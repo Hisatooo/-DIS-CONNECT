@@ -112,6 +112,185 @@
 <div id="app-container" class="h-full w-full max-w-md mx-auto flex flex-col relative">
 
     <main id="main-content" class="main-content">
+
+        <!-- ══════════════════════════════════════════════════════
+             PAGE: ONBOARDING
+        ══════════════════════════════════════════════════════ -->
+        <div id="page-onboarding" class="page no-scrollbar flex flex-col items-center justify-center text-center px-6">
+            <div id="onboarding-slides">
+                <!-- Slide 1 -->
+                <div class="onboarding-slide" id="slide-0">
+                    <div class="w-28 h-28 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-8">
+                        <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M6.343 6.343a9 9 0 000 12.728M9.172 9.172a5 5 0 000 7.071M13 12a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+                    </div>
+                    <h1 class="text-3xl font-extrabold text-white mb-3">(DIS)CONNECT</h1>
+                    <p class="text-gray-400 text-base leading-relaxed">Go offline to get ahead. Deep work sessions, real connections.</p>
+                </div>
+                <!-- Slide 2 -->
+                <div class="onboarding-slide hidden" id="slide-1">
+                    <div class="w-28 h-28 rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-8">
+                        <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h1 class="text-3xl font-extrabold text-white mb-3">Focus Sessions</h1>
+                    <p class="text-gray-400 text-base leading-relaxed">Set a timer, lock in, and earn XP for every minute of focused work.</p>
+                </div>
+                <!-- Slide 3 -->
+                <div class="onboarding-slide hidden" id="slide-2">
+                    <div class="w-28 h-28 rounded-3xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center mx-auto mb-8">
+                        <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </div>
+                    <h1 class="text-3xl font-extrabold text-white mb-3">Group Sessions</h1>
+                    <p class="text-gray-400 text-base leading-relaxed">Grind together. Find your crew and build accountability through shared sessions.</p>
+                </div>
+            </div>
+            <!-- Dots -->
+            <div class="flex space-x-2 my-8" id="onboarding-dots">
+                <div class="w-2 h-2 rounded-full bg-white" data-dot="0"></div>
+                <div class="w-2 h-2 rounded-full bg-white/30" data-dot="1"></div>
+                <div class="w-2 h-2 rounded-full bg-white/30" data-dot="2"></div>
+            </div>
+            <button id="onboarding-next-btn" class="w-full py-4 bg-white text-black font-extrabold text-base rounded-2xl mb-4 transition-all active:scale-95">Continue</button>
+            <button id="onboarding-skip-btn" class="text-sm text-gray-500">Skip</button>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+             PAGE: START SESSION
+        ══════════════════════════════════════════════════════ -->
+        <div id="page-start-session" class="page no-scrollbar">
+            <div class="flex items-center justify-between py-5">
+                <button onclick="goBack()" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                <h1 id="start-session-title" class="text-lg font-extrabold text-white">New Session</h1>
+                <div class="w-9"></div>
+            </div>
+            <!-- Duration stepper -->
+            <div class="card p-6 mb-5 text-center">
+                <p class="text-xs text-gray-500 uppercase tracking-widest mb-4">Duration</p>
+                <div class="flex items-center justify-center space-x-6 mb-5">
+                    <button id="dur-minus" class="w-12 h-12 rounded-full bg-[#2c2c2e] text-white font-bold text-2xl flex items-center justify-center active:scale-90 transition-transform">−</button>
+                    <div id="duration-display" class="text-6xl font-extrabold text-white w-36 text-center">25<span class="text-2xl text-gray-400">m</span></div>
+                    <button id="dur-plus" class="w-12 h-12 rounded-full bg-[#2c2c2e] text-white font-bold text-2xl flex items-center justify-center active:scale-90 transition-transform">+</button>
+                </div>
+                <!-- Presets -->
+                <div class="flex space-x-2">
+                    <button class="duration-preset flex-1 py-2 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-min="15">15m</button>
+                    <button class="duration-preset flex-1 py-2 rounded-xl text-sm font-semibold bg-white text-black" data-min="25">25m</button>
+                    <button class="duration-preset flex-1 py-2 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-min="45">45m</button>
+                    <button class="duration-preset flex-1 py-2 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-min="60">60m</button>
+                </div>
+            </div>
+            <!-- Focus type -->
+            <div class="card p-4 mb-5">
+                <p class="text-xs text-gray-500 uppercase tracking-widest mb-3">Focus Type</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="focus-type-btn py-3 rounded-xl text-sm font-semibold bg-white text-black" data-type="deep">Deep Work</button>
+                    <button class="focus-type-btn py-3 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-type="creative">Creative</button>
+                    <button class="focus-type-btn py-3 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-type="study">Study</button>
+                    <button class="focus-type-btn py-3 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-type="practice">Practice</button>
+                </div>
+            </div>
+            <button id="start-session-btn" class="w-full py-4 bg-white text-black font-extrabold text-base rounded-2xl transition-all active:scale-95">
+                <span id="start-btn-label">Start Session</span>
+            </button>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+             PAGE: TIMER (active session)
+        ══════════════════════════════════════════════════════ -->
+        <div id="page-timer" class="page no-scrollbar flex flex-col" style="padding-bottom:2rem;">
+            <div class="flex items-center justify-between py-5">
+                <div></div>
+                <div class="text-center">
+                    <span id="timer-mode-label" class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Focus</span>
+                </div>
+                <div class="w-9"></div>
+            </div>
+            <!-- Ring timer -->
+            <div class="flex-1 flex flex-col items-center justify-center">
+                <div class="relative w-64 h-64 mb-10">
+                    <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="44" fill="none" stroke="#1C1C1E" stroke-width="6"/>
+                        <circle id="timer-ring" cx="50" cy="50" r="44" fill="none" stroke="url(#timer-grad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0" style="transition:stroke-dashoffset 0.9s linear;"/>
+                        <defs>
+                            <linearGradient id="timer-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#a855f7"/>
+                                <stop offset="100%" stop-color="#ec4899"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="timer-display" class="text-6xl font-extrabold text-white tabular-nums">25:00</span>
+                        <span id="timer-sub" class="text-xs text-gray-500 mt-2">Stay offline</span>
+                    </div>
+                </div>
+                <!-- Controls -->
+                <div class="flex items-center space-x-6">
+                    <button id="timer-pause-btn" class="w-16 h-16 rounded-full bg-[#1C1C1E] flex items-center justify-center active:scale-90 transition-transform">
+                        <svg id="pause-icon" class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                        </svg>
+                    </button>
+                    <button id="timer-stop-btn" class="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center active:scale-90 transition-transform">
+                        <svg class="w-7 h-7 text-red-400" fill="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+             PAGE: SESSION RESULT
+        ══════════════════════════════════════════════════════ -->
+        <div id="page-session-result" class="page no-scrollbar flex flex-col items-center justify-start pt-8">
+            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-5">
+                <svg class="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h1 id="result-title" class="text-2xl font-extrabold text-white mb-1">Session Complete!</h1>
+            <p class="text-sm text-gray-500 mb-8">Nice work. Keep it up.</p>
+            <!-- Stats row -->
+            <div class="grid grid-cols-3 gap-3 w-full mb-6">
+                <div class="card p-4 flex flex-col items-center">
+                    <span id="result-duration-value" class="text-xl font-extrabold text-white">—</span>
+                    <span class="text-xs text-gray-500 mt-1">Duration</span>
+                </div>
+                <div class="card p-4 flex flex-col items-center">
+                    <span id="result-xp-value" class="text-xl font-extrabold text-purple-400">+25</span>
+                    <span class="text-xs text-gray-500 mt-1">XP</span>
+                </div>
+                <div class="card p-4 flex flex-col items-center">
+                    <span id="result-streak-value" class="text-xl font-extrabold text-white">—</span>
+                    <span class="text-xs text-gray-500 mt-1">Streak</span>
+                </div>
+            </div>
+            <div class="flex space-x-3 w-full">
+                <button onclick="navigateTo('home'); renderHomePage();" class="flex-1 py-3 bg-[#1C1C1E] text-white font-semibold rounded-2xl border border-white/10 transition-all active:scale-95">Done</button>
+                <button onclick="navigateTo('create-post')" class="flex-1 py-3 bg-white text-black font-bold rounded-2xl transition-all active:scale-95">Share</button>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+             PAGE: EXPLORE
+        ══════════════════════════════════════════════════════ -->
+        <div id="page-explore" class="page no-scrollbar">
+            <div class="flex items-center justify-between py-5">
+                <h1 id="explore-page-title" class="text-lg font-extrabold text-white">Explore</h1>
+                <button onclick="navigateTo('create-post')" class="w-9 h-9 rounded-full bg-white flex items-center justify-center">
+                    <svg class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                </button>
+            </div>
+            <!-- Search bar -->
+            <div class="relative mb-4">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input id="explore-search" type="text" placeholder="Search posts…" class="w-full bg-[#1C1C1E] text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/20">
+            </div>
+            <!-- Tab -->
+            <div class="flex space-x-3 mb-4">
+                <button class="explore-tab px-4 py-1.5 rounded-full text-sm font-semibold bg-white text-black" data-tab="latest">Latest</button>
+                <button class="explore-tab px-4 py-1.5 rounded-full text-sm font-semibold bg-[#1C1C1E] text-gray-400" data-tab="trending">Trending</button>
+            </div>
+            <div id="explore-feed" class="space-y-3"></div>
+        </div>
+
         <!-- ══════════════════════════════════════════════════════
              PAGE: HOME
         ══════════════════════════════════════════════════════ -->
@@ -1573,6 +1752,183 @@ function renderNotifications() {
     });
 }
 
+// ================================================================
+//  PART 8 — Onboarding · DM · Explore tabs · Focus-type · Boot
+// ================================================================
+
+// ── Onboarding ────────────────────────────────────────────────
+function initOnboarding() {
+    let slide = 0;
+    const total = 3;
+
+    function goSlide(n) {
+        document.querySelectorAll('.onboarding-slide').forEach((el, i) => el.classList.toggle('hidden', i !== n));
+        document.querySelectorAll('[data-dot]').forEach(d => {
+            d.className = `w-2 h-2 rounded-full ${parseInt(d.dataset.dot) === n ? 'bg-white' : 'bg-white/30'}`;
+        });
+        const btn = document.getElementById('onboarding-next-btn');
+        if (btn) btn.textContent = n === total - 1 ? "Let's Go" : 'Continue';
+    }
+
+    const nextBtn = document.getElementById('onboarding-next-btn');
+    const skipBtn = document.getElementById('onboarding-skip-btn');
+
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+        if (slide < total - 1) { slide++; goSlide(slide); }
+        else finishOnboarding();
+    });
+    if (skipBtn) skipBtn.addEventListener('click', finishOnboarding);
+
+    goSlide(0);
+}
+
+function finishOnboarding() {
+    localStorage.setItem('onboarded', '1');
+    navigateTo('home');
+    renderHomePage();
+}
+
+// ── DM / Messages ─────────────────────────────────────────────
+const SAMPLE_CONVOS = [
+    { id:'c1', name:'Alex', handle:'alex', last:'Yo, how was your session?', time:'2m', unread:2 },
+    { id:'c2', name:'Saki', handle:'saki', last:'Drop the beat when you\'re done', time:'1h', unread:0 },
+    { id:'c3', name:'Jake', handle:'jake', last:'Let\'s do a group session tmrw', time:'3h', unread:1 },
+];
+
+let activeDM = null;
+
+function renderMessagesList() {
+    const list = document.getElementById('messages-list');
+    if (!list) return;
+    list.innerHTML = '';
+    SAMPLE_CONVOS.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center space-x-3 py-3 border-b border-white/5 last:border-0 cursor-pointer active:bg-white/5 rounded-xl px-2 -mx-2 transition-colors';
+        row.innerHTML = `
+            <div class="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-base font-bold text-white flex-shrink-0">${c.name[0]}</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-bold text-white">${c.name}</span>
+                    <span class="text-xs text-gray-500">${c.time}</span>
+                </div>
+                <p class="text-xs text-gray-500 truncate mt-0.5">${c.last}</p>
+            </div>
+            ${c.unread ? `<div class="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">${c.unread}</div>` : ''}`;
+        row.addEventListener('click', () => openDM(c));
+        list.appendChild(row);
+    });
+}
+
+function openDM(convo) {
+    activeDM = convo;
+    const titleEl = document.getElementById('dm-title');
+    if (titleEl) titleEl.textContent = convo.name;
+    renderDMChat(convo);
+    navigateTo('dm');
+}
+
+function renderDMChat(convo) {
+    const chat = document.getElementById('dm-chat-messages');
+    if (!chat) return;
+    const msgs = JSON.parse(localStorage.getItem('dm-' + convo.id) || '[]');
+    const sample = [
+        { text: convo.last, from: 'them', time: convo.time },
+    ];
+    const all = [...sample, ...msgs];
+    chat.innerHTML = '';
+    all.forEach(m => {
+        const bubble = document.createElement('div');
+        const isMe = m.from === 'me';
+        bubble.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-3`;
+        bubble.innerHTML = `<div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${isMe ? 'bg-white text-black rounded-br-sm' : 'bg-[#2c2c2e] text-white rounded-bl-sm'}">${m.text}</div>`;
+        chat.appendChild(bubble);
+    });
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function initDM() {
+    const input   = document.getElementById('dm-input');
+    const sendBtn = document.getElementById('dm-send-btn');
+
+    if (sendBtn && input) {
+        sendBtn.addEventListener('click', sendDMMessage);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDMMessage(); } });
+    }
+}
+
+function sendDMMessage() {
+    const input = document.getElementById('dm-input');
+    if (!input || !activeDM) return;
+    const text = input.value.trim();
+    if (!text) return;
+    const msgs = JSON.parse(localStorage.getItem('dm-' + activeDM.id) || '[]');
+    msgs.push({ text, from: 'me', time: 'now' });
+    localStorage.setItem('dm-' + activeDM.id, JSON.stringify(msgs));
+    input.value = '';
+    renderDMChat(activeDM);
+}
+
+// ── Explore tabs ──────────────────────────────────────────────
+function initExploreTabs() {
+    document.querySelectorAll('.explore-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.explore-tab').forEach(b =>
+                b.className = `explore-tab px-4 py-1.5 rounded-full text-sm font-semibold ${b === btn ? 'bg-white text-black' : 'bg-[#1C1C1E] text-gray-400'}`
+            );
+            renderExploreFeed();
+        });
+    });
+}
+
+// ── Focus type picker ──────────────────────────────────────────
+function initFocusTypePicker() {
+    document.querySelectorAll('.focus-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.focus-type-btn').forEach(b =>
+                b.className = `focus-type-btn py-3 rounded-xl text-sm font-semibold ${b === btn ? 'bg-white text-black' : 'bg-[#2c2c2e] text-gray-400'}`
+            );
+        });
+    });
+}
+
+// ── Home "New Session" button wiring ──────────────────────────
+function initHomeButtons() {
+    const nsBtn = document.getElementById('new-session-btn');
+    if (nsBtn) nsBtn.addEventListener('click', () => navigateTo('start-session'));
+
+    const ha = document.getElementById('home-user-avatar');
+    if (ha) ha.addEventListener('click', () => navigateTo('profile'));
+}
+
+// ── showPage extension: extra page hooks ──────────────────────
+const _origShowPage = showPage;
+// patch showPage to trigger extra renders
+const _showPage = function(pageId) {
+    _origShowPage(pageId);
+    if (pageId === 'messages') renderMessagesList();
+    if (pageId === 'explore')  renderExploreFeed();
+};
+// replace global
+Object.assign(window, { showPage: _showPage, navigateTo: function(p){ pageHistory[pageHistory.length-1]!==p && pageHistory.push(p); _showPage(p); } });
+
+// ── applyLang: extra labels for new pages ─────────────────────
+const _origApplyLang = applyLang;
+function applyLangExtra() {
+    _origApplyLang();
+    const extras = {
+        'explore-page-title': 'explore',
+        'start-session-title': currentLang==='ja'?'新しいセッション':'New Session',
+    };
+    Object.entries(extras).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = typeof val === 'string' && STRINGS[currentLang]?.[val] ? t(val) : val;
+    });
+    const ph = document.getElementById('explore-search');
+    if (ph) ph.placeholder = currentLang==='ja' ? '投稿を検索…' : 'Search posts…';
+    const startLbl = document.getElementById('start-btn-label');
+    if (startLbl) startLbl.textContent = currentLang==='ja' ? 'セッション開始' : 'Start Session';
+}
+
 // ── Boot ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     initNav();
@@ -1581,9 +1937,23 @@ document.addEventListener('DOMContentLoaded', () => {
     initStartSession();
     initCreatePost();
     initGroupsCatFilter();
-    applyLang();
+    initDM();
+    initExploreTabs();
+    initFocusTypePicker();
+    initHomeButtons();
+    applyLangExtra();
     renderHomePage();
-    showPage('home');
+
+    // Onboarding check
+    if (!localStorage.getItem('onboarded')) {
+        initOnboarding();
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const ob = document.getElementById('page-onboarding');
+        if (ob) ob.classList.add('active');
+        document.getElementById('bottom-nav').style.display = 'none';
+    } else {
+        showPage('home');
+    }
 });
 </script>
 </body>
