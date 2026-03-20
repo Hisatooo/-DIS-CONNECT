@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>(DIS)CONNECT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ── Base ── */
+        body { font-family: 'Sora', sans-serif; overscroll-behavior: none; background-color: #000; color: #E2E2E2; }
+        .main-content { position: relative; z-index: 1; flex-grow: 1; overflow: hidden; }
+        .page { position: absolute; inset: 0; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; padding-left: 1rem; padding-right: 1rem; padding-bottom: 8rem; }
+        .page.active { opacity: 1; pointer-events: auto; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ── Cards ── */
+        .card { background: #1C1C1E; border-radius: 1.25rem; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
+
+        /* ── Nav ── */
+        .nav-bar { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 400px; background: rgba(28,28,30,0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; transition: transform 0.4s cubic-bezier(0.25,1,0.5,1), opacity 0.4s ease; z-index: 100; }
+        .nav-bar.hidden { transform: translate(-50%, 150%); opacity: 0; }
+        .nav-btn { transition: color 0.2s ease; position: relative; }
+        .notification-dot { position: absolute; top: 0.5rem; right: 0.5rem; width: 8px; height: 8px; border-radius: 9999px; background-color: #ef4444; display: none; }
+        .nav-btn.active-nav .icon-outline { display: none; }
+        .nav-btn.active-nav .icon-solid { display: block; }
+        .nav-btn:not(.active-nav) .icon-solid { display: none; }
+        .nav-btn[data-page="tuneout"] { transition: transform 0.3s cubic-bezier(0.25,1,0.5,1), background-color 0.3s ease, color 0.3s ease; }
+        .nav-btn[data-page="tuneout"].active-nav { background-color: #373737; border-radius: 9999px; color: white; transform: scale(1.1) translateY(-5px); }
+        .nav-btn.session-disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Comment view ── */
+        #comment-view { position: fixed; inset: 0; background-color: #000; z-index: 200; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25,1,0.5,1); }
+        #comment-view.active { transform: translateX(0); }
+
+        /* ── Notification banner ── */
+        #notification-banner { position: fixed; top: 1rem; left: 1rem; right: 1rem; max-width: 400px; margin: 0 auto; background: rgba(28,28,30,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); border-radius: 1rem; padding: 1rem; z-index: 9999; transform: translateY(-150%); transition: transform 0.5s cubic-bezier(0.19,1,0.22,1); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        #notification-banner.visible { transform: translateY(0); }
+
+        /* ── Picker ── */
+        #hours-picker, #minutes-picker, #lobby-hours-picker, #lobby-minutes-picker { touch-action: pan-y; scroll-snap-type: y mandatory; }
+        .picker-item { scroll-snap-align: center; transition: opacity 0.3s ease, transform 0.3s ease; opacity: 0.3; transform: scale(0.8); }
+
+        /* ── Slider ── */
+        .slider-track { background: #1C1C1E; border-radius: 9999px; padding: 6px; position: relative; user-select: none; overflow: hidden; }
+        .slider-reveal { position: absolute; top: 0; left: 0; bottom: 0; width: 0; background: #373737; border-radius: 9999px; }
+        .slider-thumb { background: white; border-radius: 9999px; position: absolute; top: 6px; left: 6px; cursor: grab; transition: transform 0.2s ease; display: flex; align-items: center; justify-content: center; z-index: 2; }
+        .slider-thumb:active { cursor: grabbing; transform: scale(1.1); }
+        .slider-text { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); color: #a1a1aa; pointer-events: none; transition: opacity 0.2s ease, color 0.2s ease; font-weight: 600; z-index: 1; }
+
+        /* ── Countdown ring ── */
+        #countdown-container { position: relative; width: 280px; height: 280px; }
+        .countdown-ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+        .countdown-ring circle { transition: stroke-dashoffset 1s linear; }
+        .countdown-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+
+        /* ── Animations ── */
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%,90%{transform:translate3d(-1px,0,0)}20%,80%{transform:translate3d(2px,0,0)}30%,50%,70%{transform:translate3d(-4px,0,0)}40%,60%{transform:translate3d(4px,0,0)} }
+        @keyframes pulse { 50%{opacity:0.5} }
+        @keyframes like-pop { 0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)} }
+        @keyframes result-bounce { 0%{transform:scale(0);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1} }
+        @keyframes fade-in-up { from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)} }
+        @keyframes dot-pulse { 0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:0.7} }
+        .like-animation { animation: like-pop 0.3s ease-in-out; }
+        .like-btn .heart-icon.liked { fill: #ef4444; stroke: #ef4444; }
+        .result-appear { animation: result-bounce 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .fade-in-up { animation: fade-in-up 0.4s ease forwards; }
+
+        /* ── Pill tabs ── */
+        .pill-tab-container { -ms-overflow-style: none; scrollbar-width: none; }
+        .pill-tab-container::-webkit-scrollbar { display: none; }
+
+        /* ── Participant display ── */
+        .participant-display { display: inline-flex; align-items: center; gap: 6px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); border-radius: 9999px; padding: 6px 14px; }
+        .participant-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: dot-pulse 2s ease-in-out infinite; flex-shrink: 0; }
+
+        /* ── iOS Toggle ── */
+        .ios-toggle { position: relative; display: inline-block; width: 36px; height: 22px; flex-shrink: 0; }
+        .ios-toggle input { opacity: 0; width: 0; height: 0; }
+        .ios-toggle-slider { position: absolute; cursor: pointer; inset: 0; background-color: #3a3a3c; border-radius: 9999px; transition: background-color 0.3s; }
+        .ios-toggle-slider:before { content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+        .ios-toggle input:checked + .ios-toggle-slider { background-color: #22c55e; }
+        .ios-toggle input:checked + .ios-toggle-slider:before { transform: translateX(14px); }
+
+        /* ── Group card ── */
+        .group-card { background: #1C1C1E; border-radius: 1.25rem; border: 1px solid rgba(255,255,255,0.08); padding: 1rem; cursor: pointer; transition: background-color 0.2s; }
+        .group-card:active { background: #2c2c2e; }
+
+        /* ── Ready indicator ── */
+        .ready-indicator { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #000; position: absolute; bottom: 0; right: 0; }
+        .ready-indicator.ready { background: #22c55e; }
+        .ready-indicator.pending { background: #6b7280; }
+
+        /* ── Group member card (active session) ── */
+        .group-member-card { background: #1C1C1E; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; transition: border-color 0.3s; }
+        .group-member-card.failed { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+
+        /* ── Disconnect warning ── */
+        .disconnect-warning { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); border-radius: 1rem; padding: 1rem; }
+
+        /* ── Result icons ── */
+        .result-icon-success, .result-icon-failure { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto; }
+        .result-icon-success { background: rgba(34,197,94,0.15); border: 2px solid rgba(34,197,94,0.3); }
+        .result-icon-failure { background: rgba(239,68,68,0.15); border: 2px solid rgba(239,68,68,0.3); }
+    </style>
+</head>
+<body class="antialiased overflow-hidden h-screen w-screen">
+<div id="app-container" class="h-full w-full max-w-md mx-auto flex flex-col relative">
+
+    <main id="main-content" class="main-content">
+        <!-- PAGES GO HERE (Parts 2-5) -->
+    </main>
+
+    <!-- FAB -->
+    <button id="fab-btn" class="fixed bottom-24 right-4 w-14 h-14 bg-white text-black rounded-full flex items-center justify-center shadow-2xl z-50 transition-all duration-300 hover:scale-110 active:scale-95">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    </button>
+
+    <!-- Notification banner -->
+    <div id="notification-banner">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            </div>
+            <p id="notification-text" class="text-sm font-semibold text-white flex-1"></p>
+        </div>
+        <button id="notification-close" class="text-gray-500 hover:text-white ml-3 flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </div>
+
+    <!-- Nav bar -->
+    <nav class="nav-bar" id="nav-bar">
+        <div class="flex items-center justify-around py-3 px-2">
+            <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="home">
+                <div class="notification-dot" id="home-dot"></div>
+                <svg class="icon-outline w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <svg class="icon-solid w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+            </button>
+            <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="gigs">
+                <svg class="icon-outline w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <svg class="icon-solid w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6 6V4a2 2 0 012-2h8a2 2 0 012 2v2h2a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h2zm2-2h8v2H8V4zm-2 6a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm5 0a1 1 0 011-1h.01a1 1 0 110 2H13a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+            </button>
+            <button class="nav-btn flex flex-col items-center p-3 text-gray-500" data-page="tuneout">
+                <svg class="icon-outline w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 100 20A10 10 0 0012 2zM4 12a8 8 0 1116 0A8 8 0 014 12zm8-3a1 1 0 011 1v3.586l2.707 2.707a1 1 0 01-1.414 1.414l-3-3A1 1 0 019 14v-4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+            </button>
+            <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="friends">
+                <svg class="icon-outline w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <svg class="icon-solid w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 14.094A5.973 5.973 0 004 17v1H1v-1a3 3 0 013.75-2.906z"/></svg>
+            </button>
+            <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="profile">
+                <svg class="icon-outline w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <svg class="icon-solid w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a4 4 0 100 8 4 4 0 000-8zM5 14a7 7 0 0114 0v1H5v-1z" clip-rule="evenodd"/></svg>
+            </button>
+        </div>
+    </nav>
+
+</div>
+
+<!-- Confirmation modal -->
+<div id="confirm-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[1000] hidden flex items-end justify-center pb-8">
+    <div class="bg-[#1C1C1E] rounded-2xl p-6 mx-4 w-full max-w-sm border border-white/10">
+        <h3 id="confirm-title" class="text-lg font-bold text-white text-center mb-2"></h3>
+        <p id="confirm-message" class="text-gray-400 text-sm text-center mb-6"></p>
+        <div class="flex flex-col space-y-2">
+            <button id="confirm-yes" class="w-full py-3 bg-red-500 text-white font-bold rounded-xl"></button>
+            <button id="confirm-no" class="w-full py-3 bg-[#2c2c2e] text-white font-semibold rounded-xl"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── PLACEHOLDER: JS will be added in Parts 6-8 ──
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('(DIS)CONNECT loading...');
+});
+</script>
+</body>
+</html>
