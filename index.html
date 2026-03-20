@@ -1130,16 +1130,459 @@ function initNav() {
     });
 }
 
-// ── Placeholder renders (stubs for Parts 7-8) ─────────────────
-function renderExploreFeed() {}
-function renderGroupsList()  {}
-function renderNotifications() {}
+// ================================================================
+//  PART 7 — Timer · Groups · Create-Post · Explore · Notifications
+// ================================================================
+
+// ── Timer state ───────────────────────────────────────────────
+const TIMER = {
+    interval: null, remaining: 0, total: 0,
+    mode: 'focus', running: false, sessionMinutes: 25,
+};
+
+function fmtTime(sec) {
+    return String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0');
+}
+
+function updateTimerRing(remaining, total) {
+    const ring = document.getElementById('timer-ring');
+    if (!ring) return;
+    const pct = total > 0 ? remaining / total : 1;
+    ring.style.strokeDashoffset = 276.46 * (1 - pct);
+}
+
+function timerTick() {
+    if (TIMER.remaining <= 0) {
+        clearInterval(TIMER.interval); TIMER.running = false;
+        onTimerComplete(); return;
+    }
+    TIMER.remaining--;
+    document.getElementById('timer-display').textContent = fmtTime(TIMER.remaining);
+    updateTimerRing(TIMER.remaining, TIMER.total);
+}
+
+function onTimerComplete() {
+    const user = getUser();
+    user.sessions = (user.sessions||0) + 1;
+    user.hoursOffline = +(((user.hoursOffline||0) + TIMER.sessionMinutes/60).toFixed(1));
+    user.xp = (user.xp||0) + 25;
+    saveUser(user);
+    updateStreak();
+    const sessions = JSON.parse(localStorage.getItem('sessions')||'[]');
+    sessions.unshift({ date: new Date().toISOString(), duration: TIMER.sessionMinutes, xp: 25 });
+    localStorage.setItem('sessions', JSON.stringify(sessions.slice(0,50)));
+    renderSessionResult();
+    navigateTo('session-result');
+}
+
+function updateStreak() {
+    const user = getUser();
+    const today = new Date().toDateString();
+    const last  = localStorage.getItem('lastSessionDate');
+    if (last !== today) {
+        const yesterday = new Date(Date.now()-86400000).toDateString();
+        user.streak = last === yesterday ? (user.streak||0)+1 : 1;
+        if (user.streak > (user.bestStreak||0)) user.bestStreak = user.streak;
+        localStorage.setItem('lastSessionDate', today);
+        saveUser(user);
+    }
+}
+
+function startTimer(minutes) {
+    TIMER.sessionMinutes = minutes;
+    TIMER.remaining = TIMER.total = minutes * 60;
+    TIMER.mode = 'focus'; TIMER.running = true;
+    const disp = document.getElementById('timer-display');
+    if (disp) disp.textContent = fmtTime(TIMER.remaining);
+    updateTimerRing(TIMER.remaining, TIMER.total);
+    const ml = document.getElementById('timer-mode-label');
+    if (ml) ml.textContent = t('focus');
+    setPauseIcon(true);
+    clearInterval(TIMER.interval);
+    TIMER.interval = setInterval(timerTick, 1000);
+    navigateTo('timer');
+}
+
+function pauseResumeTimer() {
+    if (TIMER.running) {
+        clearInterval(TIMER.interval); TIMER.running = false; setPauseIcon(false);
+    } else {
+        TIMER.interval = setInterval(timerTick, 1000); TIMER.running = true; setPauseIcon(true);
+    }
+}
+
+function stopTimer() {
+    clearInterval(TIMER.interval); TIMER.running = false;
+    navigateTo('home'); renderHomePage();
+}
+
+function setPauseIcon(running) {
+    const ic = document.getElementById('pause-icon');
+    if (!ic) return;
+    ic.innerHTML = running
+        ? '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>'
+        : '<path d="M8 5v14l11-7z"/>';
+}
+
+function renderSessionResult() {
+    const user = getUser();
+    const title = document.getElementById('result-title');
+    if (title) title.textContent = t('session-complete');
+    const xpEl = document.getElementById('result-xp-value');
+    if (xpEl) xpEl.textContent = '+25 XP';
+    const durEl = document.getElementById('result-duration-value');
+    if (durEl) durEl.textContent = TIMER.sessionMinutes + 'm';
+    const strEl = document.getElementById('result-streak-value');
+    if (strEl) strEl.textContent = user.streak || 1;
+}
+
+function initTimerPage() {
+    const pb = document.getElementById('timer-pause-btn');
+    const sb = document.getElementById('timer-stop-btn');
+    if (pb) pb.addEventListener('click', pauseResumeTimer);
+    if (sb) sb.addEventListener('click', stopTimer);
+}
+
+// ── Home render ───────────────────────────────────────────────
+function renderHomePage() {
+    renderGreeting();
+    const user = getUser();
+    const ha = document.getElementById('home-user-avatar');
+    if (ha) ha.textContent = getInitials(user.name);
+    const goalEl   = document.getElementById('home-stat-goal');
+    const streakEl = document.getElementById('home-stat-streak');
+    const hoursEl  = document.getElementById('home-stat-hours');
+    if (goalEl)   goalEl.textContent   = user.sessions    || 0;
+    if (streakEl) streakEl.textContent = user.streak      || 0;
+    if (hoursEl)  hoursEl.textContent  = user.hoursOffline|| '0.0';
+
+    const list = document.getElementById('recent-sessions-list');
+    if (!list) return;
+    const sessions = JSON.parse(localStorage.getItem('sessions')||'[]');
+    list.innerHTML = '';
+    if (!sessions.length) {
+        list.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">${currentLang==='ja'?'まだセッションがありません':'No sessions yet'}</p>`;
+        return;
+    }
+    sessions.slice(0,3).forEach(s => {
+        const date = new Date(s.date).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{month:'short',day:'numeric'});
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between py-3 border-b border-white/5 last:border-0';
+        item.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div><p class="text-sm font-semibold text-white">${s.duration}m session</p><p class="text-xs text-gray-500">${date}</p></div>
+            </div>
+            <span class="text-xs font-semibold text-purple-400">+${s.xp||25} XP</span>`;
+        list.appendChild(item);
+    });
+}
+
+// ── Start-session duration picker ─────────────────────────────
+let selectedDuration = 25;
+
+function initStartSession() {
+    const display  = document.getElementById('duration-display');
+    const minusBtn = document.getElementById('dur-minus');
+    const plusBtn  = document.getElementById('dur-plus');
+    const startBtn = document.getElementById('start-session-btn');
+
+    document.querySelectorAll('.duration-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedDuration = parseInt(btn.dataset.min);
+            if (display) display.innerHTML = `${selectedDuration}<span class="text-xl text-gray-400">m</span>`;
+            document.querySelectorAll('.duration-preset').forEach(b => {
+                b.className = `duration-preset flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${b===btn?'bg-white text-black':'bg-[#2c2c2e] text-gray-400'}`;
+            });
+        });
+    });
+    if (minusBtn) minusBtn.addEventListener('click', () => {
+        selectedDuration = Math.max(5, selectedDuration-5);
+        if (display) display.innerHTML = `${selectedDuration}<span class="text-xl text-gray-400">m</span>`;
+    });
+    if (plusBtn) plusBtn.addEventListener('click', () => {
+        selectedDuration = Math.min(120, selectedDuration+5);
+        if (display) display.innerHTML = `${selectedDuration}<span class="text-xl text-gray-400">m</span>`;
+    });
+    if (startBtn) startBtn.addEventListener('click', () => startTimer(selectedDuration));
+}
+
+// ── Groups ────────────────────────────────────────────────────
+const SAMPLE_GROUPS = [
+    { id:'g1', name:'Late Night Coders', cat:'dev',    members:8,  desc:'Midnight coding sprints with lofi.', rules:'Mic off during session.' },
+    { id:'g2', name:'Beat Makers Unite', cat:'music',  members:5,  desc:'Produce together, share WIPs.',       rules:"Respect each other's process." },
+    { id:'g3', name:'UI/UX Focus Room',  cat:'design', members:12, desc:'Design deep work sessions.',         rules:'No social media during session.' },
+    { id:'g4', name:'Study Grind',       cat:'study',  members:20, desc:'Pomodoro study sessions.',           rules:'Stay on task.' },
+    { id:'g5', name:'General Hustle',    cat:'general',members:33, desc:'Any skill, any goal. Just focus.',   rules:'Be respectful.' },
+];
+
+let activeGroupCat = 'all';
+let selectedGroup  = null;
+
+function renderGroupsList() {
+    const list = document.getElementById('groups-list');
+    if (!list) return;
+    const filtered = activeGroupCat === 'all' ? SAMPLE_GROUPS : SAMPLE_GROUPS.filter(g => g.cat === activeGroupCat);
+    list.innerHTML = '';
+    filtered.forEach(g => {
+        const card = document.createElement('div');
+        card.className = 'card p-4 cursor-pointer active:scale-[0.98] transition-transform';
+        card.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-bold text-white">${g.name}</h3>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-400">${g.cat}</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">${g.desc}</p>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-1">
+                    <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                    <span class="text-xs text-gray-400">${g.members} members</span>
+                </div>
+                <button class="join-btn px-3 py-1 bg-white text-black text-xs font-bold rounded-full">${t('start')}</button>
+            </div>`;
+        card.querySelector('.join-btn').addEventListener('click', e => { e.stopPropagation(); openGroupLobby(g); });
+        card.addEventListener('click', () => openGroupLobby(g));
+        list.appendChild(card);
+    });
+}
+
+function openGroupLobby(group) {
+    selectedGroup = group;
+    document.getElementById('lobby-group-name').textContent = group.name;
+    document.getElementById('lobby-group-cat').textContent  = group.cat;
+    document.getElementById('lobby-desc').textContent       = group.desc;
+    document.getElementById('lobby-rules-text').textContent = group.rules;
+
+    const membersEl = document.getElementById('lobby-members-list');
+    if (membersEl) {
+        membersEl.innerHTML = '';
+        ['Alex','Saki','Jake','Mina','Tom','Rei'].slice(0, Math.min(group.members,6)).forEach(name => {
+            const chip = document.createElement('div');
+            chip.className = 'flex items-center space-x-1.5';
+            chip.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white">${name[0]}</div><span class="text-xs text-gray-400">${name}</span>`;
+            membersEl.appendChild(chip);
+        });
+        if (group.members > 6) {
+            const more = document.createElement('span');
+            more.className = 'text-xs text-gray-500 self-center';
+            more.textContent = `+${group.members-6} more`;
+            membersEl.appendChild(more);
+        }
+    }
+
+    let lobbyDur = 25;
+    const durDisp  = document.getElementById('lobby-duration-display');
+    const updateD  = () => { if (durDisp) durDisp.innerHTML = `${lobbyDur}<span class="text-lg text-gray-400">m</span>`; };
+    updateD();
+    const dm = document.getElementById('lobby-dur-minus');
+    const dp = document.getElementById('lobby-dur-plus');
+    if (dm) dm.onclick = () => { lobbyDur = Math.max(5, lobbyDur-5); updateD(); };
+    if (dp) dp.onclick = () => { lobbyDur = Math.min(120, lobbyDur+5); updateD(); };
+    const sb = document.getElementById('lobby-start-btn');
+    if (sb) sb.onclick = () => startGroupSession(lobbyDur);
+
+    navigateTo('group-lobby');
+}
+
+// ── Group session ─────────────────────────────────────────────
+const GTIMER = { interval: null, remaining: 0, total: 0, running: false };
+
+function startGroupSession(minutes) {
+    GTIMER.remaining = GTIMER.total = minutes * 60;
+    GTIMER.running = true;
+    const nameEl = document.getElementById('group-active-name');
+    if (nameEl && selectedGroup) nameEl.textContent = selectedGroup.name;
+    updateGroupTimerDisplay();
+    renderGroupActiveMembers();
+    clearInterval(GTIMER.interval);
+    GTIMER.interval = setInterval(() => {
+        if (GTIMER.remaining <= 0) { clearInterval(GTIMER.interval); GTIMER.running = false; endGroupSession(); return; }
+        GTIMER.remaining--; updateGroupTimerDisplay();
+    }, 1000);
+    const pb = document.getElementById('group-pause-btn');
+    const sb = document.getElementById('group-stop-btn');
+    if (pb) pb.onclick = toggleGroupPause;
+    if (sb) sb.onclick = () => { clearInterval(GTIMER.interval); endGroupSession(); };
+    navigateTo('group-active');
+}
+
+function updateGroupTimerDisplay() {
+    const d = document.getElementById('group-timer-display');
+    if (d) d.textContent = fmtTime(GTIMER.remaining);
+    const ring = document.getElementById('group-timer-ring');
+    if (ring) ring.style.strokeDashoffset = 276.46 * (1 - (GTIMER.total > 0 ? GTIMER.remaining/GTIMER.total : 1));
+}
+
+function toggleGroupPause() {
+    const ic = document.getElementById('group-pause-icon');
+    if (GTIMER.running) {
+        clearInterval(GTIMER.interval); GTIMER.running = false;
+        if (ic) ic.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    } else {
+        GTIMER.interval = setInterval(() => {
+            if (GTIMER.remaining<=0){clearInterval(GTIMER.interval);endGroupSession();return;}
+            GTIMER.remaining--;updateGroupTimerDisplay();
+        },1000); GTIMER.running = true;
+        if (ic) ic.innerHTML = '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>';
+    }
+}
+
+function renderGroupActiveMembers() {
+    const el = document.getElementById('group-active-members');
+    const cnt = document.getElementById('group-active-count');
+    if (!el) return;
+    el.innerHTML = '';
+    ['A','S','J','M','T'].forEach(n => {
+        const av = document.createElement('div');
+        av.className = 'w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white ring-2 ring-black';
+        av.textContent = n; el.appendChild(av);
+    });
+    if (cnt && selectedGroup) cnt.textContent = `${selectedGroup.members} members online`;
+}
+
+function endGroupSession() {
+    const user = getUser();
+    user.sessions = (user.sessions||0)+1; user.xp = (user.xp||0)+50;
+    saveUser(user); updateStreak();
+    const nameEl = document.getElementById('group-result-group-name');
+    if (nameEl && selectedGroup) nameEl.textContent = selectedGroup.name;
+    const xpEl = document.getElementById('group-result-xp');
+    if (xpEl) xpEl.textContent = '+50 XP';
+    const lb = document.getElementById('group-result-leaderboard');
+    if (lb) {
+        const u = getUser();
+        const entries = [{name:u.name,xp:50,you:true},{name:'Alex',xp:50},{name:'Saki',xp:45}];
+        lb.innerHTML = '';
+        entries.forEach((e,i) => {
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between';
+            row.innerHTML = `<div class="flex items-center space-x-3"><span class="text-sm font-bold text-gray-500 w-4">${i+1}</span><div class="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white">${e.name[0]}</div><span class="text-sm font-semibold text-white">${e.name}${e.you?' <span class="text-xs text-gray-500">(you)</span>':''}</span></div><span class="text-sm font-bold text-purple-400">+${e.xp} XP</span>`;
+            lb.appendChild(row);
+        });
+    }
+    navigateTo('group-result');
+}
+
+// ── Create Post ───────────────────────────────────────────────
+function initCreatePost() {
+    const textarea = document.getElementById('post-content');
+    const submitBtn = document.getElementById('post-submit-btn');
+    const catBtns = document.querySelectorAll('.post-cat-btn');
+    let selectedCat = 'general';
+
+    catBtns.forEach(btn => btn.addEventListener('click', () => {
+        selectedCat = btn.dataset.cat;
+        catBtns.forEach(b => b.className = `post-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${b===btn?'bg-white text-black':'bg-[#1C1C1E] text-gray-400'}`);
+    }));
+
+    if (textarea && submitBtn) {
+        textarea.addEventListener('input', () => {
+            const ok = textarea.value.trim().length > 0;
+            submitBtn.disabled = !ok;
+            submitBtn.className = `px-4 py-1.5 bg-white text-black text-sm font-bold rounded-full transition-all ${ok?'opacity-100 active:scale-95':'opacity-50'}`;
+        });
+        submitBtn.addEventListener('click', () => {
+            const content = textarea.value.trim();
+            if (!content) return;
+            const posts = JSON.parse(localStorage.getItem('posts')||'[]');
+            posts.unshift({ id:Date.now(), content, cat:selectedCat, date:new Date().toISOString(), likes:0, author:getUser().name, handle:getUser().handle });
+            localStorage.setItem('posts', JSON.stringify(posts.slice(0,100)));
+            textarea.value = '';
+            submitBtn.disabled = true;
+            submitBtn.className = 'px-4 py-1.5 bg-white text-black text-sm font-bold rounded-full opacity-50 transition-all';
+            navigateTo('explore'); renderExploreFeed();
+        });
+    }
+}
+
+// ── Explore feed ──────────────────────────────────────────────
+function renderExploreFeed() {
+    const feed = document.getElementById('explore-feed');
+    if (!feed) return;
+    const saved = JSON.parse(localStorage.getItem('posts')||'[]');
+    const sample = [
+        { author:'Alex', handle:'alex', content:'3h deep work session done. Nothing beats flow state.', likes:24, cat:'dev', date:new Date().toISOString() },
+        { author:'Saki', handle:'saki', content:'Finished the album artwork. Going offline for a week to reset.', likes:41, cat:'design', date:new Date().toISOString() },
+        { author:'Jake', handle:'jake', content:'Recorded 4 new demos. The less I look at my phone, the better the music.', likes:17, cat:'music', date:new Date().toISOString() },
+    ];
+    const all = [...saved, ...sample];
+    feed.innerHTML = '';
+    all.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'card p-4 mb-3';
+        const date = new Date(p.date).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{month:'short',day:'numeric'});
+        card.innerHTML = `
+            <div class="flex items-start space-x-3 mb-3">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">${(p.author||'?')[0]}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-bold text-white">${p.author}</span>
+                        <span class="text-xs text-gray-500">@${p.handle||p.author.toLowerCase()}</span>
+                        <span class="text-xs text-gray-600 ml-auto">${date}</span>
+                    </div>
+                    <p class="text-sm text-gray-300 mt-1 leading-relaxed">${p.content}</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 ml-12">
+                <button class="like-btn flex items-center space-x-1 text-xs text-gray-500 transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                    <span class="like-count">${p.likes||0}</span>
+                </button>
+                <span class="text-xs px-2 py-0.5 bg-white/5 rounded-full text-gray-500">${p.cat||'general'}</span>
+            </div>`;
+        card.querySelector('.like-btn').addEventListener('click', function() {
+            const liked = this.dataset.liked==='1';
+            this.dataset.liked = liked?'0':'1';
+            this.querySelector('.like-count').textContent = parseInt(this.querySelector('.like-count').textContent)+(liked?-1:1);
+            this.classList.toggle('text-pink-400',!liked);
+        });
+        feed.appendChild(card);
+    });
+}
+
+// ── Group cat filter ──────────────────────────────────────────
+function initGroupsCatFilter() {
+    document.querySelectorAll('.group-cat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            activeGroupCat = btn.dataset.cat;
+            document.querySelectorAll('.group-cat-btn').forEach(b =>
+                b.className = `group-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold ${b===btn?'bg-white text-black':'bg-[#1C1C1E] text-gray-400'}`
+            );
+            renderGroupsList();
+        });
+    });
+}
+
+// ── Notifications ─────────────────────────────────────────────
+function renderNotifications() {
+    const list = document.getElementById('notifications-list');
+    if (!list) return;
+    const items = [
+        { icon:'👍', text: currentLang==='ja'?'Alexがあなたの投稿にいいねしました':'Alex liked your post', time:'2m' },
+        { icon:'🎯', text: currentLang==='ja'?'3日連続達成！':'3-day streak achieved!', time:'1h' },
+        { icon:'👥', text: currentLang==='ja'?'Sakiがグループに参加しました':'Saki joined your group', time:'3h' },
+    ];
+    list.innerHTML = '';
+    items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center space-x-3 py-4 border-b border-white/5 last:border-0';
+        row.innerHTML = `<div class="w-10 h-10 rounded-full bg-[#2c2c2e] flex items-center justify-center text-xl flex-shrink-0">${item.icon}</div><div class="flex-1 min-w-0"><p class="text-sm text-white leading-snug">${item.text}</p><p class="text-xs text-gray-500 mt-0.5">${item.time} ago</p></div>`;
+        list.appendChild(row);
+    });
+}
 
 // ── Boot ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     initNav();
     initSettings();
+    initTimerPage();
+    initStartSession();
+    initCreatePost();
+    initGroupsCatFilter();
     applyLang();
+    renderHomePage();
     showPage('home');
 });
 </script>
