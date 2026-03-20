@@ -295,26 +295,52 @@
              PAGE: HOME
         ══════════════════════════════════════════════════════ -->
         <div id="page-home" class="page no-scrollbar">
+            <!-- Header -->
             <div class="flex items-center justify-between py-5">
-                <button data-page="profile" class="nav-to-page">
-                    <div id="home-avatar" class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm font-bold text-white"></div>
-                </button>
+                <button onclick="navigateTo('profile')" class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm font-bold text-white" id="home-user-avatar"></button>
                 <h1 class="text-lg font-extrabold text-white tracking-tight">(DIS)CONNECT</h1>
-                <div class="flex items-center space-x-2">
-                    <button id="notif-btn" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center relative">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                        <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-                    </button>
+                <button onclick="navigateTo('notifications')" id="notif-btn" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center relative">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                </button>
+            </div>
+            <!-- Greeting -->
+            <div class="mb-5">
+                <p class="text-sm text-gray-400"><span id="greeting-text">Good morning,</span></p>
+                <h2 class="text-2xl font-extrabold text-white" id="greeting-name"></h2>
+            </div>
+            <!-- New Session CTA -->
+            <button id="new-session-btn" class="w-full py-4 bg-white text-black font-extrabold text-base rounded-2xl mb-5 transition-all active:scale-95 flex items-center justify-center space-x-2">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span id="home-new-session-label">New Session</span>
+            </button>
+            <!-- Stats row -->
+            <div class="grid grid-cols-3 gap-3 mb-5">
+                <div class="card p-3 flex flex-col items-center">
+                    <span id="home-stat-goal" class="text-xl font-extrabold text-white">0</span>
+                    <span id="home-stat-goal-label" class="text-xs text-gray-500 mt-0.5">Sessions</span>
+                </div>
+                <div class="card p-3 flex flex-col items-center">
+                    <span id="home-stat-streak" class="text-xl font-extrabold text-white">0</span>
+                    <span id="home-stat-streak-label" class="text-xs text-gray-500 mt-0.5">Streak</span>
+                </div>
+                <div class="card p-3 flex flex-col items-center">
+                    <span id="home-stat-hours" class="text-xl font-extrabold text-white">0.0</span>
+                    <span id="home-stat-hours-label" class="text-xs text-gray-500 mt-0.5">Hrs Offline</span>
                 </div>
             </div>
-            <!-- Pill tabs -->
-            <div class="pill-tab-container flex overflow-x-auto space-x-2 pb-3 mb-4">
-                <button class="pill-tab flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-white text-black" data-tab="all">All</button>
-                <button class="pill-tab flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-tab="following">Following</button>
-                <button class="pill-tab flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-tab="popular">Popular</button>
+            <!-- Recent sessions -->
+            <div class="flex items-center justify-between mb-3">
+                <h2 id="home-recent-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Recent Sessions</h2>
+                <button onclick="navigateTo('explore')" class="text-xs text-gray-500">View All →</button>
             </div>
-            <!-- Feed -->
-            <div id="feed-container" class="space-y-4"></div>
+            <div id="recent-sessions-list" class="card px-4 divide-y divide-white/5 mb-5"></div>
+            <!-- Feed preview -->
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Community</h2>
+                <button onclick="navigateTo('explore')" class="text-xs text-gray-500">See all →</button>
+            </div>
+            <div id="feed-container" class="space-y-3"></div>
         </div>
 
         <!-- ══════════════════════════════════════════════════════
@@ -463,7 +489,7 @@
                 </button>
                 <div id="dm-avatar" class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-sm font-bold text-white flex-shrink-0"></div>
                 <div class="flex-1 min-w-0">
-                    <p id="dm-name" class="font-semibold text-white truncate"></p>
+                    <p id="dm-title" class="font-semibold text-white truncate"></p>
                     <p id="dm-status" class="text-xs text-green-400"></p>
                 </div>
                 <button class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
@@ -471,7 +497,7 @@
                 </button>
             </div>
             <!-- Messages -->
-            <div id="dm-messages" class="space-y-3 pb-4"></div>
+            <div id="dm-chat-messages" class="space-y-3 pb-4"></div>
             <!-- Input -->
             <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-4 py-3 bg-black border-t border-white/5">
                 <div class="flex items-center space-x-2">
@@ -945,7 +971,7 @@
     </div>
 
     <!-- Nav bar -->
-    <nav class="nav-bar" id="nav-bar">
+    <nav class="nav-bar" id="bottom-nav">
         <div class="flex items-center justify-around py-3 px-2">
             <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="home">
                 <div class="notification-dot" id="home-dot"></div>
@@ -1169,7 +1195,7 @@ function showPage(pageId) {
 
     // bottom nav highlight
     document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.page === pageId || (NAV_PAGES.includes(pageId) && btn.dataset.page === pageId));
+        btn.classList.toggle('active-nav', btn.dataset.page === pageId);
     });
 
     // show/hide bottom nav
@@ -1177,11 +1203,13 @@ function showPage(pageId) {
     document.getElementById('bottom-nav').style.display = hideNav ? 'none' : '';
 
     // page-specific setup
-    if (pageId === 'profile') renderProfilePage();
+    if (pageId === 'home')         renderHomePage();
+    if (pageId === 'profile')      renderProfilePage();
     if (pageId === 'edit-profile') fillEditProfile();
-    if (pageId === 'explore') renderExploreFeed();
-    if (pageId === 'groups') renderGroupsList();
+    if (pageId === 'explore')      renderExploreFeed();
+    if (pageId === 'groups')       renderGroupsList();
     if (pageId === 'notifications') renderNotifications();
+    if (pageId === 'messages')     renderMessagesList();
 }
 
 // ── User data ─────────────────────────────────────────────────
@@ -1457,6 +1485,33 @@ function renderHomePage() {
             <span class="text-xs font-semibold text-purple-400">+${s.xp||25} XP</span>`;
         list.appendChild(item);
     });
+
+    // Home community feed preview (3 posts)
+    const feed = document.getElementById('feed-container');
+    if (feed) {
+        const saved  = JSON.parse(localStorage.getItem('posts')||'[]');
+        const sample = [
+            { author:'Alex', handle:'alex', content:'3h deep work session done. Nothing beats flow state.', likes:24, cat:'dev', date:new Date().toISOString() },
+            { author:'Saki', handle:'saki', content:'Finished the album artwork. Going offline for a week.', likes:41, cat:'design', date:new Date().toISOString() },
+        ];
+        feed.innerHTML = '';
+        [...saved, ...sample].slice(0,3).forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'card p-4';
+            card.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">${(p.author||'?')[0]}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-sm font-bold text-white">${p.author}</span>
+                            <span class="text-xs text-gray-500">@${p.handle||p.author.toLowerCase()}</span>
+                        </div>
+                        <p class="text-sm text-gray-300 leading-relaxed">${p.content}</p>
+                    </div>
+                </div>`;
+            feed.appendChild(card);
+        });
+    }
 }
 
 // ── Start-session duration picker ─────────────────────────────
@@ -1927,6 +1982,25 @@ function applyLangExtra() {
     if (ph) ph.placeholder = currentLang==='ja' ? '投稿を検索…' : 'Search posts…';
     const startLbl = document.getElementById('start-btn-label');
     if (startLbl) startLbl.textContent = currentLang==='ja' ? 'セッション開始' : 'Start Session';
+    const nsLbl = document.getElementById('home-new-session-label');
+    if (nsLbl) nsLbl.textContent = currentLang==='ja' ? '新しいセッション' : 'New Session';
+    const dmPh = document.getElementById('dm-input');
+    if (dmPh) dmPh.placeholder = currentLang==='ja' ? 'メッセージを送信…' : 'Send a message…';
+    // home stat labels
+    const hgl = document.getElementById('home-stat-goal-label');
+    if (hgl) hgl.textContent   = currentLang==='ja' ? 'セッション' : 'Sessions';
+    const hsl = document.getElementById('home-stat-streak-label');
+    if (hsl) hsl.textContent   = currentLang==='ja' ? '連続' : 'Streak';
+    const hhl = document.getElementById('home-stat-hours-label');
+    if (hhl) hhl.textContent   = currentLang==='ja' ? 'オフライン時間' : 'Hrs Offline';
+    const hrl = document.getElementById('home-recent-label');
+    if (hrl) hrl.textContent   = currentLang==='ja' ? '最近のセッション' : 'Recent Sessions';
+    // nav labels (existing nav uses text nodes — set aria-label)
+    document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+        const key = btn.dataset.page;
+        const map = { home:'home', gigs:'gigs', tuneout:'TuneOut', friends:'friends', profile:'profile' };
+        if (map[key]) btn.setAttribute('aria-label', t(key) || map[key]);
+    });
 }
 
 // ── Boot ──────────────────────────────────────────────────────
