@@ -807,9 +807,340 @@
 </div>
 
 <script>
-// ── PLACEHOLDER: JS will be added in Parts 6-8 ──
+/* ================================================================
+   (DIS)CONNECT — Core JS
+   Part 6: navigation · i18n · profile/settings
+================================================================ */
+
+// ── i18n ──────────────────────────────────────────────────────
+const STRINGS = {
+    en: {
+        // Nav
+        home:'Home', explore:'Explore', groups:'Groups', profile:'Profile',
+        // Home
+        'good-morning':'Good morning', 'good-afternoon':'Good afternoon', 'good-evening':'Good evening',
+        'your-sessions':'Your Sessions', 'new-session':'New Session',
+        'daily-goal':'Daily Goal', 'focus-streak':'Focus Streak', 'hours-offline':'Hours Offline',
+        'recent-sessions':'Recent Sessions', 'view-all':'View All',
+        // Timer
+        'start-session':'Start Session', 'end-session':'End Session', 'pause':'Pause', 'resume':'Resume',
+        'focus':'Focus', 'break':'Break', 'session-complete':'Session Complete!',
+        // Profile
+        'edit-profile':'Edit Profile', 'save':'Save', 'change-photo':'Change Photo',
+        'name':'Name', 'username':'Username', 'bio':'Bio', 'skills':'Skills',
+        'sessions':'Sessions', 'best-streak':'Best Streak', 'gigs-done':'Gigs Done',
+        'posts':'Posts',
+        // Settings
+        'settings':'Settings', 'language':'Language', 'notifications':'Notifications',
+        'privacy':'Privacy', 'log-out':'Log Out',
+        // Groups
+        'all':'All', 'music':'Music', 'design':'Design', 'dev':'Dev', 'study':'Study',
+        'start':'Start', 'session-duration':'Session Duration', 'members':'Members',
+        'rules':'Rules', 'leave':'Leave',
+        'leaderboard':'Leaderboard', 'xp-earned':'XP Earned', 'back-to-groups':'Back to Groups',
+        'share':'Share', 'session-complete-group':'Session Complete!',
+        // Explore / feed
+        'discover':'Discover', 'trending':'Trending', 'latest':'Latest',
+        // Notifications
+        'all-notifs':'All', 'unread':'Unread',
+        // Create post
+        'new-post':'New Post', 'post':'Post', 'add-media':'Add Media', 'general':'General',
+        // DM / messages
+        'messages':'Messages', 'search':'Search', 'send':'Send',
+        // Misc
+        'follow':'Follow', 'message':'Message', 'rejoin':'Rejoin',
+    },
+    ja: {
+        home:'ホーム', explore:'探索', groups:'グループ', profile:'プロフィール',
+        'good-morning':'おはようございます', 'good-afternoon':'こんにちは', 'good-evening':'こんばんは',
+        'your-sessions':'セッション', 'new-session':'新しいセッション',
+        'daily-goal':'デイリー目標', 'focus-streak':'連続集中', 'hours-offline':'オフライン時間',
+        'recent-sessions':'最近のセッション', 'view-all':'すべて見る',
+        'start-session':'セッション開始', 'end-session':'セッション終了', 'pause':'一時停止', 'resume':'再開',
+        'focus':'集中', 'break':'休憩', 'session-complete':'セッション完了！',
+        'edit-profile':'プロフィール編集', 'save':'保存', 'change-photo':'写真を変更',
+        'name':'名前', 'username':'ユーザー名', 'bio':'自己紹介', 'skills':'スキル',
+        'sessions':'セッション', 'best-streak':'最長連続', 'gigs-done':'仕事完了',
+        'posts':'投稿',
+        'settings':'設定', 'language':'言語', 'notifications':'通知',
+        'privacy':'プライバシー', 'log-out':'ログアウト',
+        'all':'すべて', 'music':'音楽', 'design':'デザイン', 'dev':'開発', 'study':'勉強',
+        'start':'開始', 'session-duration':'セッション時間', 'members':'メンバー',
+        'rules':'ルール', 'leave':'退出',
+        'leaderboard':'リーダーボード', 'xp-earned':'獲得XP', 'back-to-groups':'グループに戻る',
+        'share':'シェア', 'session-complete-group':'セッション完了！',
+        'discover':'発見', 'trending':'トレンド', 'latest':'最新',
+        'all-notifs':'すべて', 'unread':'未読',
+        'new-post':'新しい投稿', 'post':'投稿する', 'add-media':'メディア追加', 'general':'一般',
+        'messages':'メッセージ', 'search':'検索', 'send':'送信',
+        'follow':'フォロー', 'message':'メッセージ', 'rejoin':'再参加',
+    }
+};
+
+let currentLang = localStorage.getItem('lang') || 'en';
+
+function t(key) {
+    return (STRINGS[currentLang] && STRINGS[currentLang][key]) || STRINGS['en'][key] || key;
+}
+
+function applyLang() {
+    // nav labels
+    const navMap = {
+        'nav-label-home':'home', 'nav-label-explore':'explore',
+        'nav-label-groups':'groups', 'nav-label-profile':'profile'
+    };
+    Object.entries(navMap).forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = t(key);
+    });
+
+    // page titles & static labels — mapping: element-id → i18n key
+    const labelMap = {
+        'profile-page-title':'profile',
+        'settings-page-title':'settings',
+        'edit-profile-page-title':'edit-profile',
+        'create-post-title':'new-post',
+        'groups-page-title':'groups',
+        'settings-lang-label':'language',
+        'settings-edit-profile':'edit-profile',
+        'settings-notif':'notifications',
+        'settings-privacy':'privacy',
+        'settings-logout':'log-out',
+        'edit-profile-btn-label':'edit-profile',
+        'save-label':'save',
+        'change-photo-label':'change-photo',
+        'edit-name-label':'name',
+        'edit-handle-label':'username',
+        'edit-bio-label':'bio',
+        'edit-skills-label':'skills',
+        'profile-stat-sessions-label':'sessions',
+        'profile-stat-streak-label':'best-streak',
+        'profile-stat-hours-label':'hours-offline',
+        'profile-stat-gigs-label':'gigs-done',
+        'profile-posts-label':'posts',
+        'post-submit-label':'post',
+        'attach-media-label':'add-media',
+        'group-leave-label':'leave',
+        'group-result-lb-label':'leaderboard',
+        'group-result-xp-label':'xp-earned',
+        'group-result-back-label':'back-to-groups',
+        'group-result-share-label':'share',
+        'group-result-title':'session-complete-group',
+        'lobby-session-duration-label':'session-duration',
+        'lobby-members-label':'members',
+        'lobby-rules-label':'rules',
+        'lobby-start-label':'start',
+        'user-posts-label':'posts',
+    };
+    Object.entries(labelMap).forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = t(key);
+    });
+
+    // Placeholder texts
+    const phMap = {
+        'post-content': currentLang === 'ja' ? '今どんな気分ですか？' : "What's on your mind?",
+        'groups-search-input': currentLang === 'ja' ? 'グループを検索…' : 'Search groups…',
+    };
+    Object.entries(phMap).forEach(([id, ph]) => {
+        const el = document.getElementById(id);
+        if (el) el.placeholder = ph;
+    });
+
+    // Lang buttons highlight
+    document.getElementById('lang-en-btn').className = `flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${currentLang==='en'?'bg-white text-black':'bg-[#2c2c2e] text-gray-400'}`;
+    document.getElementById('lang-ja-btn').className = `flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${currentLang==='ja'?'bg-white text-black':'bg-[#2c2c2e] text-gray-400'}`;
+
+    // greeting on home page
+    renderGreeting();
+}
+
+function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+    applyLang();
+}
+
+// ── Navigation ────────────────────────────────────────────────
+const NAV_PAGES = ['home', 'explore', 'groups', 'profile'];
+let pageHistory = ['home'];
+
+function navigateTo(pageId) {
+    const current = pageHistory[pageHistory.length - 1];
+    if (current !== pageId) pageHistory.push(pageId);
+    showPage(pageId);
+}
+
+function goBack() {
+    if (pageHistory.length > 1) {
+        pageHistory.pop();
+        showPage(pageHistory[pageHistory.length - 1]);
+    } else {
+        showPage('home');
+    }
+}
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const page = document.getElementById('page-' + pageId);
+    if (page) {
+        page.classList.add('active');
+        page.scrollTop = 0;
+    }
+
+    // bottom nav highlight
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.page === pageId || (NAV_PAGES.includes(pageId) && btn.dataset.page === pageId));
+    });
+
+    // show/hide bottom nav
+    const hideNav = ['timer', 'group-active', 'dm-chat', 'onboarding', 'splash'].includes(pageId);
+    document.getElementById('bottom-nav').style.display = hideNav ? 'none' : '';
+
+    // page-specific setup
+    if (pageId === 'profile') renderProfilePage();
+    if (pageId === 'edit-profile') fillEditProfile();
+    if (pageId === 'explore') renderExploreFeed();
+    if (pageId === 'groups') renderGroupsList();
+    if (pageId === 'notifications') renderNotifications();
+}
+
+// ── User data ─────────────────────────────────────────────────
+function getUser() {
+    const defaults = {
+        name: 'Your Name',
+        handle: 'you',
+        bio: 'Building things offline.',
+        skills: 'Design, Music',
+        sessions: 0,
+        streak: 0,
+        hoursOffline: 0,
+        gigsDone: 0,
+        xp: 0,
+    };
+    try {
+        return Object.assign({}, defaults, JSON.parse(localStorage.getItem('user') || '{}'));
+    } catch { return defaults; }
+}
+
+function saveUser(data) {
+    localStorage.setItem('user', JSON.stringify(data));
+}
+
+function getInitials(name) {
+    return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+// ── Greeting ──────────────────────────────────────────────────
+function renderGreeting() {
+    const h = new Date().getHours();
+    const key = h < 12 ? 'good-morning' : h < 18 ? 'good-afternoon' : 'good-evening';
+    const el = document.getElementById('greeting-text');
+    const nameEl = document.getElementById('greeting-name');
+    if (el) el.textContent = t(key) + ',';
+    if (nameEl) nameEl.textContent = getUser().name.split(' ')[0];
+}
+
+// ── Profile page ──────────────────────────────────────────────
+function renderProfilePage() {
+    const user = getUser();
+    const ini = getInitials(user.name);
+
+    const avatarLarge = document.getElementById('profile-avatar-large');
+    if (avatarLarge) avatarLarge.textContent = ini;
+
+    const nameEl = document.getElementById('profile-name');
+    if (nameEl) nameEl.textContent = user.name;
+
+    const handleEl = document.getElementById('profile-handle');
+    if (handleEl) handleEl.textContent = '@' + user.handle;
+
+    const bioEl = document.getElementById('profile-bio');
+    if (bioEl) bioEl.textContent = user.bio;
+
+    document.getElementById('profile-stat-sessions').textContent = user.sessions || 0;
+    document.getElementById('profile-stat-streak').textContent   = user.streak    || 0;
+    document.getElementById('profile-stat-hours').textContent    = user.hoursOffline || 0;
+    document.getElementById('profile-stat-gigs').textContent     = user.gigsDone  || 0;
+
+    // Posts grid (placeholder tiles)
+    const grid = document.getElementById('profile-posts-grid');
+    if (grid) {
+        grid.innerHTML = '';
+        const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+        posts.slice(0, 9).forEach(p => {
+            const tile = document.createElement('div');
+            tile.className = 'aspect-square bg-[#1C1C1E] rounded-lg flex items-center justify-center text-xs text-gray-500 p-2 text-center overflow-hidden cursor-pointer';
+            tile.textContent = p.content ? p.content.slice(0, 40) : '…';
+            grid.appendChild(tile);
+        });
+        if (posts.length === 0) {
+            for (let i = 0; i < 6; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'aspect-square bg-[#1C1C1E] rounded-lg';
+                grid.appendChild(tile);
+            }
+        }
+    }
+}
+
+// ── Edit Profile ──────────────────────────────────────────────
+function fillEditProfile() {
+    const user = getUser();
+    document.getElementById('edit-avatar').textContent = getInitials(user.name);
+    document.getElementById('edit-name-input').value   = user.name;
+    document.getElementById('edit-handle-input').value = user.handle;
+    document.getElementById('edit-bio-input').value    = user.bio;
+    document.getElementById('edit-skills-input').value = user.skills || '';
+}
+
+function saveProfile() {
+    const user = getUser();
+    user.name   = document.getElementById('edit-name-input').value.trim() || user.name;
+    user.handle = document.getElementById('edit-handle-input').value.trim().replace(/^@/, '') || user.handle;
+    user.bio    = document.getElementById('edit-bio-input').value.trim();
+    user.skills = document.getElementById('edit-skills-input').value.trim();
+    saveUser(user);
+
+    // update home avatar
+    renderGreeting();
+    const ha = document.getElementById('home-user-avatar');
+    if (ha) ha.textContent = getInitials(user.name);
+
+    navigateTo('profile');
+}
+
+// ── Settings lang buttons ─────────────────────────────────────
+function initSettings() {
+    document.getElementById('lang-en-btn').addEventListener('click', () => setLang('en'));
+    document.getElementById('lang-ja-btn').addEventListener('click', () => setLang('ja'));
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        if (confirm('Log out?')) {
+            localStorage.clear();
+            location.reload();
+        }
+    });
+    document.getElementById('save-profile-btn').addEventListener('click', saveProfile);
+}
+
+// ── Bottom nav ────────────────────────────────────────────────
+function initNav() {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => navigateTo(btn.dataset.page));
+    });
+}
+
+// ── Placeholder renders (stubs for Parts 7-8) ─────────────────
+function renderExploreFeed() {}
+function renderGroupsList()  {}
+function renderNotifications() {}
+
+// ── Boot ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('(DIS)CONNECT loading...');
+    initNav();
+    initSettings();
+    applyLang();
+    showPage('home');
 });
 </script>
 </body>
