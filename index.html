@@ -1345,6 +1345,236 @@ function resetSlider(trackId, thumbId, revealId) {
 }
 
 // ================================================================
+// FRIENDS PAGE
+// ================================================================
+function renderFriends() {
+  const page = document.getElementById('page-friends');
+  page.innerHTML = `
+    <div class="flex-shrink-0 px-4 pt-6 pb-3">
+      <h1 class="text-3xl font-black text-white">Friends</h1>
+      <p class="text-gray-700 text-xs font-bold uppercase tracking-wider mt-0.5">Tuning Out Now</p>
+    </div>
+    <div class="flex-shrink-0 px-4 pb-3 relative">
+      <input id="friend-search" class="input-field rounded-full pl-10" placeholder="フレンドを検索">
+      <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </div>
+    <div id="friends-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 space-y-2"></div>
+  `;
+  document.getElementById('friend-search').addEventListener('input', e => renderFriendsList(e.target.value));
+  renderFriendsList('');
+
+  // Start live timer for active friends
+  if (S.friendsTimerId) clearInterval(S.friendsTimerId);
+  S.friendsTimerId = setInterval(() => updateFriendTimers(), 1000);
+}
+
+function renderFriendsList(filter = '') {
+  const list = document.getElementById('friends-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const friends = MOCK_FRIENDS.filter(f =>
+    f.isFriend &&
+    (!filter || f.name.toLowerCase().includes(filter.toLowerCase()) || f.handle.toLowerCase().includes(filter.toLowerCase()))
+  );
+
+  const active  = friends.filter(f => f.sessionStart);
+  const offline = friends.filter(f => !f.sessionStart);
+
+  // Active friends
+  if (active.length) {
+    active.forEach(f => list.appendChild(buildFriendCard(f, true)));
+  }
+
+  // Separator
+  if (active.length && offline.length) {
+    const sep = document.createElement('div');
+    sep.className = 'text-center text-gray-800 text-xs font-bold uppercase tracking-widest py-2';
+    sep.textContent = 'オフライン';
+    list.appendChild(sep);
+  }
+
+  // Offline friends
+  offline.forEach(f => list.appendChild(buildFriendCard(f, false)));
+
+  if (friends.length === 0) {
+    list.innerHTML = '<p class="text-gray-700 text-sm text-center mt-8">フレンドが見つかりません</p>';
+  }
+}
+
+function buildFriendCard(f, isActive) {
+  const el = document.createElement('div');
+  el.className = 'card p-4 flex items-center justify-between cursor-pointer hover:bg-[#2C2C2E] transition';
+  el.dataset.uid = f.id;
+
+  const elapsed = isActive ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
+  const blockText = (isActive && f.isPublic && f.blockPublic)
+    ? '<p class="text-xs text-gray-500 mt-0.5">YouTube, Instagram をブロック中</p>'
+    : '';
+
+  el.innerHTML = `
+    <div class="flex items-center space-x-3">
+      <div class="relative">
+        <img src="${f.avatar}" class="w-12 h-12 rounded-full ${isActive?'':'opacity-50'}" alt="">
+        ${isActive ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
+      </div>
+      <div>
+        <p class="font-bold text-white">${f.name}</p>
+        <p class="text-xs text-gray-600">${f.handle}</p>
+        ${blockText}
+      </div>
+    </div>
+    <div class="text-right flex-shrink-0 ml-2">
+      ${isActive
+        ? `<p class="font-bold text-white text-sm friend-elapsed" data-start="${f.sessionStart}">${fmtCountdown(elapsed)}</p>
+           <p class="text-xs text-gray-700">経過</p>`
+        : `<svg class="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+           </svg>`
+      }
+    </div>
+  `;
+  el.addEventListener('click', () => openUserProfile(f.id));
+  return el;
+}
+
+function updateFriendTimers() {
+  document.querySelectorAll('.friend-elapsed').forEach(el => {
+    const start   = parseInt(el.dataset.start);
+    const elapsed = Math.floor((Date.now() - start) / 1000);
+    el.textContent = fmtCountdown(elapsed);
+  });
+}
+
+// ================================================================
+// MESSAGES PAGE
+// ================================================================
+function renderMessages(filter = '') {
+  const page = document.getElementById('page-messages');
+  page.innerHTML = `
+    <div class="flex-shrink-0 px-4 pt-6 pb-3">
+      <h1 class="text-3xl font-black text-white">Messages</h1>
+    </div>
+    <div class="flex-shrink-0 px-4 pb-3 relative">
+      <input id="msg-search" class="input-field rounded-full pl-10" placeholder="フレンドを検索">
+      <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </div>
+    <div id="msg-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 space-y-2"></div>
+  `;
+  document.getElementById('msg-search').addEventListener('input', e => renderMsgList(e.target.value));
+  renderMsgList(filter);
+}
+
+function renderMsgList(filter = '') {
+  const list = document.getElementById('msg-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const friends = MOCK_FRIENDS.filter(f =>
+    f.isFriend &&
+    (!filter || f.name.toLowerCase().includes(filter.toLowerCase()))
+  );
+
+  if (friends.length === 0) {
+    list.innerHTML = '<p class="text-gray-700 text-sm text-center mt-8">フレンドが見つかりません</p>';
+    return;
+  }
+
+  friends.forEach(f => {
+    const msgs = getDM(f.id);
+    const last = msgs[msgs.length - 1];
+    const el   = document.createElement('div');
+    el.className = 'card flex items-center space-x-3 p-4 cursor-pointer hover:bg-[#2C2C2E] transition';
+    el.innerHTML = `
+      <div class="relative flex-shrink-0">
+        <img src="${f.avatar}" class="w-12 h-12 rounded-full" alt="">
+        ${f.sessionStart ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
+      </div>
+      <div class="flex-grow min-w-0">
+        <p class="font-bold text-white text-sm">${f.name}</p>
+        <p class="text-gray-600 text-sm truncate">${last ? last.text : '会話を開始しよう'}</p>
+      </div>
+      <p class="text-gray-800 text-xs flex-shrink-0">${last ? last.time : ''}</p>
+    `;
+    el.addEventListener('click', () => openDM(f));
+    list.appendChild(el);
+  });
+}
+
+// ================================================================
+// DM PAGE
+// ================================================================
+function openDM(friend) {
+  S.viewingUserId = friend.id;
+  const page = document.getElementById('page-dm');
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 py-3 border-b border-gray-900 space-x-3">
+      <button id="dm-back-btn" class="p-2 -ml-2 text-gray-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <img src="${friend.avatar}" class="w-9 h-9 rounded-full" alt="">
+      <div>
+        <p class="font-bold text-white text-sm">${friend.name}</p>
+        <p class="text-xs text-gray-700">既読なし</p>
+      </div>
+    </div>
+    <div id="dm-msg-list" class="flex-grow overflow-y-auto no-scrollbar px-4 py-4 space-y-3"></div>
+    <div class="flex-shrink-0 flex items-center space-x-2 px-4 py-3 border-t border-gray-900">
+      <input id="dm-input" class="input-field rounded-full py-3 flex-grow" placeholder="メッセージ..." type="text">
+      <button id="dm-send-btn" class="w-11 h-11 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-black" style="transform:rotate(45deg)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+      </button>
+    </div>
+  `;
+
+  document.getElementById('dm-back-btn').addEventListener('click', () => goto('messages'));
+  document.getElementById('dm-send-btn').addEventListener('click', sendDMMsg);
+  document.getElementById('dm-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendDMMsg(); });
+
+  renderDMMessages(friend.id);
+  goto('dm');
+}
+
+function renderDMMessages(userId) {
+  const msgs = getDM(userId);
+  const list = document.getElementById('dm-msg-list');
+  if (!list) return;
+  list.innerHTML = '';
+  msgs.forEach(msg => {
+    const isMe = msg.from === 'me';
+    const el   = document.createElement('div');
+    el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+    el.innerHTML = `
+      <div class="max-w-xs px-4 py-2.5 rounded-2xl text-sm
+        ${isMe ? 'bg-white text-black rounded-br-sm' : 'bg-[#2C2C2E] text-white rounded-bl-sm'}">
+        ${msg.text}
+      </div>
+    `;
+    list.appendChild(el);
+  });
+  list.scrollTop = list.scrollHeight;
+}
+
+function sendDMMsg() {
+  const input = document.getElementById('dm-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  const msgs = getDM(S.viewingUserId);
+  msgs.push({ from: 'me', text, time: '今' });
+  saveDM(S.viewingUserId, msgs);
+  input.value = '';
+  renderDMMessages(S.viewingUserId);
+}
+
+// ================================================================
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
