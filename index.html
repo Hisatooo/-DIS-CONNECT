@@ -609,6 +609,11 @@ const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile'
                 'notifications','challenge','session','interrupt','post-session'];
 
 function goto(page) {
+  // Stop friend timers when leaving friends page
+  if (S.page === 'friends' && page !== 'friends' && S.friendsTimerId) {
+    clearInterval(S.friendsTimerId);
+    S.friendsTimerId = null;
+  }
   // Close comment panel if open
   document.getElementById('comment-panel').classList.remove('open');
 
@@ -1141,15 +1146,16 @@ function renderSessionPage() {
 
 function startSession(durationSec, isChallenge = false) {
   if (S.activeSession) return;
-  S.activeSession = { startTime: Date.now(), totalDuration: durationSec, isChallenge, timerId: null };
+  const sess = { startTime: Date.now(), totalDuration: durationSec, isChallenge };
+  S.activeSession = { ...sess, timerId: null };
+  localStorage.setItem('to_active_session', JSON.stringify(sess));
   renderSessionPage();
   goto('session');
   tickSession();
   S.activeSession.timerId = setInterval(tickSession, 1000);
   // update tuneout nav icon
   const tb = document.getElementById('tuneout-nav-btn');
-  tb.classList.add('active-nav','text-white');
-  tb.classList.remove('text-gray-500');
+  if (tb) { tb.classList.add('active-nav','text-white'); tb.classList.remove('text-gray-500'); }
 }
 
 function tickSession() {
@@ -1171,7 +1177,8 @@ function endSession(completed) {
   const sess = S.activeSession;
   if (!sess) return;
   clearInterval(sess.timerId);
-  const elapsed = (Date.now() - sess.startTime) / 1000;
+  localStorage.removeItem('to_active_session');
+  const elapsed  = (Date.now() - sess.startTime) / 1000;
   const duration = completed ? sess.totalDuration : elapsed;
   if (elapsed > 10) {
     const h = getHistory();
@@ -1180,9 +1187,7 @@ function endSession(completed) {
   }
   S.activeSession = null;
   const tb = document.getElementById('tuneout-nav-btn');
-  tb.classList.remove('active-nav');
-  tb.classList.add('text-gray-500');
-  tb.classList.remove('text-white');
+  if (tb) { tb.classList.remove('active-nav','text-white'); tb.classList.add('text-gray-500'); }
   renderPostSession(duration, completed);
 }
 
@@ -2053,15 +2058,69 @@ function getPickerValue(pickerId) {
 }
 
 // ================================================================
+// STOP FRIEND TIMERS ON PAGE LEAVE (hooked into goto)
+// ================================================================
+// Note: friend timer cleanup is handled inside renderFriends()
+// by clearing S.friendsTimerId before setting a new interval.
+
+// ================================================================
+// GLOBAL CLICK: close manual sheet on backdrop tap
+// ================================================================
+document.getElementById('manual-sheet').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.remove('open');
+    resetSlider('manual-slider','manual-thumb','manual-reveal');
+  }
+});
+document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.remove('open');
+    S.pendingConfirm = null;
+  }
+});
+
+// ================================================================
+// BACK BUTTON: navigate properly from sub-pages
+// ================================================================
+// (handled per-page in renderXxx functions)
+
+// ================================================================
+// SESSION RESTORE: reconnect if page reloaded during a session
+// ================================================================
+function maybeRestoreSession() {
+  const stored = JSON.parse(localStorage.getItem('to_active_session') || 'null');
+  if (!stored) return false;
+  const elapsed   = (Date.now() - stored.startTime) / 1000;
+  const remaining = stored.totalDuration - elapsed;
+  if (remaining > 5) {
+    S.activeSession = { ...stored, timerId: null };
+    renderSessionPage();
+    goto('session');
+    S.activeSession.timerId = setInterval(tickSession, 1000);
+    tickSession();
+    return true;
+  }
+  localStorage.removeItem('to_active_session');
+  return false;
+}
+
+// ================================================================
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
   renderLogin();
   renderRegister();
   renderInterruptPage();
+
   const u = getUser();
-  if (u) { goto('home'); setTimeout(triggerChallengeBanner, 2000); }
-  else    { goto('login'); }
+  if (u) {
+    if (!maybeRestoreSession()) {
+      goto('home');
+      setTimeout(triggerChallengeBanner, 2500);
+    }
+  } else {
+    goto('login');
+  }
 });
 </script>
 </body>
