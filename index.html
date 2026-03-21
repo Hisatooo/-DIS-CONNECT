@@ -363,6 +363,7 @@
 
   <!-- ===================== FRIENDS ===================== -->
   <div id="page-friends" class="page flex flex-col"></div>
+  <div id="page-group-detail" class="page flex flex-col"></div>
 
   <!-- ===================== MESSAGES ===================== -->
   <div id="page-messages" class="page flex flex-col"></div>
@@ -531,6 +532,33 @@
 // ================================================================
 // MOCK DATA
 // ================================================================
+const MOCK_GROUPS = [
+  {
+    id: 'g1', name: '朝活デトックス部', emoji: '🌅',
+    color: '#f97316',
+    members: ['alice', 'ben', 'chloe'],
+    description: '毎朝7時〜一緒にスマホ断ち！',
+    activeSince: Date.now() - 1200000,
+    isActive: true,
+  },
+  {
+    id: 'g2', name: '週末チャレンジ', emoji: '🏔️',
+    color: '#8b5cf6',
+    members: ['david', 'alice'],
+    description: '週末は2時間のデジタルデトックスにチャレンジ',
+    activeSince: null,
+    isActive: false,
+  },
+  {
+    id: 'g3', name: 'スタディグループ', emoji: '📚',
+    color: '#14b8a6',
+    members: ['chloe', 'david', 'ben', 'alice'],
+    description: '試験前の集中タイムをみんなで',
+    activeSince: null,
+    isActive: false,
+  },
+];
+
 const MOCK_FRIENDS = [
   { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
   { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
@@ -634,7 +662,8 @@ function goto(page) {
   // Active nav button highlight
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     const match = btn.dataset.page === page ||
-                  (btn.dataset.page === 'home' && page === 'home');
+                  (btn.dataset.page === 'home' && page === 'home') ||
+                  (btn.dataset.page === 'friends' && page === 'group-detail');
     btn.classList.toggle('active-nav', match);
     btn.classList.toggle('text-white',  match);
     btn.classList.toggle('text-gray-500', !match);
@@ -1357,22 +1386,179 @@ function renderFriends() {
   page.innerHTML = `
     <div class="flex-shrink-0 px-4 pt-6 pb-3">
       <h1 class="text-3xl font-black text-white">Friends</h1>
-      <p class="text-gray-700 text-xs font-bold uppercase tracking-wider mt-0.5">Tuning Out Now</p>
     </div>
-    <div class="flex-shrink-0 px-4 pb-3 relative">
-      <input id="friend-search" class="input-field rounded-full pl-10" placeholder="フレンドを検索">
-      <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-      </svg>
+    <div class="flex-shrink-0 px-4 pb-3 flex gap-2">
+      <button id="tab-friends-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black">フレンド</button>
+      <button id="tab-groups-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400">グループ</button>
     </div>
-    <div id="friends-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 space-y-2"></div>
+    <div id="friends-tab-content" class="flex-grow overflow-y-auto no-scrollbar pb-28">
+      <div id="friends-panel">
+        <div class="px-4 pb-3 relative">
+          <input id="friend-search" class="input-field rounded-full pl-10" placeholder="フレンドを検索">
+          <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <div id="friends-list" class="px-4 space-y-2"></div>
+      </div>
+      <div id="groups-panel" class="hidden px-4 space-y-3"></div>
+    </div>
   `;
+
   document.getElementById('friend-search').addEventListener('input', e => renderFriendsList(e.target.value));
   renderFriendsList('');
+  renderGroupsList();
+
+  document.getElementById('tab-friends-btn').addEventListener('click', () => {
+    document.getElementById('tab-friends-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-groups-btn').className  = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    document.getElementById('friends-panel').classList.remove('hidden');
+    document.getElementById('groups-panel').classList.add('hidden');
+  });
+  document.getElementById('tab-groups-btn').addEventListener('click', () => {
+    document.getElementById('tab-groups-btn').className  = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-friends-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    document.getElementById('groups-panel').classList.remove('hidden');
+    document.getElementById('friends-panel').classList.add('hidden');
+  });
 
   // Start live timer for active friends
   if (S.friendsTimerId) clearInterval(S.friendsTimerId);
   S.friendsTimerId = setInterval(() => updateFriendTimers(), 1000);
+}
+
+function renderGroupsList() {
+  const list = document.getElementById('groups-panel');
+  if (!list) return;
+  list.innerHTML = '';
+
+  MOCK_GROUPS.forEach(g => {
+    const activeMembers = g.members.filter(id => {
+      const f = friendById(id);
+      return f && f.sessionStart;
+    });
+    const elapsed = g.isActive ? Math.floor((Date.now() - g.activeSince) / 1000) : 0;
+
+    const card = document.createElement('div');
+    card.className = 'card p-4 cursor-pointer hover:bg-[#2C2C2E] transition';
+    card.innerHTML = `
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:${g.color}22; border:1.5px solid ${g.color}55">${g.emoji}</div>
+          <div>
+            <p class="font-bold text-white text-base">${g.name}</p>
+            <p class="text-xs text-gray-600">${g.members.length}人のメンバー</p>
+          </div>
+        </div>
+        ${g.isActive
+          ? `<div class="flex flex-col items-end"><span class="text-xs font-bold px-2 py-0.5 rounded-full mb-1" style="background:${g.color}33;color:${g.color}">実施中</span><span class="text-xs text-gray-500">${fmtCountdown(elapsed)}</span></div>`
+          : `<button class="text-xs font-bold px-3 py-1.5 rounded-full border" style="border-color:${g.color};color:${g.color}">開始</button>`
+        }
+      </div>
+      <p class="text-xs text-gray-600 mb-3">${g.description}</p>
+      <div class="flex items-center gap-1.5">
+        ${g.members.slice(0, 4).map(id => {
+          const f = friendById(id);
+          if (!f) return '';
+          const isOn = !!f.sessionStart;
+          return `<div class="relative"><img src="${f.avatar}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
+        }).join('')}
+        ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length}人がデトックス中</span>` : `<span class="text-xs text-gray-700 ml-1">待機中</span>`}
+      </div>
+    `;
+    card.addEventListener('click', () => renderGroupDetail(g.id));
+    list.appendChild(card);
+  });
+
+  // Add "新しいグループ" button
+  const addBtn = document.createElement('button');
+  addBtn.className = 'w-full card p-4 flex items-center justify-center gap-2 text-gray-600 font-semibold text-sm border-dashed border-gray-800 hover:bg-[#2C2C2E] transition';
+  addBtn.innerHTML = `
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    新しいグループを作成
+  `;
+  list.appendChild(addBtn);
+}
+
+function renderGroupDetail(groupId) {
+  const g = MOCK_GROUPS.find(x => x.id === groupId);
+  if (!g) return;
+  const page = document.getElementById('page-group-detail');
+  const elapsed = g.isActive ? Math.floor((Date.now() - g.activeSince) / 1000) : 0;
+  const activeMembers = g.members.filter(id => friendById(id)?.sessionStart);
+
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3 gap-3">
+      <button id="gd-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:${g.color}22;border:1.5px solid ${g.color}55">${g.emoji}</div>
+      <div>
+        <h1 class="text-xl font-black text-white">${g.name}</h1>
+        <p class="text-xs text-gray-600">${g.members.length}人のメンバー</p>
+      </div>
+    </div>
+
+    ${g.isActive ? `
+    <div class="mx-4 mb-4 rounded-2xl p-4 text-center" style="background:${g.color}18;border:1px solid ${g.color}33">
+      <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:${g.color}">グループデトックス実施中</p>
+      <p class="text-4xl font-black text-white tabular-nums">${fmtCountdown(elapsed)}</p>
+      <p class="text-xs text-gray-500 mt-1">${activeMembers.length}/${g.members.length}人が参加中</p>
+    </div>
+    ` : ''}
+
+    <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 space-y-3">
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
+        <div class="space-y-3">
+          ${g.members.map(id => {
+            const f = friendById(id);
+            if (!f) return '';
+            const isOn = !!f.sessionStart;
+            const elapsed2 = isOn ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
+            return `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="${f.avatar}" class="w-10 h-10 rounded-full ${isOn?'':'opacity-50'}" alt="${f.name}">
+                    ${isOn ? '<div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-white text-sm">${f.name}</p>
+                    <p class="text-xs text-gray-600">${f.handle}</p>
+                  </div>
+                </div>
+                ${isOn
+                  ? `<span class="text-xs font-bold text-green-400">${fmtCountdown(elapsed2)}</span>`
+                  : `<span class="text-xs text-gray-700">オフライン</span>`
+                }
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
+        <p class="text-sm text-gray-400">${g.description}</p>
+      </div>
+
+      ${g.isActive
+        ? `<button class="w-full py-4 rounded-2xl font-bold text-base text-white" style="background:${g.color}">このグループのデトックスに参加</button>`
+        : `<button class="w-full py-4 rounded-2xl font-bold text-base text-white" style="background:${g.color}">グループデトックスを開始</button>`
+      }
+    </div>
+  `;
+
+  document.getElementById('gd-back').addEventListener('click', () => {
+    goto('friends');
+    // Switch to groups tab
+    setTimeout(() => {
+      document.getElementById('tab-groups-btn')?.click();
+    }, 50);
+  });
+
+  goto('group-detail');
 }
 
 function renderFriendsList(filter = '') {
