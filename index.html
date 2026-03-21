@@ -392,6 +392,12 @@
   <!-- ===================== CREATE GROUP ===================== -->
   <div id="page-create-group" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
 
+  <!-- ===================== TERMS ===================== -->
+  <div id="page-terms" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
+
+  <!-- ===================== PRIVACY ===================== -->
+  <div id="page-privacy" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
+
   <!-- ===================== INVITE SHEET ===================== -->
   <div id="invite-sheet" style="position:fixed;inset:0;z-index:200;pointer-events:none;opacity:0;transition:opacity 0.25s;">
     <div id="invite-overlay" class="absolute inset-0 bg-black/60"></div>
@@ -704,7 +710,7 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // ================================================================
 const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
                 'notifications','challenge','session','interrupt','post-session',
-                'premium','create-group'];
+                'premium','create-group','terms','privacy'];
 
 function goto(page) {
   // Stop friend timers when leaving friends page
@@ -839,8 +845,8 @@ function renderRegister() {
       <label class="flex items-start space-x-3 pt-1 cursor-pointer">
         <input id="reg-agree" type="checkbox" class="mt-1 flex-shrink-0 accent-white w-4 h-4">
         <span class="text-sm text-gray-400">
-          <span class="text-white underline">利用規約</span>および
-          <span class="text-white underline">プライバシーポリシー</span>に同意します
+          <span id="open-terms" class="text-white underline">利用規約</span>および
+          <span id="open-privacy" class="text-white underline">プライバシーポリシー</span>に同意します
         </span>
       </label>
       <button id="reg-submit" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
@@ -849,6 +855,18 @@ function renderRegister() {
     </div>
   `;
   document.getElementById('reg-back').addEventListener('click', () => goto('login'));
+  document.getElementById('open-terms').addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    S._prevPage = 'register';
+    renderTerms();
+    goto('terms');
+  });
+  document.getElementById('open-privacy').addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    S._prevPage = 'register';
+    renderPrivacy();
+    goto('privacy');
+  });
   document.getElementById('reg-submit').addEventListener('click', () => {
     const name   = document.getElementById('reg-name').value.trim();
     const handle = document.getElementById('reg-handle').value.trim();
@@ -2202,6 +2220,19 @@ function renderSettings() {
         </div>
       </div>
 
+      <!-- Legal -->
+      <div class="card p-4 space-y-0">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">法律・サポート</p>
+        <button id="st-terms-btn" class="w-full flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">利用規約</span>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button id="st-privacy-btn" class="w-full flex justify-between items-center py-2.5">
+          <span class="text-white text-sm">プライバシーポリシー</span>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
       <button id="logout-btn" class="w-full bg-red-900/25 text-red-400 font-bold py-4 rounded-2xl hover:bg-red-900/40 transition mt-2">
         ログアウト
       </button>
@@ -2211,6 +2242,16 @@ function renderSettings() {
   goto('settings');
 
   document.getElementById('st-back').addEventListener('click', () => goto('profile'));
+  document.getElementById('st-terms-btn').addEventListener('click', () => {
+    S._prevPage = 'settings';
+    renderTerms();
+    goto('terms');
+  });
+  document.getElementById('st-privacy-btn').addEventListener('click', () => {
+    S._prevPage = 'settings';
+    renderPrivacy();
+    goto('privacy');
+  });
   document.getElementById('privacy-toggle').addEventListener('click', () => {
     const u = getUser() || {};
     u.isPublic = !u.isPublic;
@@ -2626,6 +2667,181 @@ function renderCreateGroup() {
       preview.style.borderColor = `${selectedColor}55`;
     });
   });
+}
+
+// ================================================================
+// TERMS OF SERVICE
+// ================================================================
+function renderTerms() {
+  const page = document.getElementById('page-terms');
+  page.innerHTML = `
+    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
+      <button id="terms-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-black text-white">利用規約</h1>
+    </div>
+    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
+      <p class="text-xs text-gray-500">制定日: 2026年1月4日</p>
+      <p class="text-sm text-gray-400 leading-relaxed">(DIS)CONNECT（以下「本アプリ」）へようこそ。本アプリのダウンロード、インストール、または利用を開始することにより、運営者との間の本利用規約に同意したものとみなされます。</p>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">第1条（サービスの内容）</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">本アプリは、ユーザーが特定のアプリケーションへのアクセスを一時的に制限し、その進捗を友人やコミュニティと共有することで、デジタルデトックスを支援するツールです。本アプリは個人によって開発・運営されています。</p>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">第2条（利用資格）</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">1. 本アプリは、13歳以上の方のみが利用できます。18歳未満のユーザーは、保護者の許可を得た上で本アプリを利用しているものとみなします。</p>
+        <p class="text-sm text-gray-400 leading-relaxed">2. 特定の機能（「キャンパス」フィードなど）を利用するために、運営者が指定する方法（大学メールアドレス等）での認証を求める場合があります。</p>
+      </div>
+
+      <div class="space-y-2">
+        <div class="card p-4 border border-yellow-500/30 bg-yellow-500/5">
+          <h2 class="text-base font-bold text-yellow-400 mb-2">第3条（デトックス機能と免責事項）⚠️ 重要</h2>
+          <p class="text-xs text-gray-400 leading-relaxed mb-3">本アプリの主要機能は、端末上の他のアプリや通知へのアクセスを遮断または制限すること（デトックスセッション）です。この機能を利用することにより、ユーザーは以下の事項を承諾したものとします。</p>
+          <div class="space-y-2">
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">1. 通信の不達:</span> セッション中は、重要な電話、メッセージ、通知、または緊急速報（Jアラート等）を見逃す可能性があります。</p>
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">2. 免責:</span> 運営者は、セッション中にユーザーが端末や他のアプリにアクセスできなかったことに起因するいかなる損害についても一切の責任を負いません。</p>
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">3. 自己責任:</span> 緊急時の連絡手段の確保は、ユーザー自身の責任において行ってください。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">第4条（アカウント管理）</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">ユーザーは、自己の責任においてアカウント情報を管理するものとします。また、登録情報に虚偽があった場合、運営者はアカウントを停止または削除する権利を有します。</p>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">第5条（ユーザーコンテンツ）</h2>
+        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">ライセンス:</span> ユーザーが投稿したコンテンツの著作権はユーザーに帰属しますが、ユーザーは運営者に対し、本アプリ内で当該コンテンツを表示・配信するための非独占的な権利を許諾するものとします。</p>
+        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">禁止事項:</span> 違法、公序良俗に反する内容、他者への誹謗中傷、ハラスメント行為を含むコンテンツの投稿は禁止します。</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">第6条（サービスの変更・停止）</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">運営者は、個人の判断により、事前の通知なく本アプリの機能変更、一時停止、または提供終了を行うことができるものとします。これに起因してユーザーに生じた損害について、運営者は責任を負いません。</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">第7条（損害賠償の制限）</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">運営者は、本アプリの利用に関連してユーザーに生じた損害について、運営者に故意または重大な過失がある場合を除き、一切の責任を負いません。また、賠償責任を負う場合であっても、その範囲は通常生ずべき直接の損害に限られるものとします。</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">第8条（準拠法・管轄）</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">本規約は日本法に準拠し、解釈されるものとします。本アプリに関わる一切の紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">第9条（お問い合わせ）</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">本規約に関するお問い合わせは、以下のメールアドレスまでご連絡ください。</p>
+        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-xs text-gray-600 text-center">Terms of Service / Effective Date: January 4, 2026</p>
+        <p class="text-xs text-gray-700 leading-relaxed mt-2">(DIS)CONNECT is a social digital detox application. By using the App, you acknowledge that you may miss calls, messages, and emergency alerts during a Detox Session. The Operator is NOT liable for any resulting damages. These Terms are governed by the laws of Japan.</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('terms-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); goto(p); });
+}
+
+// ================================================================
+// PRIVACY POLICY
+// ================================================================
+function renderPrivacy() {
+  const page = document.getElementById('page-privacy');
+  page.innerHTML = `
+    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
+      <button id="privacy-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-black text-white">プライバシーポリシー</h1>
+    </div>
+    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
+      <p class="text-xs text-gray-500">制定日: 2026年1月4日</p>
+      <p class="text-sm text-gray-400 leading-relaxed">(DIS)CONNECTの運営者は、ユーザーのプライバシーを尊重します。本ポリシーは、個人運営のアプリにおける個人情報の取り扱いについて説明するものです。</p>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">1. 収集する情報</h2>
+        <div class="card p-4 space-y-3">
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">提供される情報</p>
+            <p class="text-xs text-gray-400 leading-relaxed">アカウント情報（名前、メールアドレス、プロフィール画像等）、キャンパス機能用の認証情報、ユーザーコンテンツ（投稿、メッセージ）</p>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">自動収集される情報</p>
+            <p class="text-xs text-gray-400 leading-relaxed">利用データ（デトックス時間、ステータス）、端末情報（機種、OS）、プッシュ通知用トークン</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <p class="text-sm font-semibold text-white mb-1">アプリ利用状況の検知について</p>
+            <p class="text-xs text-gray-400 leading-relaxed">本アプリは機能上、セッション中にユーザーがどのアプリを起動しようとしたかを検知します。ただし、LINEやメッセージアプリ等の<span class="text-white">「内容（トーク内容）」を収集・保存することは一切ありません。</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">2. 利用目的</h2>
+        <div class="space-y-1">
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">本アプリの機能提供、維持、改善のため</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">ユーザー間のソーシャル機能の提供のため</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">学生認証の確認のため</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">重要なお知らせやイベント通知の配信のため</p></div>
+        </div>
+        <div class="card p-3 flex items-center gap-3 mt-2">
+          <span class="text-xl">🚫</span>
+          <p class="text-sm text-gray-300 font-semibold">ユーザーの個人情報を第三者に<span class="text-white">販売することはありません</span></p>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">3. 情報の共有と外部サービス</h2>
+        <div class="card p-4 space-y-3">
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">ユーザー間</p>
+            <p class="text-xs text-gray-400 leading-relaxed">プロフィールや投稿は、アプリの仕様に基づき他のユーザーに公開されます。</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-base">🔥</span>
+              <p class="text-sm font-semibold text-white">Google Firebase</p>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">本アプリは、データの保管、認証、分析のためにGoogle社が提供する「Firebase」を使用しています。ユーザーの情報はFirebaseのサーバー（海外を含む）に保存・処理される場合があります。</p>
+            <p class="text-xs text-gray-600 mt-1">Google Privacy Policy: https://policies.google.com/privacy</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <p class="text-sm font-semibold text-white mb-1">法令</p>
+            <p class="text-xs text-gray-400">法令に基づき開示が必要な場合、情報を開示することがあります。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">4. 個人情報の管理</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">運営者は、個人情報の漏洩や滅失を防ぐために適切なセキュリティ対策を講じるよう努めます。ただし、個人運営であるため、企業と同等の完全なセキュリティ体制を保証するものではないことをご了承ください。</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">5. データの削除</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">ユーザーは、アプリ内の設定からいつでもアカウントおよびデータを削除することができます。</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">6. お問い合わせ</h2>
+        <p class="text-sm text-gray-400">プライバシーポリシーに関するご質問は、以下までご連絡ください。</p>
+        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-xs text-gray-600 text-center">Privacy Policy / Effective Date: January 4, 2026</p>
+        <p class="text-xs text-gray-700 leading-relaxed mt-2">We use Google Firebase to host data, manage authentication, and analyze app usage. We do NOT sell your personal data. You may request deletion of your account and data at any time through the App settings.</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('privacy-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); goto(p); });
 }
 
 // ================================================================
