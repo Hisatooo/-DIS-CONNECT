@@ -579,6 +579,7 @@ const MOCK_GROUPS = [
     description: '毎朝7時〜一緒にスマホ断ち！',
     activeSince: Date.now() - 1200000,
     isActive: true,
+    streak: 5,
   },
   {
     id: 'g2', name: '週末チャレンジ', emoji: '🏔️',
@@ -589,6 +590,7 @@ const MOCK_GROUPS = [
     description: '週末は2時間のデジタルデトックスにチャレンジ',
     activeSince: null,
     isActive: false,
+    streak: 2,
   },
   {
     id: 'g3', name: 'スタディグループ', emoji: '📚',
@@ -599,6 +601,7 @@ const MOCK_GROUPS = [
     description: '試験前の集中タイムをみんなで',
     activeSince: null,
     isActive: false,
+    streak: 0,
   },
   {
     id: 'g4', name: '夜活瞑想部', emoji: '🌙',
@@ -610,6 +613,7 @@ const MOCK_GROUPS = [
     activeSince: null,
     isActive: false,
     pendingInvite: { from: 'alice' },
+    streak: 0,
   },
 ];
 
@@ -651,6 +655,7 @@ const S = {
   pendingConfirm: null,
   friendsTimerId: null,
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
+  groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy }
 };
 
 // ================================================================
@@ -1213,10 +1218,34 @@ const RING_R    = 110;
 const RING_CIRC = 2 * Math.PI * RING_R;
 
 function renderSessionPage() {
+  const gd = S.groupDetox;
+  const g  = gd ? MOCK_GROUPS.find(x => x.id === gd.groupId) : null;
+
   document.getElementById('page-session').innerHTML = `
+    ${g ? `
+    <div class="w-full rounded-2xl px-4 py-3 flex items-center gap-3" style="background:${g.color}18;border:1px solid ${g.color}33">
+      <span class="text-xl">${g.emoji}</span>
+      <div class="flex-grow">
+        <p class="text-xs font-bold" style="color:${g.color}">${g.name} · グループデトックス中</p>
+        <div class="flex gap-1 mt-1" id="gd-sess-avatars">
+          ${gd.allMembers.map(id => {
+            const isMe = id === 'me';
+            const f = isMe ? null : friendById(id);
+            const u2 = getUser();
+            const name = isMe ? (u2?u2.name:'あなた') : (f?f.name:id);
+            const avatar = isMe
+              ? `https://placehold.co/24x24/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
+              : (f?f.avatar.replace('48x48','24x24'):`https://placehold.co/24x24/555/FFF?text=${id[0].toUpperCase()}`);
+            return `<img src="${avatar}" class="w-6 h-6 rounded-full border-2 border-black" title="${name}">`;
+          }).join('')}
+        </div>
+      </div>
+      <span class="text-xs font-black" style="color:${g.color}" id="gd-sess-cnt">${gd.allMembers.length}/${gd.allMembers.length}</span>
+    </div>
+    ` : `
     <div class="text-center w-full">
       <p class="text-gray-700 text-xs font-bold uppercase tracking-widest">Tuning Out...</p>
-    </div>
+    </div>`}
 
     <div class="relative flex items-center justify-center" style="width:240px;height:240px;">
       <svg class="countdown-ring absolute" width="240" height="240" viewBox="0 0 240 240">
@@ -1311,14 +1340,44 @@ function endSession(completed) {
   S.activeSession = null;
   const tb = document.getElementById('tuneout-nav-btn');
   if (tb) { tb.classList.remove('active-nav','text-white'); tb.classList.add('text-gray-500'); }
-  renderPostSession(duration, completed);
+
+  // Group detox result
+  const gd = S.groupDetox;
+  if (gd) {
+    const g = MOCK_GROUPS.find(x => x.id === gd.groupId);
+    if (completed) {
+      // Team success — increment streak
+      if (g) g.streak = (g.streak || 0) + 1;
+      renderPostSession(duration, true, { groupSuccess: true, group: g });
+    } else {
+      // Team failed
+      if (g) g.streak = 0;
+      const u = getUser();
+      gd.failed = true;
+      gd.failedBy = u ? u.name : 'あなた';
+      renderPostSession(duration, false, { groupFailed: true, group: g, failedBy: gd.failedBy });
+    }
+    S.groupDetox = null;
+  } else {
+    renderPostSession(duration, completed);
+  }
 }
 
 // ================================================================
 // INTERRUPT PAGE
 // ================================================================
 function renderInterruptPage() {
+  const gd = S.groupDetox;
+  const g  = gd ? MOCK_GROUPS.find(x => x.id === gd.groupId) : null;
+
   document.getElementById('page-interrupt').innerHTML = `
+    ${g ? `
+    <div class="w-full rounded-2xl px-4 py-3 mb-6 text-center" style="background:${g.color}18;border:1px solid ${g.color}44">
+      <p class="text-base font-black mb-1" style="color:${g.color}">${g.emoji} ${g.name}</p>
+      <p class="text-sm text-white font-semibold">グループセッション参加中！</p>
+      <p class="text-xs text-gray-400 mt-1">中断すると<span class="text-red-400 font-bold">チーム全員が失敗</span>になります</p>
+    </div>
+    ` : ''}
     <div class="w-16 h-16 rounded-full bg-red-900/25 flex items-center justify-center mb-6">
       <svg class="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -1353,9 +1412,32 @@ function renderInterruptPage() {
 // ================================================================
 // POST SESSION
 // ================================================================
-function renderPostSession(duration, completed) {
+function renderPostSession(duration, completed, groupResult = null) {
   const dur = fmtDuration(duration);
+  const isGroupSuccess = groupResult?.groupSuccess;
+  const isGroupFailed  = groupResult?.groupFailed;
+  const grp = groupResult?.group;
+
   document.getElementById('page-post-session').innerHTML = `
+    ${isGroupSuccess && grp ? `
+    <div class="rounded-2xl px-4 py-4 mb-4 text-center" style="background:${grp.color}18;border:1px solid ${grp.color}44">
+      <p class="text-2xl mb-1">${grp.emoji}</p>
+      <p class="text-base font-black text-white mb-1">チーム達成！</p>
+      <p class="text-xs text-gray-400 mb-2">${grp.name}の全員がデトックスを完走しました</p>
+      <div class="flex items-center justify-center gap-2">
+        <span class="text-3xl font-black text-orange-400">🔥 ${grp.streak}日</span>
+        <span class="text-xs text-gray-500">グループストリーク</span>
+      </div>
+    </div>
+    ` : ''}
+    ${isGroupFailed && grp ? `
+    <div class="rounded-2xl px-4 py-4 mb-4 text-center bg-red-900/15 border border-red-900/30">
+      <p class="text-2xl mb-1">${grp.emoji}</p>
+      <p class="text-base font-black text-red-400 mb-1">チーム失敗...</p>
+      <p class="text-xs text-gray-500">${groupResult.failedBy}が中断したため、グループセッションが終了しました</p>
+      <p class="text-xs text-gray-700 mt-1">ストリークがリセットされました</p>
+    </div>
+    ` : ''}
     <div class="text-center mb-8">
       <div class="w-16 h-16 rounded-full ${completed?'bg-white/10':'bg-red-900/20'} flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 ${completed?'text-white':'text-red-400'}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -1637,8 +1719,48 @@ function renderGroupDetail(groupId) {
   const g = MOCK_GROUPS.find(x => x.id === groupId);
   if (!g) return;
   const page = document.getElementById('page-group-detail');
-  const elapsed = g.isActive ? Math.floor((Date.now() - g.activeSince) / 1000) : 0;
-  const activeMembers = g.members.filter(id => friendById(id)?.sessionStart);
+  const gd = S.groupDetox;
+  const isMyGroup = gd && gd.groupId === groupId;
+  const inLobby = isMyGroup && !gd.startTime;
+  const inSession = isMyGroup && !!gd.startTime;
+
+  // Preset durations for group detox
+  const GD_DURATIONS = [
+    { label: '30分', sec: 1800 },
+    { label: '1時間', sec: 3600 },
+    { label: '2時間', sec: 7200 },
+  ];
+  const selectedDur = (isMyGroup ? gd.duration : GD_DURATIONS[1].sec);
+
+  // Member ready status html
+  function memberReadyRows(readyList) {
+    const u = getUser();
+    const myName = u ? u.name : 'あなた';
+    const allIds = ['me', ...g.members];
+    return allIds.map(id => {
+      const isMe = id === 'me';
+      const f = isMe ? null : friendById(id);
+      const name = isMe ? myName : (f ? f.name : id);
+      const avatar = isMe
+        ? `https://placehold.co/40x40/334155/FFF?text=${myName[0].toUpperCase()}`
+        : (f ? f.avatar : `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+      const ready = readyList.includes(id);
+      return `
+        <div class="flex items-center justify-between py-2">
+          <div class="flex items-center gap-3">
+            <img src="${avatar}" class="w-9 h-9 rounded-full ${ready?'':'opacity-40'}" alt="${name}">
+            <div>
+              <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+            </div>
+          </div>
+          ${ready
+            ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>準備完了</span>`
+            : `<span class="text-xs text-gray-600">待機中...</span>`
+          }
+        </div>
+      `;
+    }).join('');
+  }
 
   page.innerHTML = `
     <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3 gap-3">
@@ -1651,7 +1773,10 @@ function renderGroupDetail(groupId) {
           <h1 class="text-xl font-black text-white">${g.name}</h1>
           ${g.inviteOnly ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>招待制</span>` : ''}
         </div>
-        <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5}人 · 最大${g.maxMembers||5}名</p>
+        <div class="flex items-center gap-2">
+          <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5}人</p>
+          ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}日連続</span>` : ''}
+        </div>
       </div>
       ${g.members.length < (g.maxMembers||5) ? `
       <button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
@@ -1660,41 +1785,50 @@ function renderGroupDetail(groupId) {
       </button>` : `<span class="text-xs text-gray-600 flex-shrink-0">満員</span>`}
     </div>
 
-    ${g.isActive ? `
-    <div class="mx-4 mb-4 rounded-2xl p-4 text-center" style="background:${g.color}18;border:1px solid ${g.color}33">
-      <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:${g.color}">グループデトックス実施中</p>
-      <p class="text-4xl font-black text-white tabular-nums">${fmtCountdown(elapsed)}</p>
-      <p class="text-xs text-gray-500 mt-1">${activeMembers.length}/${g.members.length}人が参加中</p>
-    </div>
-    ` : ''}
+    <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10 space-y-3">
 
-    <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 space-y-3">
+      ${inLobby ? `
+      <!-- LOBBY: waiting for all to be ready -->
+      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
+        <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:${g.color}">準備中 — 全員が揃ったら自動でスタート</p>
+        <div class="space-y-0" id="gd-member-rows">
+          ${memberReadyRows(gd.readyMembers)}
+        </div>
+        <div class="mt-3 flex items-center justify-between">
+          <span class="text-xs text-gray-600">時間: <span class="text-white font-bold">${GD_DURATIONS.find(d=>d.sec===gd.duration)?.label||'1時間'}</span></span>
+          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${1+g.members.length}人 準備完了</span>
+        </div>
+      </div>
+      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">キャンセル</button>
+      ` : `
+      <!-- DEFAULT: setup -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">デトックス時間</p>
+        <div class="flex gap-2" id="gd-dur-btns">
+          ${GD_DURATIONS.map(d => `
+            <button class="gd-dur flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${d.sec===selectedDur?'text-black border-transparent':'border-gray-800 text-gray-500'}"
+              style="${d.sec===selectedDur?`background:${g.color};`:'background:#1C1C1E;'}"
+              data-sec="${d.sec}">${d.label}</button>
+          `).join('')}
+        </div>
+      </div>
+
       <div class="card p-4">
         <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
-        <div class="space-y-3">
-          ${g.members.map(id => {
-            const f = friendById(id);
-            if (!f) return '';
-            const isOn = !!f.sessionStart;
-            const elapsed2 = isOn ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
+        <div class="space-y-0">
+          ${['me', ...g.members].map(id => {
+            const isMe = id === 'me';
+            const f = isMe ? null : friendById(id);
+            const u2 = getUser();
+            const name = isMe ? (u2?u2.name:'あなた') : (f?f.name:id);
+            const avatar = isMe
+              ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
+              : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
             return `
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="relative">
-                    <img src="${f.avatar}" class="w-10 h-10 rounded-full ${isOn?'':'opacity-50'}" alt="${f.name}">
-                    ${isOn ? '<div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
-                  </div>
-                  <div>
-                    <p class="font-semibold text-white text-sm">${f.name}</p>
-                    <p class="text-xs text-gray-600">${f.handle}</p>
-                  </div>
-                </div>
-                ${isOn
-                  ? `<span class="text-xs font-bold text-green-400">${fmtCountdown(elapsed2)}</span>`
-                  : `<span class="text-xs text-gray-700">オフライン</span>`
-                }
-              </div>
-            `;
+              <div class="flex items-center gap-3 py-2">
+                <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
+                <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+              </div>`;
           }).join('')}
         </div>
       </div>
@@ -1702,12 +1836,14 @@ function renderGroupDetail(groupId) {
       <div class="card p-4">
         <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
         <p class="text-sm text-gray-400">${g.description}</p>
+        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
       </div>
 
-      ${g.isActive
-        ? `<button class="w-full py-4 rounded-2xl font-bold text-base text-white" style="background:${g.color}">このグループのデトックスに参加</button>`
-        : `<button class="w-full py-4 rounded-2xl font-bold text-base text-white" style="background:${g.color}">グループデトックスを開始</button>`
-      }
+      <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+        準備完了にする
+      </button>
+      <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>
+      `}
     </div>
   `;
 
@@ -1716,6 +1852,64 @@ function renderGroupDetail(groupId) {
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
   });
   document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
+
+  if (inLobby) {
+    document.getElementById('gd-cancel-lobby').addEventListener('click', () => {
+      S.groupDetox = null;
+      renderGroupDetail(groupId);
+    });
+    // Simulate others joining (already handled by the simulation timers set when lobby started)
+  } else {
+    // Duration selector
+    let gdSelectedDur = selectedDur;
+    page.querySelectorAll('.gd-dur').forEach(btn => {
+      btn.addEventListener('click', () => {
+        gdSelectedDur = parseInt(btn.dataset.sec);
+        page.querySelectorAll('.gd-dur').forEach(b => {
+          const active = parseInt(b.dataset.sec) === gdSelectedDur;
+          b.style.background = active ? g.color : '#1C1C1E';
+          b.style.borderColor = active ? 'transparent' : '';
+          b.className = b.className.replace(/text-black|text-gray-500/g, '');
+          b.classList.add(active ? 'text-black' : 'text-gray-500');
+          b.style.borderColor = active ? 'transparent' : '#374151';
+        });
+      });
+    });
+
+    document.getElementById('gd-ready-btn').addEventListener('click', () => {
+      // Enter lobby - mark "me" as ready
+      S.groupDetox = {
+        groupId,
+        duration: gdSelectedDur,
+        readyMembers: ['me'],
+        allMembers: ['me', ...g.members],
+        startTime: null,
+        failed: false,
+        failedBy: null,
+      };
+      renderGroupDetail(groupId);
+      // Simulate other members getting ready one by one
+      const others = [...g.members];
+      others.forEach((id, i) => {
+        setTimeout(() => {
+          if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
+          S.groupDetox.readyMembers.push(id);
+          // Update UI if still on group-detail page
+          const rows = document.getElementById('gd-member-rows');
+          const cnt  = document.getElementById('gd-ready-count');
+          if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
+          if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
+          // All ready → start
+          if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
+            S.groupDetox.startTime = Date.now();
+            setTimeout(() => {
+              startSession(S.groupDetox.duration, false);
+            }, 600);
+          }
+        }, (i + 1) * 1500);
+      });
+    });
+  }
 
   goto('group-detail');
 }
