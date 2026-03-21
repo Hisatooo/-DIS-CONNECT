@@ -435,7 +435,20 @@
     <div class="sheet-body">
       <div class="sheet-handle"></div>
       <h3 class="text-xl font-black text-white text-center mb-1">デトックス開始</h3>
-      <p class="text-gray-600 text-sm text-center mb-6">時間をセットしてスワイプ</p>
+      <p class="text-gray-600 text-sm text-center mb-5">制限するアプリと時間をセット</p>
+
+      <!-- App Selection -->
+      <div class="mb-5">
+        <p class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
+        <div id="app-chip-list" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Divider -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex-1 h-px bg-gray-800"></div>
+        <p class="text-xs text-gray-600 font-semibold">時間</p>
+        <div class="flex-1 h-px bg-gray-800"></div>
+      </div>
 
       <!-- Picker -->
       <div class="flex justify-center items-center mb-6 relative" style="height:15rem;">
@@ -596,6 +609,7 @@ const S = {
   commentPostId: null,
   pendingConfirm: null,
   friendsTimerId: null,
+  selectedApps: new Set(['YouTube', 'Instagram', 'X']),
 };
 
 // ================================================================
@@ -1037,11 +1051,17 @@ document.getElementById('comment-send-btn').addEventListener('click', () => {
 // ================================================================
 // CHALLENGE PAGE
 // ================================================================
-const BLOCKED_APPS = [
-  { label: 'YouTube', bg: 'ff0000' },
-  { label: 'Instagram', bg: 'c13584' },
-  { label: 'X', bg: '1DA1F2' },
+const ALL_APPS = [
+  { label: 'YouTube',   bg: 'FF0000' },
+  { label: 'Instagram', bg: 'C13584' },
+  { label: 'X',         bg: '1D9BF0' },
+  { label: 'TikTok',   bg: '010101' },
+  { label: 'LINE',      bg: '06C755' },
+  { label: 'Facebook',  bg: '1877F2' },
+  { label: 'Discord',   bg: '5865F2' },
+  { label: 'Twitch',    bg: '9146FF' },
 ];
+const getBlockedApps = () => ALL_APPS.filter(a => S.selectedApps.has(a.label));
 
 function openChallengePage() {
   const durMin = Math.round((S.challengeData?.duration || 3600) / 60);
@@ -1061,7 +1081,7 @@ function openChallengePage() {
     <div class="card p-4 w-full">
       <p class="text-xs text-gray-600 font-semibold mb-3">ブロック対象アプリ</p>
       <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar">
-        ${BLOCKED_APPS.map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
+        ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
       </div>
     </div>
 
@@ -1142,7 +1162,7 @@ function renderSessionPage() {
       <div class="card p-3">
         <p class="text-xs text-gray-600 mb-2 font-semibold">ブロック中</p>
         <div class="flex space-x-2">
-          ${BLOCKED_APPS.map(a=>`<img src="https://placehold.co/36x36/${a.bg}/FFF?text=${a.label[0]}" class="rounded-lg w-9 h-9" alt="${a.label}">`).join('')}
+          ${getBlockedApps().map(a=>`<img src="https://placehold.co/36x36/${a.bg}/FFF?text=${a.label[0]}" class="rounded-lg w-9 h-9" alt="${a.label}">`).join('')}
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
@@ -2025,7 +2045,7 @@ function renderSettings() {
       <div class="card p-4">
         <p class="text-xs text-gray-700 font-bold uppercase mb-3">ブロック対象アプリ</p>
         <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
-          ${BLOCKED_APPS.map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
+          ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
           <button class="w-12 h-12 rounded-xl bg-[#2C2C2E] border border-gray-800 flex items-center justify-center flex-shrink-0 text-gray-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -2173,8 +2193,33 @@ function renderNotifications() {
 // ================================================================
 // MANUAL START SHEET (TIME PICKER + SLIDER)
 // ================================================================
+function renderAppChips() {
+  const container = document.getElementById('app-chip-list');
+  if (!container) return;
+  container.innerHTML = ALL_APPS.map(a => {
+    const sel = S.selectedApps.has(a.label);
+    return `<button class="app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
+      <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
+      ${a.label}
+    </button>`;
+  }).join('');
+  container.querySelectorAll('.app-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const app = btn.dataset.app;
+      if (S.selectedApps.has(app)) {
+        S.selectedApps.delete(app);
+        btn.className = btn.className.replace('border-white/30 bg-white/10 text-white', 'border-gray-800 text-gray-600');
+      } else {
+        S.selectedApps.add(app);
+        btn.className = btn.className.replace('border-gray-800 text-gray-600', 'border-white/30 bg-white/10 text-white');
+      }
+    });
+  });
+}
+
 function openManualSheet() {
   document.getElementById('manual-sheet').classList.add('open');
+  renderAppChips();
   initTimePicker();
   initSlider('manual-slider','manual-thumb','manual-reveal', () => {
     const h = getPickerValue('picker-hours');
