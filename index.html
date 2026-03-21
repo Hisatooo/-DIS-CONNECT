@@ -527,10 +527,287 @@
 
 <script>
 'use strict';
+
 // ================================================================
-// JS will be added in subsequent tasks
+// MOCK DATA
 // ================================================================
-console.log('TuneOut scaffold ready');
+const MOCK_FRIENDS = [
+  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
+  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
+  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+];
+
+const MOCK_POSTS = [
+  { id: 1, userId: 'alice', duration: 5400, task: '読書2章分、英単語100個', comment: '久しぶりに集中できた！', time: '2時間前', likes: 12, liked: false, img: null },
+  { id: 2, userId: 'ben',   duration: 3600, task: 'プログラミング課題',       comment: null,               time: '5時間前', likes: 8,  liked: false, img: null },
+  { id: 3, userId: 'chloe', duration: 1800, task: null,                       comment: 'ショートセッション完了', time: '昨日',   likes: 5,  liked: true,  img: null },
+  { id: 'ad1', type: 'ad', brand: 'Notion', text: '思考を整理するワークスペース。今日から使おう。', cta: '詳しく見る' },
+  { id: 4, userId: 'david', duration: 7200, task: 'AI論文読み込み', comment: '2時間、スマホなし！', time: '2日前', likes: 21, liked: false, img: null },
+];
+
+const MOCK_COMMENTS = {
+  1: [{ userId: 'ben',   text: 'すごい！継続できてますね' },
+      { userId: 'chloe', text: '私も頑張ります！' }],
+  2: [{ userId: 'alice', text: 'お疲れ様です！' }],
+  3: [],
+  4: [{ userId: 'chloe', text: 'かっこいい！' }, { userId: 'ben', text: '2時間はすごい' }],
+};
+
+// ================================================================
+// STATE
+// ================================================================
+const S = {
+  page: 'login',
+  feedTab: 'following',
+  activeSession: null,   // { startTime, totalDuration, timerId, isChallenge }
+  challengeData: null,   // { duration }
+  challengeAcceptTimerId: null,
+  viewingUserId: null,
+  commentPostId: null,
+  pendingConfirm: null,
+  friendsTimerId: null,
+};
+
+// ================================================================
+// STORAGE HELPERS
+// ================================================================
+const getUser    = () => JSON.parse(localStorage.getItem('to_user'))    || null;
+const saveUser   = u  => localStorage.setItem('to_user', JSON.stringify(u));
+const getHistory = () => JSON.parse(localStorage.getItem('to_history')) || [];
+const saveHistory= h  => localStorage.setItem('to_history', JSON.stringify(h));
+const getDM      = id => JSON.parse(localStorage.getItem(`to_dm_${id}`)) || [
+  { from: id,  text: 'やあ！最近デトックスできてる？',    time: '昨日' },
+  { from: 'me',text: 'ちょっとずつ！今日も頑張ろう',     time: '昨日' },
+];
+const saveDM     = (id, msgs) => localStorage.setItem(`to_dm_${id}`, JSON.stringify(msgs));
+
+// ================================================================
+// UTILS
+// ================================================================
+function fmtDuration(sec, alwaysHours = false) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  if (h > 0 || alwaysHours) return `${h}時間${m > 0 ? m + '分' : ''}`;
+  return `${m}分`;
+}
+function fmtCountdown(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
+}
+function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
+                'notifications','challenge','session','interrupt','post-session'];
+
+function goto(page) {
+  // Close comment panel if open
+  document.getElementById('comment-panel').classList.remove('open');
+
+  // Deactivate all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById(`page-${page}`);
+  if (el) el.classList.add('active');
+  S.page = page;
+
+  // Nav bar visibility
+  const nav = document.getElementById('nav-bar');
+  if (NO_NAV.includes(page)) {
+    nav.classList.add('nav-hidden');
+  } else {
+    nav.classList.remove('nav-hidden');
+  }
+
+  // Active nav button highlight
+  document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+    const match = btn.dataset.page === page ||
+                  (btn.dataset.page === 'home' && page === 'home');
+    btn.classList.toggle('active-nav', match);
+    btn.classList.toggle('text-white',  match);
+    btn.classList.toggle('text-gray-500', !match);
+  });
+
+  // Page-specific render
+  if (page === 'home')         renderHome();
+  if (page === 'friends')      renderFriends();
+  if (page === 'messages')     renderMessages();
+  if (page === 'profile')      renderProfile();
+  if (page === 'notifications') renderNotifications();
+}
+
+// ================================================================
+// NAV BUTTON WIRING
+// ================================================================
+document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.page;
+    if (page === 'tuneout') {
+      if (S.activeSession) goto('session');
+      else openManualSheet();
+    } else {
+      goto(page);
+    }
+  });
+});
+
+// ================================================================
+// LOGIN PAGE
+// ================================================================
+function renderLogin() {
+  document.getElementById('page-login').innerHTML = `
+    <div class="text-center mb-10">
+      <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5">
+        <svg class="w-8 h-8 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+        </svg>
+      </div>
+      <h1 class="text-4xl font-black text-white">TuneOut</h1>
+      <p class="text-gray-500 mt-2 text-sm">デジタルデトックスを、みんなで。</p>
+    </div>
+    <div class="space-y-3">
+      <input id="li-email" class="input-field" type="email" placeholder="メールアドレス / 電話番号">
+      <input id="li-pass"  class="input-field" type="password" placeholder="パスワード">
+      <button id="li-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
+        ログイン
+      </button>
+      <button id="li-reg-btn" class="w-full border border-gray-800 text-gray-300 font-semibold py-4 rounded-full text-base hover:bg-white/5 transition">
+        新規登録
+      </button>
+    </div>
+  `;
+  document.getElementById('li-btn').addEventListener('click', handleLogin);
+  document.getElementById('li-reg-btn').addEventListener('click', () => goto('register'));
+}
+
+function handleLogin() {
+  let u = getUser();
+  if (!u) {
+    u = { name: 'ゆうき', handle: '@yuuki', bio: 'デジタルデトックス挑戦中',
+          avatar: 'https://placehold.co/72x72/334155/FFF?text=U',
+          email: 'user@example.com', isPublic: true };
+    saveUser(u);
+  }
+  goto('home');
+  setTimeout(triggerChallengeBanner, 2500);
+}
+
+// ================================================================
+// REGISTER PAGE
+// ================================================================
+function renderRegister() {
+  document.getElementById('page-register').innerHTML = `
+    <button id="reg-back" class="mb-6 p-2 -ml-2 text-gray-400">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <h2 class="text-3xl font-black text-white mb-8">アカウント作成</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーネーム</label>
+        <input id="reg-name" class="input-field" type="text" placeholder="表示名">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーID (@)</label>
+        <input id="reg-handle" class="input-field" type="text" placeholder="例: tuneout_user">
+        <p class="text-xs text-gray-700 mt-1 ml-1">3〜30文字、英数字・_・. のみ</p>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">メールアドレス</label>
+        <input id="reg-email" class="input-field" type="email" placeholder="mail@example.com">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">生年月日</label>
+        <input id="reg-birth" class="input-field" type="text" placeholder="YYYY/MM/DD">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">パスワード</label>
+        <input id="reg-pass" class="input-field" type="password" placeholder="8文字以上">
+      </div>
+      <label class="flex items-start space-x-3 pt-1 cursor-pointer">
+        <input id="reg-agree" type="checkbox" class="mt-1 flex-shrink-0 accent-white w-4 h-4">
+        <span class="text-sm text-gray-400">
+          <span class="text-white underline">利用規約</span>および
+          <span class="text-white underline">プライバシーポリシー</span>に同意します
+        </span>
+      </label>
+      <button id="reg-submit" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
+        登録する
+      </button>
+    </div>
+  `;
+  document.getElementById('reg-back').addEventListener('click', () => goto('login'));
+  document.getElementById('reg-submit').addEventListener('click', () => {
+    const name   = document.getElementById('reg-name').value.trim();
+    const handle = document.getElementById('reg-handle').value.trim();
+    const email  = document.getElementById('reg-email').value.trim();
+    const agree  = document.getElementById('reg-agree').checked;
+    if (!name || !handle || !email) { alert('必須項目を入力してください'); return; }
+    if (!agree) { alert('利用規約に同意してください'); return; }
+    const u = {
+      name, handle: `@${handle.replace('@','')}`,
+      bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
+      email, isPublic: true,
+    };
+    saveUser(u);
+    goto('home');
+    setTimeout(triggerChallengeBanner, 2500);
+  });
+}
+
+// ================================================================
+// CONFIRM MODAL
+// ================================================================
+function showConfirm(title, msg, okLabel, onOk) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  document.getElementById('confirm-ok-btn').textContent = okLabel;
+  S.pendingConfirm = onOk;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  S.pendingConfirm = null;
+});
+document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  if (S.pendingConfirm) { S.pendingConfirm(); S.pendingConfirm = null; }
+});
+
+// ================================================================
+// CHALLENGE BANNER
+// ================================================================
+function triggerChallengeBanner() {
+  const choices = [30,45,60,90,120,150];
+  const dur = choices[Math.floor(Math.random() * choices.length)];
+  S.challengeData = { duration: dur * 60 };
+  document.getElementById('banner-sub').textContent = `今日のデトックス: ${dur}分間`;
+  document.getElementById('challenge-banner').classList.add('visible');
+  setTimeout(() => document.getElementById('challenge-banner').classList.remove('visible'), 9000);
+}
+document.getElementById('banner-join-btn').addEventListener('click', () => {
+  document.getElementById('challenge-banner').classList.remove('visible');
+  if (S.challengeData) openChallengePage();
+});
+
+// ================================================================
+// BOOT
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderLogin();
+  renderRegister();
+  const u = getUser();
+  if (u) { goto('home'); setTimeout(triggerChallengeBanner, 2000); }
+  else    { goto('login'); }
+});
 </script>
 </body>
 </html>
