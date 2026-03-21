@@ -1,2034 +1,536 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>(DIS)CONNECT</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* ── Base ── */
-        body { font-family: 'Sora', sans-serif; overscroll-behavior: none; background-color: #000; color: #E2E2E2; }
-        .main-content { position: relative; z-index: 1; flex-grow: 1; overflow: hidden; }
-        .page { position: absolute; inset: 0; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; padding-left: 1rem; padding-right: 1rem; padding-bottom: 8rem; }
-        .page.active { opacity: 1; pointer-events: auto; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TuneOut</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ===== BASE ===== */
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: #000;
+      color: #E2E2E2;
+      overscroll-behavior: none;
+    }
+    input, textarea, select, button { font-family: 'Sora', sans-serif; }
 
-        /* ── Cards ── */
-        .card { background: #1C1C1E; border-radius: 1.25rem; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
+    /* ===== SCROLLBAR ===== */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* ── Nav ── */
-        .nav-bar { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 400px; background: rgba(28,28,30,0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; transition: transform 0.4s cubic-bezier(0.25,1,0.5,1), opacity 0.4s ease; z-index: 100; }
-        .nav-bar.hidden { transform: translate(-50%, 150%); opacity: 0; }
-        .nav-btn { transition: color 0.2s ease; position: relative; }
-        .notification-dot { position: absolute; top: 0.5rem; right: 0.5rem; width: 8px; height: 8px; border-radius: 9999px; background-color: #ef4444; display: none; }
-        .nav-btn.active-nav .icon-outline { display: none; }
-        .nav-btn.active-nav .icon-solid { display: block; }
-        .nav-btn:not(.active-nav) .icon-solid { display: none; }
-        .nav-btn[data-page="tuneout"] { transition: transform 0.3s cubic-bezier(0.25,1,0.5,1), background-color 0.3s ease, color 0.3s ease; }
-        .nav-btn[data-page="tuneout"].active-nav { background-color: #373737; border-radius: 9999px; color: white; transform: scale(1.1) translateY(-5px); }
-        .nav-btn.session-disabled { opacity: 0.5; cursor: not-allowed; }
+    /* ===== PAGE SYSTEM ===== */
+    .page {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      overflow: hidden;
+    }
+    .page.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
-        /* ── Comment view ── */
-        #comment-view { position: fixed; inset: 0; background-color: #000; z-index: 200; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25,1,0.5,1); }
-        #comment-view.active { transform: translateX(0); }
+    /* ===== CARD ===== */
+    .card {
+      background: #1C1C1E;
+      border-radius: 1.25rem;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
 
-        /* ── Notification banner ── */
-        #notification-banner { position: fixed; top: 1rem; left: 1rem; right: 1rem; max-width: 400px; margin: 0 auto; background: rgba(28,28,30,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); border-radius: 1rem; padding: 1rem; z-index: 9999; transform: translateY(-150%); transition: transform 0.5s cubic-bezier(0.19,1,0.22,1); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-        #notification-banner.visible { transform: translateY(0); }
+    /* ===== INPUTS ===== */
+    .input-field {
+      background: #1C1C1E;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      border-radius: 0.875rem;
+      padding: 0.9rem 1rem;
+      width: 100%;
+      font-size: 0.9375rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: rgba(255,255,255,0.35); }
+    .input-field::placeholder { color: #6B7280; }
 
-        /* ── Picker ── */
-        #hours-picker, #minutes-picker, #lobby-hours-picker, #lobby-minutes-picker { touch-action: pan-y; scroll-snap-type: y mandatory; }
-        .picker-item { scroll-snap-align: center; transition: opacity 0.3s ease, transform 0.3s ease; opacity: 0.3; transform: scale(0.8); }
+    /* ===== BOTTOM NAV ===== */
+    .nav-bar {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 2rem);
+      max-width: 400px;
+      background: rgba(22,22,24,0.82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 9999px;
+      z-index: 100;
+      transition: transform 0.4s cubic-bezier(0.25,1,0.5,1), opacity 0.3s ease;
+    }
+    .nav-bar.nav-hidden {
+      transform: translate(-50%, 200%);
+      opacity: 0;
+    }
+    .nav-btn { transition: color 0.18s ease; position: relative; }
+    .nav-btn .icon-solid { display: none; }
+    .nav-btn.active-nav .icon-outline { display: none; }
+    .nav-btn.active-nav .icon-solid { display: block; }
 
-        /* ── Slider ── */
-        .slider-track { background: #1C1C1E; border-radius: 9999px; padding: 6px; position: relative; user-select: none; overflow: hidden; }
-        .slider-reveal { position: absolute; top: 0; left: 0; bottom: 0; width: 0; background: #373737; border-radius: 9999px; }
-        .slider-thumb { background: white; border-radius: 9999px; position: absolute; top: 6px; left: 6px; cursor: grab; transition: transform 0.2s ease; display: flex; align-items: center; justify-content: center; z-index: 2; }
-        .slider-thumb:active { cursor: grabbing; transform: scale(1.1); }
-        .slider-text { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); color: #a1a1aa; pointer-events: none; transition: opacity 0.2s ease, color 0.2s ease; font-weight: 600; z-index: 1; }
+    /* ===== NOTIFICATION DOT ===== */
+    .notif-dot {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.35rem;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 1.5px solid #000;
+    }
 
-        /* ── Countdown ring ── */
-        #countdown-container { position: relative; width: 280px; height: 280px; }
-        .countdown-ring { position: absolute; inset: 0; transform: rotate(-90deg); }
-        .countdown-ring circle { transition: stroke-dashoffset 1s linear; }
-        .countdown-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    /* ===== SLIDER ===== */
+    .slider-track {
+      background: #1C1C1E;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 9999px;
+      padding: 6px;
+      position: relative;
+      user-select: none;
+      touch-action: none;
+      overflow: hidden;
+    }
+    .slider-reveal {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 0;
+      background: rgba(255,255,255,0.12);
+      border-radius: 9999px;
+      pointer-events: none;
+    }
+    .slider-thumb {
+      background: white;
+      border-radius: 9999px;
+      position: absolute;
+      top: 6px; left: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      cursor: grab;
+      transition: box-shadow 0.2s;
+    }
+    .slider-thumb:active { cursor: grabbing; box-shadow: 0 0 0 6px rgba(255,255,255,0.1); }
+    .slider-label {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      color: #6B7280;
+      pointer-events: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      z-index: 1;
+      transition: opacity 0.15s;
+    }
 
-        /* ── Animations ── */
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%,90%{transform:translate3d(-1px,0,0)}20%,80%{transform:translate3d(2px,0,0)}30%,50%,70%{transform:translate3d(-4px,0,0)}40%,60%{transform:translate3d(4px,0,0)} }
-        @keyframes pulse { 50%{opacity:0.5} }
-        @keyframes like-pop { 0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)} }
-        @keyframes result-bounce { 0%{transform:scale(0);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1} }
-        @keyframes fade-in-up { from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)} }
-        @keyframes dot-pulse { 0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:0.7} }
-        .like-animation { animation: like-pop 0.3s ease-in-out; }
-        .like-btn .heart-icon.liked { fill: #ef4444; stroke: #ef4444; }
-        .result-appear { animation: result-bounce 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-        .fade-in-up { animation: fade-in-up 0.4s ease forwards; }
+    /* ===== COUNTDOWN RING ===== */
+    .countdown-ring { transform: rotate(-90deg); }
+    .countdown-ring circle { transition: stroke-dashoffset 1s linear; }
 
-        /* ── Pill tabs ── */
-        .pill-tab-container { -ms-overflow-style: none; scrollbar-width: none; }
-        .pill-tab-container::-webkit-scrollbar { display: none; }
+    /* ===== ANIMATIONS ===== */
+    @keyframes like-pop {
+      0%   { transform: scale(1); }
+      45%  { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+    .like-pop { animation: like-pop 0.28s ease; }
 
-        /* ── Participant display ── */
-        .participant-display { display: inline-flex; align-items: center; gap: 6px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); border-radius: 9999px; padding: 6px 14px; }
-        .participant-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: dot-pulse 2s ease-in-out infinite; flex-shrink: 0; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%     { transform: translateX(-5px); }
+      40%     { transform: translateX(5px); }
+      60%     { transform: translateX(-5px); }
+      80%     { transform: translateX(5px); }
+    }
+    .shake { animation: shake 0.4s ease; }
 
-        /* ── iOS Toggle ── */
-        .ios-toggle { position: relative; display: inline-block; width: 36px; height: 22px; flex-shrink: 0; }
-        .ios-toggle input { opacity: 0; width: 0; height: 0; }
-        .ios-toggle-slider { position: absolute; cursor: pointer; inset: 0; background-color: #3a3a3c; border-radius: 9999px; transition: background-color 0.3s; }
-        .ios-toggle-slider:before { content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
-        .ios-toggle input:checked + .ios-toggle-slider { background-color: #22c55e; }
-        .ios-toggle input:checked + .ios-toggle-slider:before { transform: translateX(14px); }
+    @keyframes pulse-ring {
+      0%,100% { opacity: 1; }
+      50%     { opacity: 0.55; }
+    }
+    .pulse-ring { animation: pulse-ring 2.2s ease infinite; }
 
-        /* ── Group card ── */
-        .group-card { background: #1C1C1E; border-radius: 1.25rem; border: 1px solid rgba(255,255,255,0.08); padding: 1rem; cursor: pointer; transition: background-color 0.2s; }
-        .group-card:active { background: #2c2c2e; }
+    /* ===== COMMENT PANEL ===== */
+    #comment-panel {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 300;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.25,1,0.5,1);
+      display: flex;
+      flex-direction: column;
+    }
+    #comment-panel.open { transform: translateX(0); }
 
-        /* ── Ready indicator ── */
-        .ready-indicator { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #000; position: absolute; bottom: 0; right: 0; }
-        .ready-indicator.ready { background: #22c55e; }
-        .ready-indicator.pending { background: #6b7280; }
+    /* ===== CHALLENGE BANNER ===== */
+    #challenge-banner {
+      position: fixed;
+      top: 1rem; left: 1rem; right: 1rem;
+      max-width: 400px;
+      margin: 0 auto;
+      background: rgba(25,25,27,0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 1.1rem;
+      padding: 0.9rem 1rem;
+      z-index: 9999;
+      transform: translateY(-160%);
+      transition: transform 0.5s cubic-bezier(0.19,1,0.22,1);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+    }
+    #challenge-banner.visible { transform: translateY(0); }
 
-        /* ── Group member card (active session) ── */
-        .group-member-card { background: #1C1C1E; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; transition: border-color 0.3s; }
-        .group-member-card.failed { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+    /* ===== BOTTOM SHEET MODAL ===== */
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 400;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .sheet-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sheet-body {
+      width: 100%;
+      max-width: 400px;
+      background: #111113;
+      border-radius: 1.5rem 1.5rem 0 0;
+      padding: 0 1.25rem 2rem;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.25,1,0.5,1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .sheet-overlay.open .sheet-body { transform: translateY(0); }
+    .sheet-handle {
+      width: 2.5rem; height: 4px;
+      background: #3a3a3c;
+      border-radius: 2px;
+      margin: 0.75rem auto 1.25rem;
+    }
 
-        /* ── Disconnect warning ── */
-        .disconnect-warning { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); border-radius: 1rem; padding: 1rem; }
+    /* ===== TIME PICKER ===== */
+    .picker-col {
+      width: 5rem;
+      height: 15rem;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .picker-col::-webkit-scrollbar { display: none; }
+    .picker-item {
+      height: 4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      scroll-snap-align: center;
+      font-size: 2rem;
+      font-weight: 900;
+      color: white;
+      opacity: 0.25;
+      transition: opacity 0.15s;
+    }
+    .picker-pad { height: 5.5rem; flex-shrink: 0; }
 
-        /* ── Result icons ── */
-        .result-icon-success, .result-icon-failure { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto; }
-        .result-icon-success { background: rgba(34,197,94,0.15); border: 2px solid rgba(34,197,94,0.3); }
-        .result-icon-failure { background: rgba(239,68,68,0.15); border: 2px solid rgba(239,68,68,0.3); }
-    </style>
+    /* ===== WEEKLY CHART ===== */
+    .week-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .week-bar-wrap {
+      flex: 1;
+      width: 100%;
+      max-width: 28px;
+      background: #2C2C2E;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .week-bar-fill {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: #606060;
+      border-radius: 4px;
+      transition: height 0.6s cubic-bezier(0.25,1,0.5,1);
+    }
+    .week-bar-fill.today { background: white; }
+
+    /* ===== TOGGLE SWITCH ===== */
+    .toggle {
+      position: relative;
+      width: 2.75rem;
+      height: 1.5rem;
+      border-radius: 9999px;
+      background: #3a3a3c;
+      cursor: pointer;
+      transition: background 0.25s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: white; }
+    .toggle-knob {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 1.25rem; height: 1.25rem;
+      border-radius: 50%;
+      background: #888;
+      transition: transform 0.25s, background 0.25s;
+    }
+    .toggle.on .toggle-knob {
+      transform: translateX(1.25rem);
+      background: #000;
+    }
+
+    /* ===== FEED TABS ===== */
+    .feed-tab {
+      position: relative;
+      padding-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: #6B7280;
+      transition: color 0.2s;
+    }
+    .feed-tab.active-tab { color: white; }
+    .feed-tab.active-tab::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 1.5rem; height: 2px;
+      background: white;
+      border-radius: 1px;
+    }
+
+    /* ===== PADDING FOR NAV ===== */
+    .pb-nav { padding-bottom: 7rem; }
+  </style>
 </head>
 <body class="antialiased overflow-hidden h-screen w-screen">
-<div id="app-container" class="h-full w-full max-w-md mx-auto flex flex-col relative">
 
-    <main id="main-content" class="main-content">
+<!-- ========================================================== -->
+<!-- APP ROOT                                                    -->
+<!-- ========================================================== -->
+<div id="app" class="h-full w-full max-w-md mx-auto relative overflow-hidden bg-black">
 
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: ONBOARDING
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-onboarding" class="page no-scrollbar flex flex-col items-center justify-center text-center px-6">
-            <div id="onboarding-slides">
-                <!-- Slide 1 -->
-                <div class="onboarding-slide" id="slide-0">
-                    <div class="w-28 h-28 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-8">
-                        <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M6.343 6.343a9 9 0 000 12.728M9.172 9.172a5 5 0 000 7.071M13 12a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
-                    </div>
-                    <h1 class="text-3xl font-extrabold text-white mb-3">(DIS)CONNECT</h1>
-                    <p class="text-gray-400 text-base leading-relaxed">Go offline to get ahead. Deep work sessions, real connections.</p>
-                </div>
-                <!-- Slide 2 -->
-                <div class="onboarding-slide hidden" id="slide-1">
-                    <div class="w-28 h-28 rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-8">
-                        <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <h1 class="text-3xl font-extrabold text-white mb-3">Focus Sessions</h1>
-                    <p class="text-gray-400 text-base leading-relaxed">Set a timer, lock in, and earn XP for every minute of focused work.</p>
-                </div>
-                <!-- Slide 3 -->
-                <div class="onboarding-slide hidden" id="slide-2">
-                    <div class="w-28 h-28 rounded-3xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center mx-auto mb-8">
-                        <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    </div>
-                    <h1 class="text-3xl font-extrabold text-white mb-3">Group Sessions</h1>
-                    <p class="text-gray-400 text-base leading-relaxed">Grind together. Find your crew and build accountability through shared sessions.</p>
-                </div>
-            </div>
-            <!-- Dots -->
-            <div class="flex space-x-2 my-8" id="onboarding-dots">
-                <div class="w-2 h-2 rounded-full bg-white" data-dot="0"></div>
-                <div class="w-2 h-2 rounded-full bg-white/30" data-dot="1"></div>
-                <div class="w-2 h-2 rounded-full bg-white/30" data-dot="2"></div>
-            </div>
-            <button id="onboarding-next-btn" class="w-full py-4 bg-white text-black font-extrabold text-base rounded-2xl mb-4 transition-all active:scale-95">Continue</button>
-            <button id="onboarding-skip-btn" class="text-sm text-gray-500">Skip</button>
+  <!-- ===================== LOGIN ===================== -->
+  <div id="page-login" class="page active flex flex-col justify-center px-8"></div>
+
+  <!-- ===================== REGISTER ===================== -->
+  <div id="page-register" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-14 pb-10"></div>
+
+  <!-- ===================== HOME (FEED) ===================== -->
+  <div id="page-home" class="page flex flex-col"></div>
+
+  <!-- ===================== CHALLENGE ===================== -->
+  <div id="page-challenge" class="page flex flex-col items-center justify-between px-6 py-10"></div>
+
+  <!-- ===================== SESSION ACTIVE ===================== -->
+  <div id="page-session" class="page flex flex-col items-center justify-between px-6 pt-10 pb-8"></div>
+
+  <!-- ===================== INTERRUPT ===================== -->
+  <div id="page-interrupt" class="page flex flex-col items-center justify-center px-6 text-center"></div>
+
+  <!-- ===================== POST SESSION ===================== -->
+  <div id="page-post-session" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-8 pb-nav"></div>
+
+  <!-- ===================== FRIENDS ===================== -->
+  <div id="page-friends" class="page flex flex-col"></div>
+
+  <!-- ===================== MESSAGES ===================== -->
+  <div id="page-messages" class="page flex flex-col"></div>
+
+  <!-- ===================== DM ===================== -->
+  <div id="page-dm" class="page flex flex-col"></div>
+
+  <!-- ===================== PROFILE ===================== -->
+  <div id="page-profile" class="page flex flex-col overflow-y-auto no-scrollbar pb-nav"></div>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <div id="page-settings" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
+  <!-- ===================== EDIT PROFILE ===================== -->
+  <div id="page-edit-profile" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
+  <!-- ===================== USER PROFILE ===================== -->
+  <div id="page-user-profile" class="page flex flex-col"></div>
+
+  <!-- ===================== NOTIFICATIONS ===================== -->
+  <div id="page-notifications" class="page flex flex-col"></div>
+
+  <!-- ===== COMMENT PANEL (slide from right) ===== -->
+  <div id="comment-panel">
+    <div class="flex-shrink-0 flex items-center px-4 py-3 border-b border-gray-900 relative">
+      <button id="comment-close-btn" class="p-2 -ml-2 text-gray-400 z-10">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="absolute left-1/2 -translate-x-1/2 font-bold text-white text-base">投稿</h2>
+    </div>
+    <div class="flex-grow overflow-y-auto no-scrollbar">
+      <div id="comment-post-body" class="border-b border-gray-900 p-4"></div>
+      <div id="comment-list" class="p-4 space-y-5"></div>
+    </div>
+    <div class="flex-shrink-0 flex items-center space-x-2 px-4 py-3 border-t border-gray-900">
+      <input id="comment-input" class="input-field rounded-full py-3 flex-grow" placeholder="コメントを追加...">
+      <button id="comment-send-btn" class="w-10 h-10 bg-[#2C2C2E] rounded-full flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 text-white" style="transform:rotate(45deg)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== CHALLENGE NOTIFICATION BANNER ===== -->
+  <div id="challenge-banner">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+          </svg>
         </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: START SESSION
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-start-session" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <button onclick="goBack()" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-                <h1 id="start-session-title" class="text-lg font-extrabold text-white">New Session</h1>
-                <div class="w-9"></div>
-            </div>
-            <!-- Duration stepper -->
-            <div class="card p-6 mb-5 text-center">
-                <p class="text-xs text-gray-500 uppercase tracking-widest mb-4">Duration</p>
-                <div class="flex items-center justify-center space-x-6 mb-5">
-                    <button id="dur-minus" class="w-12 h-12 rounded-full bg-[#2c2c2e] text-white font-bold text-2xl flex items-center justify-center active:scale-90 transition-transform">−</button>
-                    <div id="duration-display" class="text-6xl font-extrabold text-white w-36 text-center">25<span class="text-2xl text-gray-400">m</span></div>
-                    <button id="dur-plus" class="w-12 h-12 rounded-full bg-[#2c2c2e] text-white font-bold text-2xl flex items-center justify-center active:scale-90 transition-transform">+</button>
-                </div>
-                <!-- Presets -->
-                <div class="flex space-x-2">
-                    <button class="duration-preset flex-1 py-2 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-min="15">15m</button>
-                    <button class="duration-preset flex-1 py-2 rounded-xl text-sm font-semibold bg-white text-black" data-min="25">25m</button>
-                    <button class="duration-preset flex-1 py-2 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-min="45">45m</button>
-                    <button class="duration-preset flex-1 py-2 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-min="60">60m</button>
-                </div>
-            </div>
-            <!-- Focus type -->
-            <div class="card p-4 mb-5">
-                <p class="text-xs text-gray-500 uppercase tracking-widest mb-3">Focus Type</p>
-                <div class="grid grid-cols-2 gap-2">
-                    <button class="focus-type-btn py-3 rounded-xl text-sm font-semibold bg-white text-black" data-type="deep">Deep Work</button>
-                    <button class="focus-type-btn py-3 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-type="creative">Creative</button>
-                    <button class="focus-type-btn py-3 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-type="study">Study</button>
-                    <button class="focus-type-btn py-3 rounded-xl text-sm font-semibold bg-[#2c2c2e] text-gray-400" data-type="practice">Practice</button>
-                </div>
-            </div>
-            <button id="start-session-btn" class="w-full py-4 bg-white text-black font-extrabold text-base rounded-2xl transition-all active:scale-95">
-                <span id="start-btn-label">Start Session</span>
-            </button>
+        <div>
+          <p class="font-bold text-white text-sm">デトックスチャレンジ！</p>
+          <p id="banner-sub" class="text-xs text-gray-400">読み込み中...</p>
         </div>
+      </div>
+      <button id="banner-join-btn" class="ml-3 bg-white text-black px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">
+        参加する
+      </button>
+    </div>
+  </div>
 
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: TIMER (active session)
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-timer" class="page no-scrollbar flex flex-col" style="padding-bottom:2rem;">
-            <div class="flex items-center justify-between py-5">
-                <div></div>
-                <div class="text-center">
-                    <span id="timer-mode-label" class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Focus</span>
-                </div>
-                <div class="w-9"></div>
-            </div>
-            <!-- Ring timer -->
-            <div class="flex-1 flex flex-col items-center justify-center">
-                <div class="relative w-64 h-64 mb-10">
-                    <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="44" fill="none" stroke="#1C1C1E" stroke-width="6"/>
-                        <circle id="timer-ring" cx="50" cy="50" r="44" fill="none" stroke="url(#timer-grad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0" style="transition:stroke-dashoffset 0.9s linear;"/>
-                        <defs>
-                            <linearGradient id="timer-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#a855f7"/>
-                                <stop offset="100%" stop-color="#ec4899"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span id="timer-display" class="text-6xl font-extrabold text-white tabular-nums">25:00</span>
-                        <span id="timer-sub" class="text-xs text-gray-500 mt-2">Stay offline</span>
-                    </div>
-                </div>
-                <!-- Controls -->
-                <div class="flex items-center space-x-6">
-                    <button id="timer-pause-btn" class="w-16 h-16 rounded-full bg-[#1C1C1E] flex items-center justify-center active:scale-90 transition-transform">
-                        <svg id="pause-icon" class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-                        </svg>
-                    </button>
-                    <button id="timer-stop-btn" class="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center active:scale-90 transition-transform">
-                        <svg class="w-7 h-7 text-red-400" fill="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-                    </button>
-                </div>
-            </div>
+  <!-- ===== MANUAL START SHEET ===== -->
+  <div id="manual-sheet" class="sheet-overlay">
+    <div class="sheet-body">
+      <div class="sheet-handle"></div>
+      <h3 class="text-xl font-black text-white text-center mb-1">デトックス開始</h3>
+      <p class="text-gray-600 text-sm text-center mb-6">時間をセットしてスワイプ</p>
+
+      <!-- Picker -->
+      <div class="flex justify-center items-center mb-6 relative" style="height:15rem;">
+        <div class="absolute left-1/2 -translate-x-1/2 w-44 h-16 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-[#111113] via-transparent to-[#111113] pointer-events-none z-10"></div>
+        <div class="z-20 flex items-center space-x-1">
+          <div id="picker-hours" class="picker-col"></div>
+          <span class="text-3xl font-black text-gray-600">:</span>
+          <div id="picker-minutes" class="picker-col"></div>
         </div>
+      </div>
 
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: SESSION RESULT
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-session-result" class="page no-scrollbar flex flex-col items-center justify-start pt-8">
-            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-5">
-                <svg class="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            </div>
-            <h1 id="result-title" class="text-2xl font-extrabold text-white mb-1">Session Complete!</h1>
-            <p class="text-sm text-gray-500 mb-8">Nice work. Keep it up.</p>
-            <!-- Stats row -->
-            <div class="grid grid-cols-3 gap-3 w-full mb-6">
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="result-duration-value" class="text-xl font-extrabold text-white">—</span>
-                    <span class="text-xs text-gray-500 mt-1">Duration</span>
-                </div>
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="result-xp-value" class="text-xl font-extrabold text-purple-400">+25</span>
-                    <span class="text-xs text-gray-500 mt-1">XP</span>
-                </div>
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="result-streak-value" class="text-xl font-extrabold text-white">—</span>
-                    <span class="text-xs text-gray-500 mt-1">Streak</span>
-                </div>
-            </div>
-            <div class="flex space-x-3 w-full">
-                <button onclick="navigateTo('home'); renderHomePage();" class="flex-1 py-3 bg-[#1C1C1E] text-white font-semibold rounded-2xl border border-white/10 transition-all active:scale-95">Done</button>
-                <button onclick="navigateTo('create-post')" class="flex-1 py-3 bg-white text-black font-bold rounded-2xl transition-all active:scale-95">Share</button>
-            </div>
+      <!-- Slider -->
+      <div class="slider-track h-16" id="manual-slider">
+        <div class="slider-reveal" id="manual-reveal"></div>
+        <div class="slider-thumb w-20 h-14" id="manual-thumb">
+          <svg class="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
         </div>
+        <span class="slider-label">スワイプして開始</span>
+      </div>
 
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: EXPLORE
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-explore" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <h1 id="explore-page-title" class="text-lg font-extrabold text-white">Explore</h1>
-                <button onclick="navigateTo('create-post')" class="w-9 h-9 rounded-full bg-white flex items-center justify-center">
-                    <svg class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                </button>
-            </div>
-            <!-- Search bar -->
-            <div class="relative mb-4">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input id="explore-search" type="text" placeholder="Search posts…" class="w-full bg-[#1C1C1E] text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/20">
-            </div>
-            <!-- Tab -->
-            <div class="flex space-x-3 mb-4">
-                <button class="explore-tab px-4 py-1.5 rounded-full text-sm font-semibold bg-white text-black" data-tab="latest">Latest</button>
-                <button class="explore-tab px-4 py-1.5 rounded-full text-sm font-semibold bg-[#1C1C1E] text-gray-400" data-tab="trending">Trending</button>
-            </div>
-            <div id="explore-feed" class="space-y-3"></div>
-        </div>
+      <button id="manual-cancel-btn" class="w-full text-gray-600 font-semibold py-3 mt-1 text-sm">キャンセル</button>
+    </div>
+  </div>
 
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: HOME
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-home" class="page no-scrollbar">
-            <!-- Header -->
-            <div class="flex items-center justify-between py-5">
-                <button onclick="navigateTo('profile')" class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm font-bold text-white" id="home-user-avatar"></button>
-                <h1 class="text-lg font-extrabold text-white tracking-tight">(DIS)CONNECT</h1>
-                <button onclick="navigateTo('notifications')" id="notif-btn" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center relative">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                    <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-                </button>
-            </div>
-            <!-- Greeting -->
-            <div class="mb-5">
-                <p class="text-sm text-gray-400"><span id="greeting-text">Good morning,</span></p>
-                <h2 class="text-2xl font-extrabold text-white" id="greeting-name"></h2>
-            </div>
-            <!-- New Session CTA -->
-            <button id="new-session-btn" class="w-full py-4 bg-white text-black font-extrabold text-base rounded-2xl mb-5 transition-all active:scale-95 flex items-center justify-center space-x-2">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span id="home-new-session-label">New Session</span>
-            </button>
-            <!-- Stats row -->
-            <div class="grid grid-cols-3 gap-3 mb-5">
-                <div class="card p-3 flex flex-col items-center">
-                    <span id="home-stat-goal" class="text-xl font-extrabold text-white">0</span>
-                    <span id="home-stat-goal-label" class="text-xs text-gray-500 mt-0.5">Sessions</span>
-                </div>
-                <div class="card p-3 flex flex-col items-center">
-                    <span id="home-stat-streak" class="text-xl font-extrabold text-white">0</span>
-                    <span id="home-stat-streak-label" class="text-xs text-gray-500 mt-0.5">Streak</span>
-                </div>
-                <div class="card p-3 flex flex-col items-center">
-                    <span id="home-stat-hours" class="text-xl font-extrabold text-white">0.0</span>
-                    <span id="home-stat-hours-label" class="text-xs text-gray-500 mt-0.5">Hrs Offline</span>
-                </div>
-            </div>
-            <!-- Recent sessions -->
-            <div class="flex items-center justify-between mb-3">
-                <h2 id="home-recent-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Recent Sessions</h2>
-                <button onclick="navigateTo('explore')" class="text-xs text-gray-500">View All →</button>
-            </div>
-            <div id="recent-sessions-list" class="card px-4 divide-y divide-white/5 mb-5"></div>
-            <!-- Feed preview -->
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Community</h2>
-                <button onclick="navigateTo('explore')" class="text-xs text-gray-500">See all →</button>
-            </div>
-            <div id="feed-container" class="space-y-3"></div>
-        </div>
+  <!-- ===== CONFIRM MODAL ===== -->
+  <div id="confirm-overlay" class="sheet-overlay" style="align-items:center;">
+    <div style="width:100%;max-width:360px;margin:1rem;background:#1C1C1E;border-radius:1.25rem;padding:1.5rem;">
+      <h3 id="confirm-title" class="text-xl font-black text-white text-center mb-2"></h3>
+      <p id="confirm-msg" class="text-gray-500 text-sm text-center mb-6"></p>
+      <div class="flex space-x-3">
+        <button id="confirm-cancel-btn" class="flex-1 border border-gray-700 text-gray-300 font-semibold py-3 rounded-full text-sm">キャンセル</button>
+        <button id="confirm-ok-btn" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-full text-sm"></button>
+      </div>
+    </div>
+  </div>
 
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: TUNEOUT
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-tuneout" class="page no-scrollbar">
-            <!-- SETUP VIEW -->
-            <div id="tuneout-setup" class="">
-                <div class="flex items-center justify-between py-5">
-                    <h1 id="tuneout-title" class="text-lg font-extrabold text-white">TuneOut</h1>
-                    <div id="participant-counter" class="participant-display">
-                        <span class="participant-dot"></span>
-                        <span id="participant-count-text" class="text-sm font-semibold text-green-400">-- online</span>
-                    </div>
-                </div>
-
-                <!-- Slider -->
-                <div class="mb-6">
-                    <p id="tuneout-intensity-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Intensity</p>
-                    <div id="slider-track" class="slider-track h-14">
-                        <div id="slider-reveal" class="slider-reveal"></div>
-                        <div id="slider-thumb" class="slider-thumb w-10 h-10" style="left:6px">
-                            <svg class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                        <span id="slider-label" class="slider-text text-sm"></span>
-                    </div>
-                    <div class="flex justify-between mt-2 px-1">
-                        <span id="tuneout-soft-label" class="text-xs text-gray-600">Soft</span>
-                        <span id="tuneout-hard-label" class="text-xs text-gray-600">Hard</span>
-                    </div>
-                </div>
-
-                <!-- Duration Picker -->
-                <p id="tuneout-duration-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Duration</p>
-                <div class="card p-4 mb-4">
-                    <div class="flex items-center justify-center space-x-6">
-                        <!-- Hours -->
-                        <div class="flex flex-col items-center">
-                            <span id="tuneout-hours-label" class="text-xs text-gray-500 mb-2">Hours</span>
-                            <div id="hours-picker" class="h-32 overflow-y-auto no-scrollbar w-16 text-center">
-                                <div class="h-10"></div>
-                                <!-- items rendered by JS -->
-                                <div class="h-10"></div>
-                            </div>
-                        </div>
-                        <span class="text-2xl font-bold text-white">:</span>
-                        <!-- Minutes -->
-                        <div class="flex flex-col items-center">
-                            <span id="tuneout-minutes-label" class="text-xs text-gray-500 mb-2">Minutes</span>
-                            <div id="minutes-picker" class="h-32 overflow-y-auto no-scrollbar w-16 text-center">
-                                <div class="h-10"></div>
-                                <!-- items rendered by JS -->
-                                <div class="h-10"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Intensity description -->
-                <div id="intensity-desc" class="card p-4 mb-4">
-                    <p id="intensity-desc-text" class="text-sm text-gray-400 leading-relaxed"></p>
-                </div>
-
-                <!-- Buttons -->
-                <div class="space-y-3">
-                    <button id="start-solo-btn" class="w-full py-4 bg-white text-black font-bold rounded-2xl text-base transition-all active:scale-95">
-                        <span id="start-solo-label">Start Solo</span>
-                    </button>
-                    <button id="start-group-btn" class="w-full py-4 bg-[#1C1C1E] text-white font-semibold rounded-2xl text-base border border-white/10 transition-all active:scale-95 flex items-center justify-center space-x-2">
-                        <svg class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        <span id="start-group-label">Group Detox</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- ACTIVE VIEW -->
-            <div id="tuneout-active" class="hidden flex flex-col items-center justify-center min-h-screen pb-24">
-                <div class="py-5 w-full flex items-center justify-between">
-                    <h1 id="tuneout-active-title" class="text-lg font-extrabold text-white">TuneOut</h1>
-                    <!-- Participant badge during active session -->
-                    <div id="active-participant-display" class="participant-display hidden">
-                        <span class="participant-dot"></span>
-                        <span id="active-participant-text" class="text-sm font-semibold text-green-400"></span>
-                    </div>
-                </div>
-
-                <!-- Countdown ring -->
-                <div id="countdown-container" class="mb-8 relative flex items-center justify-center" style="width:280px;height:280px;">
-                    <svg class="countdown-ring w-full h-full" viewBox="0 0 280 280">
-                        <!-- Bg ring -->
-                        <circle cx="140" cy="140" r="126" fill="none" stroke="#1C1C1E" stroke-width="14"/>
-                        <!-- Progress ring -->
-                        <circle id="progress-ring" cx="140" cy="140" r="126" fill="none" stroke="white" stroke-width="14" stroke-linecap="round"
-                            stroke-dasharray="791.7" stroke-dashoffset="0"/>
-                    </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span id="timer-display" class="text-5xl font-extrabold text-white tabular-nums">00:00</span>
-                        <span id="timer-label" class="text-sm text-gray-500 mt-1">remaining</span>
-                    </div>
-                </div>
-
-                <!-- Mode badge -->
-                <div class="flex items-center space-x-2 mb-6">
-                    <div class="w-2.5 h-2.5 rounded-full bg-green-400 countdown-pulse"></div>
-                    <span id="active-mode-label" class="text-sm font-semibold text-gray-400"></span>
-                </div>
-
-                <!-- Blocked apps info -->
-                <div class="card p-4 w-full mb-6">
-                    <p id="blocked-label" class="text-xs text-gray-500 uppercase tracking-widest mb-2">Blocked</p>
-                    <div id="blocked-list" class="flex flex-wrap gap-2"></div>
-                </div>
-
-                <!-- Give up -->
-                <button id="give-up-btn" class="w-full py-4 bg-[#1C1C1E] text-red-400 font-semibold rounded-2xl border border-red-400/20 transition-all active:scale-95">
-                    <span id="give-up-label">Give Up</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: MESSAGES
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-messages" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <h1 id="messages-page-title" class="text-lg font-extrabold text-white">Messages</h1>
-                <button class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                </button>
-            </div>
-            <div class="relative mb-4">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-                <input type="text" placeholder="" class="w-full bg-[#1C1C1E] text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/20">
-            </div>
-            <div id="messages-list" class="space-y-1"></div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: DM (Direct Message)
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-dm" class="page no-scrollbar" style="padding-bottom: 5rem;">
-            <!-- Header -->
-            <div class="flex items-center space-x-3 py-4 sticky top-0 bg-black z-10">
-                <button onclick="navigateTo('messages')" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <div id="dm-avatar" class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-sm font-bold text-white flex-shrink-0"></div>
-                <div class="flex-1 min-w-0">
-                    <p id="dm-title" class="font-semibold text-white truncate"></p>
-                    <p id="dm-status" class="text-xs text-green-400"></p>
-                </div>
-                <button class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
-                </button>
-            </div>
-            <!-- Messages -->
-            <div id="dm-chat-messages" class="space-y-3 pb-4"></div>
-            <!-- Input -->
-            <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-4 py-3 bg-black border-t border-white/5">
-                <div class="flex items-center space-x-2">
-                    <input id="dm-input" type="text" placeholder="" class="flex-1 bg-[#1C1C1E] text-white placeholder-gray-500 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-white/20">
-                    <button id="dm-send-btn" class="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95">
-                        <svg class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Comment View (slide-in panel) -->
-        <div id="comment-view" class="no-scrollbar">
-            <div class="flex flex-col h-full max-w-md mx-auto px-4">
-                <div class="flex items-center justify-between py-4 flex-shrink-0">
-                    <button id="close-comment-view" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    </button>
-                    <h2 id="comments-title" class="text-base font-bold text-white">Comments</h2>
-                    <div class="w-9"></div>
-                </div>
-                <div id="comment-original-post" class="mb-4 flex-shrink-0"></div>
-                <div id="comments-list" class="flex-1 overflow-y-auto no-scrollbar space-y-4 pb-24"></div>
-                <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-4 py-3 bg-black border-t border-white/5">
-                    <div class="flex items-center space-x-2">
-                        <input id="comment-input" type="text" placeholder="" class="flex-1 bg-[#1C1C1E] text-white placeholder-gray-500 rounded-full px-4 py-2.5 text-sm focus:outline-none">
-                        <button id="comment-send-btn" class="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: PROFILE
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-profile" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <h1 id="profile-page-title" class="text-lg font-extrabold text-white">Profile</h1>
-                <button onclick="navigateTo('settings')" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                </button>
-            </div>
-            <!-- Avatar + bio -->
-            <div class="flex flex-col items-center mb-6">
-                <div id="profile-avatar-large" class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-3xl font-extrabold text-white mb-3"></div>
-                <h2 id="profile-name" class="text-xl font-extrabold text-white mb-1"></h2>
-                <p id="profile-handle" class="text-sm text-gray-500 mb-2"></p>
-                <p id="profile-bio" class="text-sm text-gray-400 text-center max-w-xs mb-4"></p>
-                <button onclick="navigateTo('edit-profile')" class="px-6 py-2 bg-[#1C1C1E] text-white text-sm font-semibold rounded-full border border-white/10 transition-all active:scale-95">
-                    <span id="edit-profile-btn-label">Edit Profile</span>
-                </button>
-            </div>
-            <!-- Stats 2×2 grid -->
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="profile-stat-sessions" class="text-2xl font-extrabold text-white">—</span>
-                    <span id="profile-stat-sessions-label" class="text-xs text-gray-500 mt-1">Sessions</span>
-                </div>
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="profile-stat-streak" class="text-2xl font-extrabold text-white">—</span>
-                    <span id="profile-stat-streak-label" class="text-xs text-gray-500 mt-1">Best Streak</span>
-                </div>
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="profile-stat-hours" class="text-2xl font-extrabold text-white">—</span>
-                    <span id="profile-stat-hours-label" class="text-xs text-gray-500 mt-1">Hours Offline</span>
-                </div>
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="profile-stat-gigs" class="text-2xl font-extrabold text-white">—</span>
-                    <span id="profile-stat-gigs-label" class="text-xs text-gray-500 mt-1">Gigs Done</span>
-                </div>
-            </div>
-            <!-- Posts grid -->
-            <h2 id="profile-posts-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Posts</h2>
-            <div id="profile-posts-grid" class="grid grid-cols-3 gap-1"></div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: SETTINGS
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-settings" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <button onclick="navigateTo('profile')" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <h1 id="settings-page-title" class="text-lg font-extrabold text-white">Settings</h1>
-                <div class="w-9"></div>
-            </div>
-            <div class="space-y-3">
-                <!-- Language -->
-                <div class="card p-4">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3" id="settings-lang-label">Language</p>
-                    <div class="flex space-x-2">
-                        <button id="lang-en-btn" class="flex-1 py-2 rounded-xl text-sm font-semibold transition-colors bg-white text-black">EN</button>
-                        <button id="lang-ja-btn" class="flex-1 py-2 rounded-xl text-sm font-semibold transition-colors bg-[#2c2c2e] text-gray-400">JA</button>
-                    </div>
-                </div>
-                <!-- Account -->
-                <div class="card divide-y divide-white/5">
-                    <button onclick="navigateTo('edit-profile')" class="w-full flex items-center justify-between px-4 py-4">
-                        <span id="settings-edit-profile" class="text-sm font-semibold text-white">Edit Profile</span>
-                        <svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                    <button class="w-full flex items-center justify-between px-4 py-4">
-                        <span id="settings-notif" class="text-sm font-semibold text-white">Notifications</span>
-                        <svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                    <button class="w-full flex items-center justify-between px-4 py-4">
-                        <span id="settings-privacy" class="text-sm font-semibold text-white">Privacy</span>
-                        <svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                </div>
-                <!-- Danger zone -->
-                <div class="card divide-y divide-white/5">
-                    <button id="logout-btn" class="w-full flex items-center justify-between px-4 py-4">
-                        <span id="settings-logout" class="text-sm font-semibold text-red-400">Log Out</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: EDIT PROFILE
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-edit-profile" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <button onclick="navigateTo('settings')" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <h1 id="edit-profile-page-title" class="text-lg font-extrabold text-white">Edit Profile</h1>
-                <button id="save-profile-btn" class="px-4 py-1.5 bg-white text-black text-sm font-bold rounded-full transition-all active:scale-95">
-                    <span id="save-label">Save</span>
-                </button>
-            </div>
-            <!-- Avatar -->
-            <div class="flex flex-col items-center mb-6">
-                <div id="edit-avatar" class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-3xl font-extrabold text-white mb-3 relative cursor-pointer">
-                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    </div>
-                </div>
-                <span id="change-photo-label" class="text-sm text-blue-400 font-semibold">Change Photo</span>
-            </div>
-            <!-- Fields -->
-            <div class="space-y-4">
-                <div>
-                    <label id="edit-name-label" class="text-xs text-gray-500 font-semibold uppercase tracking-widest block mb-1">Name</label>
-                    <input id="edit-name-input" type="text" class="w-full bg-[#1C1C1E] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/30">
-                </div>
-                <div>
-                    <label id="edit-handle-label" class="text-xs text-gray-500 font-semibold uppercase tracking-widest block mb-1">Username</label>
-                    <input id="edit-handle-input" type="text" class="w-full bg-[#1C1C1E] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/30">
-                </div>
-                <div>
-                    <label id="edit-bio-label" class="text-xs text-gray-500 font-semibold uppercase tracking-widest block mb-1">Bio</label>
-                    <textarea id="edit-bio-input" rows="3" class="w-full bg-[#1C1C1E] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"></textarea>
-                </div>
-                <div>
-                    <label id="edit-skills-label" class="text-xs text-gray-500 font-semibold uppercase tracking-widest block mb-1">Skills</label>
-                    <input id="edit-skills-input" type="text" class="w-full bg-[#1C1C1E] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/30" placeholder="e.g. Design, Music, Dev">
-                </div>
-            </div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: USER PROFILE (other users)
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-user-profile" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <button onclick="goBack()" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <h2 id="user-profile-handle" class="text-base font-bold text-white"></h2>
-                <button class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
-                </button>
-            </div>
-            <div class="flex flex-col items-center mb-6">
-                <div id="user-profile-avatar" class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-3xl font-extrabold text-white mb-3"></div>
-                <h2 id="user-profile-name" class="text-xl font-extrabold text-white mb-1"></h2>
-                <p id="user-profile-bio" class="text-sm text-gray-400 text-center max-w-xs mb-4"></p>
-                <div class="flex space-x-3">
-                    <button id="follow-btn" class="px-6 py-2 bg-white text-black text-sm font-bold rounded-full transition-all active:scale-95">Follow</button>
-                    <button onclick="navigateTo('dm')" class="px-6 py-2 bg-[#1C1C1E] text-white text-sm font-semibold rounded-full border border-white/10 transition-all active:scale-95">Message</button>
-                </div>
-            </div>
-            <!-- Stats -->
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="user-stat-sessions" class="text-2xl font-extrabold text-white">—</span>
-                    <span class="text-xs text-gray-500 mt-1">Sessions</span>
-                </div>
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="user-stat-streak" class="text-2xl font-extrabold text-white">—</span>
-                    <span class="text-xs text-gray-500 mt-1">Best Streak</span>
-                </div>
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="user-stat-hours" class="text-2xl font-extrabold text-white">—</span>
-                    <span class="text-xs text-gray-500 mt-1">Hours Offline</span>
-                </div>
-                <div class="card p-4 flex flex-col items-center">
-                    <span id="user-stat-gigs" class="text-2xl font-extrabold text-white">—</span>
-                    <span class="text-xs text-gray-500 mt-1">Gigs Done</span>
-                </div>
-            </div>
-            <h2 id="user-posts-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Posts</h2>
-            <div id="user-profile-posts-grid" class="grid grid-cols-3 gap-1"></div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: CREATE POST
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-create-post" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <button onclick="goBack()" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-                <h1 id="create-post-title" class="text-lg font-extrabold text-white">New Post</h1>
-                <button id="post-submit-btn" class="px-4 py-1.5 bg-white text-black text-sm font-bold rounded-full opacity-50 transition-all">
-                    <span id="post-submit-label">Post</span>
-                </button>
-            </div>
-            <!-- Mood / category -->
-            <div class="pill-tab-container flex overflow-x-auto space-x-2 pb-3 mb-4">
-                <button class="post-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-white text-black" data-cat="general">General</button>
-                <button class="post-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-cat="music">Music</button>
-                <button class="post-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-cat="design">Design</button>
-                <button class="post-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-cat="dev">Dev</button>
-            </div>
-            <!-- Text area -->
-            <textarea id="post-content" rows="6" placeholder="" class="w-full bg-[#1C1C1E] text-white placeholder-gray-500 rounded-2xl px-4 py-4 text-base focus:outline-none focus:ring-1 focus:ring-white/20 resize-none mb-4"></textarea>
-            <!-- Attach media placeholder -->
-            <button class="w-full py-3 bg-[#1C1C1E] text-gray-500 text-sm font-semibold rounded-2xl border border-dashed border-white/10 flex items-center justify-center space-x-2">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span id="attach-media-label">Add Media</span>
-            </button>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: GROUPS LIST
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-groups" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <h1 id="groups-page-title" class="text-lg font-extrabold text-white">Groups</h1>
-                <button onclick="navigateTo('create-group')" class="w-9 h-9 rounded-full bg-white flex items-center justify-center">
-                    <svg class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                </button>
-            </div>
-            <!-- Search -->
-            <div class="relative mb-4">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input id="groups-search-input" type="text" placeholder="" class="w-full bg-[#1C1C1E] text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/20">
-            </div>
-            <!-- Active sessions banner -->
-            <div id="groups-active-banner" class="hidden card p-3 mb-4 flex items-center justify-between bg-gradient-to-r from-purple-900/60 to-pink-900/60 border border-purple-500/30">
-                <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span id="groups-active-banner-text" class="text-sm font-semibold text-white"></span>
-                </div>
-                <button id="groups-rejoin-btn" class="px-3 py-1 bg-white text-black text-xs font-bold rounded-full">Rejoin</button>
-            </div>
-            <!-- Category pills -->
-            <div class="pill-tab-container flex overflow-x-auto space-x-2 pb-3 mb-4">
-                <button class="group-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-white text-black" data-cat="all">All</button>
-                <button class="group-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-[#1C1C1E] text-gray-400" data-cat="music">Music</button>
-                <button class="group-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-[#1C1C1E] text-gray-400" data-cat="design">Design</button>
-                <button class="group-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-[#1C1C1E] text-gray-400" data-cat="dev">Dev</button>
-                <button class="group-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-[#1C1C1E] text-gray-400" data-cat="study">Study</button>
-            </div>
-            <div id="groups-list" class="space-y-3"></div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: GROUP LOBBY
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-group-lobby" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <button onclick="goBack()" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <div class="text-center">
-                    <h2 id="lobby-group-name" class="text-base font-extrabold text-white"></h2>
-                    <p id="lobby-group-cat" class="text-xs text-gray-500"></p>
-                </div>
-                <button class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </button>
-            </div>
-            <!-- Session info card -->
-            <div class="card p-5 mb-4 text-center">
-                <p id="lobby-session-duration-label" class="text-xs text-gray-500 uppercase tracking-widest mb-1">Session Duration</p>
-                <div class="flex items-center justify-center space-x-3 mb-4">
-                    <button id="lobby-dur-minus" class="w-10 h-10 rounded-full bg-[#2c2c2e] text-white font-bold text-xl flex items-center justify-center">−</button>
-                    <span id="lobby-duration-display" class="text-4xl font-extrabold text-white w-24 text-center">25<span class="text-lg text-gray-400">m</span></span>
-                    <button id="lobby-dur-plus" class="w-10 h-10 rounded-full bg-[#2c2c2e] text-white font-bold text-xl flex items-center justify-center">+</button>
-                </div>
-                <p id="lobby-desc" class="text-sm text-gray-400"></p>
-            </div>
-            <!-- Members -->
-            <div class="card p-4 mb-4">
-                <p id="lobby-members-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Members</p>
-                <div id="lobby-members-list" class="flex flex-wrap gap-3"></div>
-            </div>
-            <!-- Rules / tags -->
-            <div id="lobby-rules-card" class="card p-4 mb-6">
-                <p id="lobby-rules-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Rules</p>
-                <p id="lobby-rules-text" class="text-sm text-gray-400"></p>
-            </div>
-            <button id="lobby-start-btn" class="w-full py-4 bg-white text-black font-extrabold text-base rounded-2xl transition-all active:scale-95">
-                <span id="lobby-start-label">Start Session</span>
-            </button>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: GROUP SESSION ACTIVE
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-group-active" class="page no-scrollbar flex flex-col">
-            <div class="flex items-center justify-between py-5">
-                <div class="text-center flex-1">
-                    <h2 id="group-active-name" class="text-base font-extrabold text-white"></h2>
-                </div>
-                <button id="group-leave-btn" class="px-4 py-1.5 bg-red-500/20 text-red-400 text-sm font-semibold rounded-full border border-red-500/30">
-                    <span id="group-leave-label">Leave</span>
-                </button>
-            </div>
-            <!-- Big timer -->
-            <div class="flex-1 flex flex-col items-center justify-center">
-                <div class="relative w-52 h-52 mb-8">
-                    <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="44" fill="none" stroke="#1C1C1E" stroke-width="8"/>
-                        <circle id="group-timer-ring" cx="50" cy="50" r="44" fill="none" stroke="url(#ga-grad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0"/>
-                        <defs>
-                            <linearGradient id="ga-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#a855f7"/>
-                                <stop offset="100%" stop-color="#ec4899"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span id="group-timer-display" class="text-5xl font-extrabold text-white tabular-nums">25:00</span>
-                        <span id="group-timer-status" class="text-xs text-gray-400 mt-1">Focus</span>
-                    </div>
-                </div>
-                <!-- Online members row -->
-                <div id="group-active-members" class="flex -space-x-2 mb-6"></div>
-                <p id="group-active-count" class="text-sm text-gray-500 mb-8"></p>
-                <!-- Controls -->
-                <div class="flex space-x-4">
-                    <button id="group-pause-btn" class="w-16 h-16 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                        <svg id="group-pause-icon" class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
-                    </button>
-                    <button id="group-stop-btn" class="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center">
-                        <svg class="w-7 h-7 text-red-400" fill="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: GROUP RESULT
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-group-result" class="page no-scrollbar flex flex-col items-center justify-start pt-6">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4">
-                <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            </div>
-            <h1 id="group-result-title" class="text-2xl font-extrabold text-white mb-1">Session Complete!</h1>
-            <p id="group-result-group-name" class="text-sm text-gray-500 mb-8"></p>
-            <!-- Leaderboard -->
-            <div class="w-full card p-4 mb-4">
-                <p id="group-result-lb-label" class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Leaderboard</p>
-                <div id="group-result-leaderboard" class="space-y-3"></div>
-            </div>
-            <!-- XP earned -->
-            <div class="w-full card p-4 mb-6">
-                <div class="flex items-center justify-between">
-                    <span id="group-result-xp-label" class="text-sm font-semibold text-gray-300">XP Earned</span>
-                    <span id="group-result-xp" class="text-lg font-extrabold text-purple-400">+50 XP</span>
-                </div>
-            </div>
-            <div class="flex space-x-3 w-full">
-                <button onclick="navigateTo('groups')" class="flex-1 py-3 bg-[#1C1C1E] text-white font-semibold rounded-2xl border border-white/10 transition-all active:scale-95">
-                    <span id="group-result-back-label">Back to Groups</span>
-                </button>
-                <button onclick="navigateTo('create-post')" class="flex-1 py-3 bg-white text-black font-bold rounded-2xl transition-all active:scale-95">
-                    <span id="group-result-share-label">Share</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: NOTIFICATIONS
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-notifications" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <button onclick="goBack()" class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <h1 id="notif-page-title" class="text-lg font-extrabold text-white">Notifications</h1>
-                <div class="w-9"></div>
-            </div>
-            <div id="notifications-list" class="space-y-2"></div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: GIGS
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-gigs" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <h1 id="gigs-page-title" class="text-lg font-extrabold text-white">Gigs</h1>
-                <button class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
-                </button>
-            </div>
-            <!-- Search -->
-            <div class="relative mb-4">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-                <input id="gigs-search" type="text" placeholder="" class="w-full bg-[#1C1C1E] text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/20">
-            </div>
-            <!-- Category pills -->
-            <div class="pill-tab-container flex overflow-x-auto space-x-2 pb-3 mb-4">
-                <button class="gig-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-white text-black" data-cat="all">All</button>
-                <button class="gig-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-cat="music">Music</button>
-                <button class="gig-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-cat="design">Design</button>
-                <button class="gig-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-cat="dev">Dev</button>
-                <button class="gig-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors bg-[#1C1C1E] text-gray-400" data-cat="photo">Photo</button>
-            </div>
-            <div id="gigs-list" class="space-y-3"></div>
-        </div>
-
-        <!-- ══════════════════════════════════════════════════════
-             PAGE: FRIENDS
-        ══════════════════════════════════════════════════════ -->
-        <div id="page-friends" class="page no-scrollbar">
-            <div class="flex items-center justify-between py-5">
-                <h1 id="friends-page-title" class="text-lg font-extrabold text-white">Friends</h1>
-                <button class="w-9 h-9 rounded-full bg-[#1C1C1E] flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                </button>
-            </div>
-            <!-- Search -->
-            <div class="relative mb-5">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-                <input id="friends-search" type="text" placeholder="" class="w-full bg-[#1C1C1E] text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-white/20">
-            </div>
-            <!-- Section: Online Now -->
-            <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3" id="friends-online-label">Online</h2>
-            <div id="friends-online-list" class="space-y-3 mb-6"></div>
-            <!-- Section: All Friends -->
-            <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3" id="friends-all-label">All Friends</h2>
-            <div id="friends-all-list" class="space-y-3"></div>
-        </div>
-    </main>
-
-    <!-- FAB -->
-    <button id="fab-btn" class="fixed bottom-24 right-4 w-14 h-14 bg-white text-black rounded-full flex items-center justify-center shadow-2xl z-50 transition-all duration-300 hover:scale-110 active:scale-95">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  <!-- ===== BOTTOM NAV ===== -->
+  <nav id="nav-bar" class="nav-bar flex justify-around items-center h-16 px-2">
+    <button class="nav-btn p-3 text-gray-500" data-page="home">
+      <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 22V12h6v10"/>
+      </svg>
+      <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V19a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1v-8.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+      </svg>
     </button>
+    <button class="nav-btn p-3 text-gray-500" data-page="friends">
+      <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+        <circle cx="9" cy="7" r="4" stroke-width="1.75"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z"/>
+      </svg>
+    </button>
+    <!-- CENTER: TuneOut -->
+    <button class="nav-btn p-3 text-gray-500" id="tuneout-nav-btn" data-page="tuneout">
+      <svg class="icon-outline w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+      </svg>
+      <svg class="icon-solid w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M6 2v6l4.002 4.002L6 16v6h12v-6l-4.002-4.002L18 8V2H6z"/>
+      </svg>
+    </button>
+    <button class="nav-btn p-3 text-gray-500" data-page="messages">
+      <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+      </svg>
+      <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z"/>
+        <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z"/>
+      </svg>
+    </button>
+    <button class="nav-btn p-3 text-gray-500" data-page="profile">
+      <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+      </svg>
+      <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd"/>
+      </svg>
+    </button>
+  </nav>
 
-    <!-- Notification banner -->
-    <div id="notification-banner">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-            </div>
-            <p id="notification-text" class="text-sm font-semibold text-white flex-1"></p>
-        </div>
-        <button id="notification-close" class="text-gray-500 hover:text-white ml-3 flex-shrink-0">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-    </div>
-
-    <!-- Nav bar -->
-    <nav class="nav-bar" id="bottom-nav">
-        <div class="flex items-center justify-around py-3 px-2">
-            <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="home">
-                <div class="notification-dot" id="home-dot"></div>
-                <svg class="icon-outline w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                <svg class="icon-solid w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
-            </button>
-            <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="gigs">
-                <svg class="icon-outline w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                <svg class="icon-solid w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6 6V4a2 2 0 012-2h8a2 2 0 012 2v2h2a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h2zm2-2h8v2H8V4zm-2 6a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm5 0a1 1 0 011-1h.01a1 1 0 110 2H13a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
-            </button>
-            <button class="nav-btn flex flex-col items-center p-3 text-gray-500" data-page="tuneout">
-                <svg class="icon-outline w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-                <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 100 20A10 10 0 0012 2zM4 12a8 8 0 1116 0A8 8 0 014 12zm8-3a1 1 0 011 1v3.586l2.707 2.707a1 1 0 01-1.414 1.414l-3-3A1 1 0 019 14v-4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
-            </button>
-            <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="friends">
-                <svg class="icon-outline w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <svg class="icon-solid w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 14.094A5.973 5.973 0 004 17v1H1v-1a3 3 0 013.75-2.906z"/></svg>
-            </button>
-            <button class="nav-btn flex flex-col items-center p-2 text-gray-500" data-page="profile">
-                <svg class="icon-outline w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                <svg class="icon-solid w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a4 4 0 100 8 4 4 0 000-8zM5 14a7 7 0 0114 0v1H5v-1z" clip-rule="evenodd"/></svg>
-            </button>
-        </div>
-    </nav>
-
-</div>
-
-<!-- Confirmation modal -->
-<div id="confirm-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[1000] hidden flex items-end justify-center pb-8">
-    <div class="bg-[#1C1C1E] rounded-2xl p-6 mx-4 w-full max-w-sm border border-white/10">
-        <h3 id="confirm-title" class="text-lg font-bold text-white text-center mb-2"></h3>
-        <p id="confirm-message" class="text-gray-400 text-sm text-center mb-6"></p>
-        <div class="flex flex-col space-y-2">
-            <button id="confirm-yes" class="w-full py-3 bg-red-500 text-white font-bold rounded-xl"></button>
-            <button id="confirm-no" class="w-full py-3 bg-[#2c2c2e] text-white font-semibold rounded-xl"></button>
-        </div>
-    </div>
-</div>
+</div><!-- #app -->
 
 <script>
-/* ================================================================
-   (DIS)CONNECT — Core JS
-   Part 6: navigation · i18n · profile/settings
-================================================================ */
-
-// ── i18n ──────────────────────────────────────────────────────
-const STRINGS = {
-    en: {
-        // Nav
-        home:'Home', explore:'Explore', groups:'Groups', profile:'Profile',
-        // Home
-        'good-morning':'Good morning', 'good-afternoon':'Good afternoon', 'good-evening':'Good evening',
-        'your-sessions':'Your Sessions', 'new-session':'New Session',
-        'daily-goal':'Daily Goal', 'focus-streak':'Focus Streak', 'hours-offline':'Hours Offline',
-        'recent-sessions':'Recent Sessions', 'view-all':'View All',
-        // Timer
-        'start-session':'Start Session', 'end-session':'End Session', 'pause':'Pause', 'resume':'Resume',
-        'focus':'Focus', 'break':'Break', 'session-complete':'Session Complete!',
-        // Profile
-        'edit-profile':'Edit Profile', 'save':'Save', 'change-photo':'Change Photo',
-        'name':'Name', 'username':'Username', 'bio':'Bio', 'skills':'Skills',
-        'sessions':'Sessions', 'best-streak':'Best Streak', 'gigs-done':'Gigs Done',
-        'posts':'Posts',
-        // Settings
-        'settings':'Settings', 'language':'Language', 'notifications':'Notifications',
-        'privacy':'Privacy', 'log-out':'Log Out',
-        // Groups
-        'all':'All', 'music':'Music', 'design':'Design', 'dev':'Dev', 'study':'Study',
-        'start':'Start', 'session-duration':'Session Duration', 'members':'Members',
-        'rules':'Rules', 'leave':'Leave',
-        'leaderboard':'Leaderboard', 'xp-earned':'XP Earned', 'back-to-groups':'Back to Groups',
-        'share':'Share', 'session-complete-group':'Session Complete!',
-        // Explore / feed
-        'discover':'Discover', 'trending':'Trending', 'latest':'Latest',
-        // Notifications
-        'all-notifs':'All', 'unread':'Unread',
-        // Create post
-        'new-post':'New Post', 'post':'Post', 'add-media':'Add Media', 'general':'General',
-        // DM / messages
-        'messages':'Messages', 'search':'Search', 'send':'Send',
-        // Misc
-        'follow':'Follow', 'message':'Message', 'rejoin':'Rejoin',
-    },
-    ja: {
-        home:'ホーム', explore:'探索', groups:'グループ', profile:'プロフィール',
-        'good-morning':'おはようございます', 'good-afternoon':'こんにちは', 'good-evening':'こんばんは',
-        'your-sessions':'セッション', 'new-session':'新しいセッション',
-        'daily-goal':'デイリー目標', 'focus-streak':'連続集中', 'hours-offline':'オフライン時間',
-        'recent-sessions':'最近のセッション', 'view-all':'すべて見る',
-        'start-session':'セッション開始', 'end-session':'セッション終了', 'pause':'一時停止', 'resume':'再開',
-        'focus':'集中', 'break':'休憩', 'session-complete':'セッション完了！',
-        'edit-profile':'プロフィール編集', 'save':'保存', 'change-photo':'写真を変更',
-        'name':'名前', 'username':'ユーザー名', 'bio':'自己紹介', 'skills':'スキル',
-        'sessions':'セッション', 'best-streak':'最長連続', 'gigs-done':'仕事完了',
-        'posts':'投稿',
-        'settings':'設定', 'language':'言語', 'notifications':'通知',
-        'privacy':'プライバシー', 'log-out':'ログアウト',
-        'all':'すべて', 'music':'音楽', 'design':'デザイン', 'dev':'開発', 'study':'勉強',
-        'start':'開始', 'session-duration':'セッション時間', 'members':'メンバー',
-        'rules':'ルール', 'leave':'退出',
-        'leaderboard':'リーダーボード', 'xp-earned':'獲得XP', 'back-to-groups':'グループに戻る',
-        'share':'シェア', 'session-complete-group':'セッション完了！',
-        'discover':'発見', 'trending':'トレンド', 'latest':'最新',
-        'all-notifs':'すべて', 'unread':'未読',
-        'new-post':'新しい投稿', 'post':'投稿する', 'add-media':'メディア追加', 'general':'一般',
-        'messages':'メッセージ', 'search':'検索', 'send':'送信',
-        'follow':'フォロー', 'message':'メッセージ', 'rejoin':'再参加',
-    }
-};
-
-let currentLang = localStorage.getItem('lang') || 'en';
-
-function t(key) {
-    return (STRINGS[currentLang] && STRINGS[currentLang][key]) || STRINGS['en'][key] || key;
-}
-
-function applyLang() {
-    // nav labels
-    const navMap = {
-        'nav-label-home':'home', 'nav-label-explore':'explore',
-        'nav-label-groups':'groups', 'nav-label-profile':'profile'
-    };
-    Object.entries(navMap).forEach(([id, key]) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = t(key);
-    });
-
-    // page titles & static labels — mapping: element-id → i18n key
-    const labelMap = {
-        'profile-page-title':'profile',
-        'settings-page-title':'settings',
-        'edit-profile-page-title':'edit-profile',
-        'create-post-title':'new-post',
-        'groups-page-title':'groups',
-        'settings-lang-label':'language',
-        'settings-edit-profile':'edit-profile',
-        'settings-notif':'notifications',
-        'settings-privacy':'privacy',
-        'settings-logout':'log-out',
-        'edit-profile-btn-label':'edit-profile',
-        'save-label':'save',
-        'change-photo-label':'change-photo',
-        'edit-name-label':'name',
-        'edit-handle-label':'username',
-        'edit-bio-label':'bio',
-        'edit-skills-label':'skills',
-        'profile-stat-sessions-label':'sessions',
-        'profile-stat-streak-label':'best-streak',
-        'profile-stat-hours-label':'hours-offline',
-        'profile-stat-gigs-label':'gigs-done',
-        'profile-posts-label':'posts',
-        'post-submit-label':'post',
-        'attach-media-label':'add-media',
-        'group-leave-label':'leave',
-        'group-result-lb-label':'leaderboard',
-        'group-result-xp-label':'xp-earned',
-        'group-result-back-label':'back-to-groups',
-        'group-result-share-label':'share',
-        'group-result-title':'session-complete-group',
-        'lobby-session-duration-label':'session-duration',
-        'lobby-members-label':'members',
-        'lobby-rules-label':'rules',
-        'lobby-start-label':'start',
-        'user-posts-label':'posts',
-    };
-    Object.entries(labelMap).forEach(([id, key]) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = t(key);
-    });
-
-    // Placeholder texts
-    const phMap = {
-        'post-content': currentLang === 'ja' ? '今どんな気分ですか？' : "What's on your mind?",
-        'groups-search-input': currentLang === 'ja' ? 'グループを検索…' : 'Search groups…',
-    };
-    Object.entries(phMap).forEach(([id, ph]) => {
-        const el = document.getElementById(id);
-        if (el) el.placeholder = ph;
-    });
-
-    // Lang buttons highlight
-    document.getElementById('lang-en-btn').className = `flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${currentLang==='en'?'bg-white text-black':'bg-[#2c2c2e] text-gray-400'}`;
-    document.getElementById('lang-ja-btn').className = `flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${currentLang==='ja'?'bg-white text-black':'bg-[#2c2c2e] text-gray-400'}`;
-
-    // greeting on home page
-    renderGreeting();
-}
-
-function setLang(lang) {
-    currentLang = lang;
-    localStorage.setItem('lang', lang);
-    applyLang();
-}
-
-// ── Navigation ────────────────────────────────────────────────
-const NAV_PAGES = ['home', 'explore', 'groups', 'profile'];
-let pageHistory = ['home'];
-
-function navigateTo(pageId) {
-    const current = pageHistory[pageHistory.length - 1];
-    if (current !== pageId) pageHistory.push(pageId);
-    showPage(pageId);
-}
-
-function goBack() {
-    if (pageHistory.length > 1) {
-        pageHistory.pop();
-        showPage(pageHistory[pageHistory.length - 1]);
-    } else {
-        showPage('home');
-    }
-}
-
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const page = document.getElementById('page-' + pageId);
-    if (page) {
-        page.classList.add('active');
-        page.scrollTop = 0;
-    }
-
-    // bottom nav highlight
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.toggle('active-nav', btn.dataset.page === pageId);
-    });
-
-    // show/hide bottom nav
-    const hideNav = ['timer', 'group-active', 'dm-chat', 'onboarding', 'splash'].includes(pageId);
-    document.getElementById('bottom-nav').style.display = hideNav ? 'none' : '';
-
-    // page-specific setup
-    if (pageId === 'home')         renderHomePage();
-    if (pageId === 'profile')      renderProfilePage();
-    if (pageId === 'edit-profile') fillEditProfile();
-    if (pageId === 'explore')      renderExploreFeed();
-    if (pageId === 'groups')       renderGroupsList();
-    if (pageId === 'notifications') renderNotifications();
-    if (pageId === 'messages')     renderMessagesList();
-}
-
-// ── User data ─────────────────────────────────────────────────
-function getUser() {
-    const defaults = {
-        name: 'Your Name',
-        handle: 'you',
-        bio: 'Building things offline.',
-        skills: 'Design, Music',
-        sessions: 0,
-        streak: 0,
-        hoursOffline: 0,
-        gigsDone: 0,
-        xp: 0,
-    };
-    try {
-        return Object.assign({}, defaults, JSON.parse(localStorage.getItem('user') || '{}'));
-    } catch { return defaults; }
-}
-
-function saveUser(data) {
-    localStorage.setItem('user', JSON.stringify(data));
-}
-
-function getInitials(name) {
-    return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
-
-// ── Greeting ──────────────────────────────────────────────────
-function renderGreeting() {
-    const h = new Date().getHours();
-    const key = h < 12 ? 'good-morning' : h < 18 ? 'good-afternoon' : 'good-evening';
-    const el = document.getElementById('greeting-text');
-    const nameEl = document.getElementById('greeting-name');
-    if (el) el.textContent = t(key) + ',';
-    if (nameEl) nameEl.textContent = getUser().name.split(' ')[0];
-}
-
-// ── Profile page ──────────────────────────────────────────────
-function renderProfilePage() {
-    const user = getUser();
-    const ini = getInitials(user.name);
-
-    const avatarLarge = document.getElementById('profile-avatar-large');
-    if (avatarLarge) avatarLarge.textContent = ini;
-
-    const nameEl = document.getElementById('profile-name');
-    if (nameEl) nameEl.textContent = user.name;
-
-    const handleEl = document.getElementById('profile-handle');
-    if (handleEl) handleEl.textContent = '@' + user.handle;
-
-    const bioEl = document.getElementById('profile-bio');
-    if (bioEl) bioEl.textContent = user.bio;
-
-    document.getElementById('profile-stat-sessions').textContent = user.sessions || 0;
-    document.getElementById('profile-stat-streak').textContent   = user.streak    || 0;
-    document.getElementById('profile-stat-hours').textContent    = user.hoursOffline || 0;
-    document.getElementById('profile-stat-gigs').textContent     = user.gigsDone  || 0;
-
-    // Posts grid (placeholder tiles)
-    const grid = document.getElementById('profile-posts-grid');
-    if (grid) {
-        grid.innerHTML = '';
-        const posts = JSON.parse(localStorage.getItem('posts') || '[]');
-        posts.slice(0, 9).forEach(p => {
-            const tile = document.createElement('div');
-            tile.className = 'aspect-square bg-[#1C1C1E] rounded-lg flex items-center justify-center text-xs text-gray-500 p-2 text-center overflow-hidden cursor-pointer';
-            tile.textContent = p.content ? p.content.slice(0, 40) : '…';
-            grid.appendChild(tile);
-        });
-        if (posts.length === 0) {
-            for (let i = 0; i < 6; i++) {
-                const tile = document.createElement('div');
-                tile.className = 'aspect-square bg-[#1C1C1E] rounded-lg';
-                grid.appendChild(tile);
-            }
-        }
-    }
-}
-
-// ── Edit Profile ──────────────────────────────────────────────
-function fillEditProfile() {
-    const user = getUser();
-    document.getElementById('edit-avatar').textContent = getInitials(user.name);
-    document.getElementById('edit-name-input').value   = user.name;
-    document.getElementById('edit-handle-input').value = user.handle;
-    document.getElementById('edit-bio-input').value    = user.bio;
-    document.getElementById('edit-skills-input').value = user.skills || '';
-}
-
-function saveProfile() {
-    const user = getUser();
-    user.name   = document.getElementById('edit-name-input').value.trim() || user.name;
-    user.handle = document.getElementById('edit-handle-input').value.trim().replace(/^@/, '') || user.handle;
-    user.bio    = document.getElementById('edit-bio-input').value.trim();
-    user.skills = document.getElementById('edit-skills-input').value.trim();
-    saveUser(user);
-
-    // update home avatar
-    renderGreeting();
-    const ha = document.getElementById('home-user-avatar');
-    if (ha) ha.textContent = getInitials(user.name);
-
-    navigateTo('profile');
-}
-
-// ── Settings lang buttons ─────────────────────────────────────
-function initSettings() {
-    document.getElementById('lang-en-btn').addEventListener('click', () => setLang('en'));
-    document.getElementById('lang-ja-btn').addEventListener('click', () => setLang('ja'));
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        if (confirm('Log out?')) {
-            localStorage.clear();
-            location.reload();
-        }
-    });
-    document.getElementById('save-profile-btn').addEventListener('click', saveProfile);
-}
-
-// ── Bottom nav ────────────────────────────────────────────────
-function initNav() {
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => navigateTo(btn.dataset.page));
-    });
-}
-
+'use strict';
 // ================================================================
-//  PART 7 — Timer · Groups · Create-Post · Explore · Notifications
+// JS will be added in subsequent tasks
 // ================================================================
-
-// ── Timer state ───────────────────────────────────────────────
-const TIMER = {
-    interval: null, remaining: 0, total: 0,
-    mode: 'focus', running: false, sessionMinutes: 25,
-};
-
-function fmtTime(sec) {
-    return String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0');
-}
-
-function updateTimerRing(remaining, total) {
-    const ring = document.getElementById('timer-ring');
-    if (!ring) return;
-    const pct = total > 0 ? remaining / total : 1;
-    ring.style.strokeDashoffset = 276.46 * (1 - pct);
-}
-
-function timerTick() {
-    if (TIMER.remaining <= 0) {
-        clearInterval(TIMER.interval); TIMER.running = false;
-        onTimerComplete(); return;
-    }
-    TIMER.remaining--;
-    document.getElementById('timer-display').textContent = fmtTime(TIMER.remaining);
-    updateTimerRing(TIMER.remaining, TIMER.total);
-}
-
-function onTimerComplete() {
-    const user = getUser();
-    user.sessions = (user.sessions||0) + 1;
-    user.hoursOffline = +(((user.hoursOffline||0) + TIMER.sessionMinutes/60).toFixed(1));
-    user.xp = (user.xp||0) + 25;
-    saveUser(user);
-    updateStreak();
-    const sessions = JSON.parse(localStorage.getItem('sessions')||'[]');
-    sessions.unshift({ date: new Date().toISOString(), duration: TIMER.sessionMinutes, xp: 25 });
-    localStorage.setItem('sessions', JSON.stringify(sessions.slice(0,50)));
-    renderSessionResult();
-    navigateTo('session-result');
-}
-
-function updateStreak() {
-    const user = getUser();
-    const today = new Date().toDateString();
-    const last  = localStorage.getItem('lastSessionDate');
-    if (last !== today) {
-        const yesterday = new Date(Date.now()-86400000).toDateString();
-        user.streak = last === yesterday ? (user.streak||0)+1 : 1;
-        if (user.streak > (user.bestStreak||0)) user.bestStreak = user.streak;
-        localStorage.setItem('lastSessionDate', today);
-        saveUser(user);
-    }
-}
-
-function startTimer(minutes) {
-    TIMER.sessionMinutes = minutes;
-    TIMER.remaining = TIMER.total = minutes * 60;
-    TIMER.mode = 'focus'; TIMER.running = true;
-    const disp = document.getElementById('timer-display');
-    if (disp) disp.textContent = fmtTime(TIMER.remaining);
-    updateTimerRing(TIMER.remaining, TIMER.total);
-    const ml = document.getElementById('timer-mode-label');
-    if (ml) ml.textContent = t('focus');
-    setPauseIcon(true);
-    clearInterval(TIMER.interval);
-    TIMER.interval = setInterval(timerTick, 1000);
-    navigateTo('timer');
-}
-
-function pauseResumeTimer() {
-    if (TIMER.running) {
-        clearInterval(TIMER.interval); TIMER.running = false; setPauseIcon(false);
-    } else {
-        TIMER.interval = setInterval(timerTick, 1000); TIMER.running = true; setPauseIcon(true);
-    }
-}
-
-function stopTimer() {
-    clearInterval(TIMER.interval); TIMER.running = false;
-    navigateTo('home'); renderHomePage();
-}
-
-function setPauseIcon(running) {
-    const ic = document.getElementById('pause-icon');
-    if (!ic) return;
-    ic.innerHTML = running
-        ? '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>'
-        : '<path d="M8 5v14l11-7z"/>';
-}
-
-function renderSessionResult() {
-    const user = getUser();
-    const title = document.getElementById('result-title');
-    if (title) title.textContent = t('session-complete');
-    const xpEl = document.getElementById('result-xp-value');
-    if (xpEl) xpEl.textContent = '+25 XP';
-    const durEl = document.getElementById('result-duration-value');
-    if (durEl) durEl.textContent = TIMER.sessionMinutes + 'm';
-    const strEl = document.getElementById('result-streak-value');
-    if (strEl) strEl.textContent = user.streak || 1;
-}
-
-function initTimerPage() {
-    const pb = document.getElementById('timer-pause-btn');
-    const sb = document.getElementById('timer-stop-btn');
-    if (pb) pb.addEventListener('click', pauseResumeTimer);
-    if (sb) sb.addEventListener('click', stopTimer);
-}
-
-// ── Home render ───────────────────────────────────────────────
-function renderHomePage() {
-    renderGreeting();
-    const user = getUser();
-    const ha = document.getElementById('home-user-avatar');
-    if (ha) ha.textContent = getInitials(user.name);
-    const goalEl   = document.getElementById('home-stat-goal');
-    const streakEl = document.getElementById('home-stat-streak');
-    const hoursEl  = document.getElementById('home-stat-hours');
-    if (goalEl)   goalEl.textContent   = user.sessions    || 0;
-    if (streakEl) streakEl.textContent = user.streak      || 0;
-    if (hoursEl)  hoursEl.textContent  = user.hoursOffline|| '0.0';
-
-    const list = document.getElementById('recent-sessions-list');
-    if (!list) return;
-    const sessions = JSON.parse(localStorage.getItem('sessions')||'[]');
-    list.innerHTML = '';
-    if (!sessions.length) {
-        list.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">${currentLang==='ja'?'まだセッションがありません':'No sessions yet'}</p>`;
-        return;
-    }
-    sessions.slice(0,3).forEach(s => {
-        const date = new Date(s.date).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{month:'short',day:'numeric'});
-        const item = document.createElement('div');
-        item.className = 'flex items-center justify-between py-3 border-b border-white/5 last:border-0';
-        item.innerHTML = `
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <div><p class="text-sm font-semibold text-white">${s.duration}m session</p><p class="text-xs text-gray-500">${date}</p></div>
-            </div>
-            <span class="text-xs font-semibold text-purple-400">+${s.xp||25} XP</span>`;
-        list.appendChild(item);
-    });
-
-    // Home community feed preview (3 posts)
-    const feed = document.getElementById('feed-container');
-    if (feed) {
-        const saved  = JSON.parse(localStorage.getItem('posts')||'[]');
-        const sample = [
-            { author:'Alex', handle:'alex', content:'3h deep work session done. Nothing beats flow state.', likes:24, cat:'dev', date:new Date().toISOString() },
-            { author:'Saki', handle:'saki', content:'Finished the album artwork. Going offline for a week.', likes:41, cat:'design', date:new Date().toISOString() },
-        ];
-        feed.innerHTML = '';
-        [...saved, ...sample].slice(0,3).forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'card p-4';
-            card.innerHTML = `
-                <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">${(p.author||'?')[0]}</div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center space-x-2 mb-1">
-                            <span class="text-sm font-bold text-white">${p.author}</span>
-                            <span class="text-xs text-gray-500">@${p.handle||p.author.toLowerCase()}</span>
-                        </div>
-                        <p class="text-sm text-gray-300 leading-relaxed">${p.content}</p>
-                    </div>
-                </div>`;
-            feed.appendChild(card);
-        });
-    }
-}
-
-// ── Start-session duration picker ─────────────────────────────
-let selectedDuration = 25;
-
-function initStartSession() {
-    const display  = document.getElementById('duration-display');
-    const minusBtn = document.getElementById('dur-minus');
-    const plusBtn  = document.getElementById('dur-plus');
-    const startBtn = document.getElementById('start-session-btn');
-
-    document.querySelectorAll('.duration-preset').forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedDuration = parseInt(btn.dataset.min);
-            if (display) display.innerHTML = `${selectedDuration}<span class="text-xl text-gray-400">m</span>`;
-            document.querySelectorAll('.duration-preset').forEach(b => {
-                b.className = `duration-preset flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${b===btn?'bg-white text-black':'bg-[#2c2c2e] text-gray-400'}`;
-            });
-        });
-    });
-    if (minusBtn) minusBtn.addEventListener('click', () => {
-        selectedDuration = Math.max(5, selectedDuration-5);
-        if (display) display.innerHTML = `${selectedDuration}<span class="text-xl text-gray-400">m</span>`;
-    });
-    if (plusBtn) plusBtn.addEventListener('click', () => {
-        selectedDuration = Math.min(120, selectedDuration+5);
-        if (display) display.innerHTML = `${selectedDuration}<span class="text-xl text-gray-400">m</span>`;
-    });
-    if (startBtn) startBtn.addEventListener('click', () => startTimer(selectedDuration));
-}
-
-// ── Groups ────────────────────────────────────────────────────
-const SAMPLE_GROUPS = [
-    { id:'g1', name:'Late Night Coders', cat:'dev',    members:8,  desc:'Midnight coding sprints with lofi.', rules:'Mic off during session.' },
-    { id:'g2', name:'Beat Makers Unite', cat:'music',  members:5,  desc:'Produce together, share WIPs.',       rules:"Respect each other's process." },
-    { id:'g3', name:'UI/UX Focus Room',  cat:'design', members:12, desc:'Design deep work sessions.',         rules:'No social media during session.' },
-    { id:'g4', name:'Study Grind',       cat:'study',  members:20, desc:'Pomodoro study sessions.',           rules:'Stay on task.' },
-    { id:'g5', name:'General Hustle',    cat:'general',members:33, desc:'Any skill, any goal. Just focus.',   rules:'Be respectful.' },
-];
-
-let activeGroupCat = 'all';
-let selectedGroup  = null;
-
-function renderGroupsList() {
-    const list = document.getElementById('groups-list');
-    if (!list) return;
-    const filtered = activeGroupCat === 'all' ? SAMPLE_GROUPS : SAMPLE_GROUPS.filter(g => g.cat === activeGroupCat);
-    list.innerHTML = '';
-    filtered.forEach(g => {
-        const card = document.createElement('div');
-        card.className = 'card p-4 cursor-pointer active:scale-[0.98] transition-transform';
-        card.innerHTML = `
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-bold text-white">${g.name}</h3>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-400">${g.cat}</span>
-            </div>
-            <p class="text-xs text-gray-500 mb-3">${g.desc}</p>
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-1">
-                    <span class="w-2 h-2 bg-green-400 rounded-full"></span>
-                    <span class="text-xs text-gray-400">${g.members} members</span>
-                </div>
-                <button class="join-btn px-3 py-1 bg-white text-black text-xs font-bold rounded-full">${t('start')}</button>
-            </div>`;
-        card.querySelector('.join-btn').addEventListener('click', e => { e.stopPropagation(); openGroupLobby(g); });
-        card.addEventListener('click', () => openGroupLobby(g));
-        list.appendChild(card);
-    });
-}
-
-function openGroupLobby(group) {
-    selectedGroup = group;
-    document.getElementById('lobby-group-name').textContent = group.name;
-    document.getElementById('lobby-group-cat').textContent  = group.cat;
-    document.getElementById('lobby-desc').textContent       = group.desc;
-    document.getElementById('lobby-rules-text').textContent = group.rules;
-
-    const membersEl = document.getElementById('lobby-members-list');
-    if (membersEl) {
-        membersEl.innerHTML = '';
-        ['Alex','Saki','Jake','Mina','Tom','Rei'].slice(0, Math.min(group.members,6)).forEach(name => {
-            const chip = document.createElement('div');
-            chip.className = 'flex items-center space-x-1.5';
-            chip.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white">${name[0]}</div><span class="text-xs text-gray-400">${name}</span>`;
-            membersEl.appendChild(chip);
-        });
-        if (group.members > 6) {
-            const more = document.createElement('span');
-            more.className = 'text-xs text-gray-500 self-center';
-            more.textContent = `+${group.members-6} more`;
-            membersEl.appendChild(more);
-        }
-    }
-
-    let lobbyDur = 25;
-    const durDisp  = document.getElementById('lobby-duration-display');
-    const updateD  = () => { if (durDisp) durDisp.innerHTML = `${lobbyDur}<span class="text-lg text-gray-400">m</span>`; };
-    updateD();
-    const dm = document.getElementById('lobby-dur-minus');
-    const dp = document.getElementById('lobby-dur-plus');
-    if (dm) dm.onclick = () => { lobbyDur = Math.max(5, lobbyDur-5); updateD(); };
-    if (dp) dp.onclick = () => { lobbyDur = Math.min(120, lobbyDur+5); updateD(); };
-    const sb = document.getElementById('lobby-start-btn');
-    if (sb) sb.onclick = () => startGroupSession(lobbyDur);
-
-    navigateTo('group-lobby');
-}
-
-// ── Group session ─────────────────────────────────────────────
-const GTIMER = { interval: null, remaining: 0, total: 0, running: false };
-
-function startGroupSession(minutes) {
-    GTIMER.remaining = GTIMER.total = minutes * 60;
-    GTIMER.running = true;
-    const nameEl = document.getElementById('group-active-name');
-    if (nameEl && selectedGroup) nameEl.textContent = selectedGroup.name;
-    updateGroupTimerDisplay();
-    renderGroupActiveMembers();
-    clearInterval(GTIMER.interval);
-    GTIMER.interval = setInterval(() => {
-        if (GTIMER.remaining <= 0) { clearInterval(GTIMER.interval); GTIMER.running = false; endGroupSession(); return; }
-        GTIMER.remaining--; updateGroupTimerDisplay();
-    }, 1000);
-    const pb = document.getElementById('group-pause-btn');
-    const sb = document.getElementById('group-stop-btn');
-    if (pb) pb.onclick = toggleGroupPause;
-    if (sb) sb.onclick = () => { clearInterval(GTIMER.interval); endGroupSession(); };
-    navigateTo('group-active');
-}
-
-function updateGroupTimerDisplay() {
-    const d = document.getElementById('group-timer-display');
-    if (d) d.textContent = fmtTime(GTIMER.remaining);
-    const ring = document.getElementById('group-timer-ring');
-    if (ring) ring.style.strokeDashoffset = 276.46 * (1 - (GTIMER.total > 0 ? GTIMER.remaining/GTIMER.total : 1));
-}
-
-function toggleGroupPause() {
-    const ic = document.getElementById('group-pause-icon');
-    if (GTIMER.running) {
-        clearInterval(GTIMER.interval); GTIMER.running = false;
-        if (ic) ic.innerHTML = '<path d="M8 5v14l11-7z"/>';
-    } else {
-        GTIMER.interval = setInterval(() => {
-            if (GTIMER.remaining<=0){clearInterval(GTIMER.interval);endGroupSession();return;}
-            GTIMER.remaining--;updateGroupTimerDisplay();
-        },1000); GTIMER.running = true;
-        if (ic) ic.innerHTML = '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>';
-    }
-}
-
-function renderGroupActiveMembers() {
-    const el = document.getElementById('group-active-members');
-    const cnt = document.getElementById('group-active-count');
-    if (!el) return;
-    el.innerHTML = '';
-    ['A','S','J','M','T'].forEach(n => {
-        const av = document.createElement('div');
-        av.className = 'w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white ring-2 ring-black';
-        av.textContent = n; el.appendChild(av);
-    });
-    if (cnt && selectedGroup) cnt.textContent = `${selectedGroup.members} members online`;
-}
-
-function endGroupSession() {
-    const user = getUser();
-    user.sessions = (user.sessions||0)+1; user.xp = (user.xp||0)+50;
-    saveUser(user); updateStreak();
-    const nameEl = document.getElementById('group-result-group-name');
-    if (nameEl && selectedGroup) nameEl.textContent = selectedGroup.name;
-    const xpEl = document.getElementById('group-result-xp');
-    if (xpEl) xpEl.textContent = '+50 XP';
-    const lb = document.getElementById('group-result-leaderboard');
-    if (lb) {
-        const u = getUser();
-        const entries = [{name:u.name,xp:50,you:true},{name:'Alex',xp:50},{name:'Saki',xp:45}];
-        lb.innerHTML = '';
-        entries.forEach((e,i) => {
-            const row = document.createElement('div');
-            row.className = 'flex items-center justify-between';
-            row.innerHTML = `<div class="flex items-center space-x-3"><span class="text-sm font-bold text-gray-500 w-4">${i+1}</span><div class="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white">${e.name[0]}</div><span class="text-sm font-semibold text-white">${e.name}${e.you?' <span class="text-xs text-gray-500">(you)</span>':''}</span></div><span class="text-sm font-bold text-purple-400">+${e.xp} XP</span>`;
-            lb.appendChild(row);
-        });
-    }
-    navigateTo('group-result');
-}
-
-// ── Create Post ───────────────────────────────────────────────
-function initCreatePost() {
-    const textarea = document.getElementById('post-content');
-    const submitBtn = document.getElementById('post-submit-btn');
-    const catBtns = document.querySelectorAll('.post-cat-btn');
-    let selectedCat = 'general';
-
-    catBtns.forEach(btn => btn.addEventListener('click', () => {
-        selectedCat = btn.dataset.cat;
-        catBtns.forEach(b => b.className = `post-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${b===btn?'bg-white text-black':'bg-[#1C1C1E] text-gray-400'}`);
-    }));
-
-    if (textarea && submitBtn) {
-        textarea.addEventListener('input', () => {
-            const ok = textarea.value.trim().length > 0;
-            submitBtn.disabled = !ok;
-            submitBtn.className = `px-4 py-1.5 bg-white text-black text-sm font-bold rounded-full transition-all ${ok?'opacity-100 active:scale-95':'opacity-50'}`;
-        });
-        submitBtn.addEventListener('click', () => {
-            const content = textarea.value.trim();
-            if (!content) return;
-            const posts = JSON.parse(localStorage.getItem('posts')||'[]');
-            posts.unshift({ id:Date.now(), content, cat:selectedCat, date:new Date().toISOString(), likes:0, author:getUser().name, handle:getUser().handle });
-            localStorage.setItem('posts', JSON.stringify(posts.slice(0,100)));
-            textarea.value = '';
-            submitBtn.disabled = true;
-            submitBtn.className = 'px-4 py-1.5 bg-white text-black text-sm font-bold rounded-full opacity-50 transition-all';
-            navigateTo('explore'); renderExploreFeed();
-        });
-    }
-}
-
-// ── Explore feed ──────────────────────────────────────────────
-function renderExploreFeed() {
-    const feed = document.getElementById('explore-feed');
-    if (!feed) return;
-    const saved = JSON.parse(localStorage.getItem('posts')||'[]');
-    const sample = [
-        { author:'Alex', handle:'alex', content:'3h deep work session done. Nothing beats flow state.', likes:24, cat:'dev', date:new Date().toISOString() },
-        { author:'Saki', handle:'saki', content:'Finished the album artwork. Going offline for a week to reset.', likes:41, cat:'design', date:new Date().toISOString() },
-        { author:'Jake', handle:'jake', content:'Recorded 4 new demos. The less I look at my phone, the better the music.', likes:17, cat:'music', date:new Date().toISOString() },
-    ];
-    const all = [...saved, ...sample];
-    feed.innerHTML = '';
-    all.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'card p-4 mb-3';
-        const date = new Date(p.date).toLocaleDateString(currentLang==='ja'?'ja-JP':'en-US',{month:'short',day:'numeric'});
-        card.innerHTML = `
-            <div class="flex items-start space-x-3 mb-3">
-                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">${(p.author||'?')[0]}</div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm font-bold text-white">${p.author}</span>
-                        <span class="text-xs text-gray-500">@${p.handle||p.author.toLowerCase()}</span>
-                        <span class="text-xs text-gray-600 ml-auto">${date}</span>
-                    </div>
-                    <p class="text-sm text-gray-300 mt-1 leading-relaxed">${p.content}</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4 ml-12">
-                <button class="like-btn flex items-center space-x-1 text-xs text-gray-500 transition-colors">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    <span class="like-count">${p.likes||0}</span>
-                </button>
-                <span class="text-xs px-2 py-0.5 bg-white/5 rounded-full text-gray-500">${p.cat||'general'}</span>
-            </div>`;
-        card.querySelector('.like-btn').addEventListener('click', function() {
-            const liked = this.dataset.liked==='1';
-            this.dataset.liked = liked?'0':'1';
-            this.querySelector('.like-count').textContent = parseInt(this.querySelector('.like-count').textContent)+(liked?-1:1);
-            this.classList.toggle('text-pink-400',!liked);
-        });
-        feed.appendChild(card);
-    });
-}
-
-// ── Group cat filter ──────────────────────────────────────────
-function initGroupsCatFilter() {
-    document.querySelectorAll('.group-cat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            activeGroupCat = btn.dataset.cat;
-            document.querySelectorAll('.group-cat-btn').forEach(b =>
-                b.className = `group-cat-btn flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold ${b===btn?'bg-white text-black':'bg-[#1C1C1E] text-gray-400'}`
-            );
-            renderGroupsList();
-        });
-    });
-}
-
-// ── Notifications ─────────────────────────────────────────────
-function renderNotifications() {
-    const list = document.getElementById('notifications-list');
-    if (!list) return;
-    const items = [
-        { icon:'👍', text: currentLang==='ja'?'Alexがあなたの投稿にいいねしました':'Alex liked your post', time:'2m' },
-        { icon:'🎯', text: currentLang==='ja'?'3日連続達成！':'3-day streak achieved!', time:'1h' },
-        { icon:'👥', text: currentLang==='ja'?'Sakiがグループに参加しました':'Saki joined your group', time:'3h' },
-    ];
-    list.innerHTML = '';
-    items.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center space-x-3 py-4 border-b border-white/5 last:border-0';
-        row.innerHTML = `<div class="w-10 h-10 rounded-full bg-[#2c2c2e] flex items-center justify-center text-xl flex-shrink-0">${item.icon}</div><div class="flex-1 min-w-0"><p class="text-sm text-white leading-snug">${item.text}</p><p class="text-xs text-gray-500 mt-0.5">${item.time} ago</p></div>`;
-        list.appendChild(row);
-    });
-}
-
-// ================================================================
-//  PART 8 — Onboarding · DM · Explore tabs · Focus-type · Boot
-// ================================================================
-
-// ── Onboarding ────────────────────────────────────────────────
-function initOnboarding() {
-    let slide = 0;
-    const total = 3;
-
-    function goSlide(n) {
-        document.querySelectorAll('.onboarding-slide').forEach((el, i) => el.classList.toggle('hidden', i !== n));
-        document.querySelectorAll('[data-dot]').forEach(d => {
-            d.className = `w-2 h-2 rounded-full ${parseInt(d.dataset.dot) === n ? 'bg-white' : 'bg-white/30'}`;
-        });
-        const btn = document.getElementById('onboarding-next-btn');
-        if (btn) btn.textContent = n === total - 1 ? "Let's Go" : 'Continue';
-    }
-
-    const nextBtn = document.getElementById('onboarding-next-btn');
-    const skipBtn = document.getElementById('onboarding-skip-btn');
-
-    if (nextBtn) nextBtn.addEventListener('click', () => {
-        if (slide < total - 1) { slide++; goSlide(slide); }
-        else finishOnboarding();
-    });
-    if (skipBtn) skipBtn.addEventListener('click', finishOnboarding);
-
-    goSlide(0);
-}
-
-function finishOnboarding() {
-    localStorage.setItem('onboarded', '1');
-    navigateTo('home');
-    renderHomePage();
-}
-
-// ── DM / Messages ─────────────────────────────────────────────
-const SAMPLE_CONVOS = [
-    { id:'c1', name:'Alex', handle:'alex', last:'Yo, how was your session?', time:'2m', unread:2 },
-    { id:'c2', name:'Saki', handle:'saki', last:'Drop the beat when you\'re done', time:'1h', unread:0 },
-    { id:'c3', name:'Jake', handle:'jake', last:'Let\'s do a group session tmrw', time:'3h', unread:1 },
-];
-
-let activeDM = null;
-
-function renderMessagesList() {
-    const list = document.getElementById('messages-list');
-    if (!list) return;
-    list.innerHTML = '';
-    SAMPLE_CONVOS.forEach(c => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center space-x-3 py-3 border-b border-white/5 last:border-0 cursor-pointer active:bg-white/5 rounded-xl px-2 -mx-2 transition-colors';
-        row.innerHTML = `
-            <div class="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-base font-bold text-white flex-shrink-0">${c.name[0]}</div>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-bold text-white">${c.name}</span>
-                    <span class="text-xs text-gray-500">${c.time}</span>
-                </div>
-                <p class="text-xs text-gray-500 truncate mt-0.5">${c.last}</p>
-            </div>
-            ${c.unread ? `<div class="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">${c.unread}</div>` : ''}`;
-        row.addEventListener('click', () => openDM(c));
-        list.appendChild(row);
-    });
-}
-
-function openDM(convo) {
-    activeDM = convo;
-    const titleEl = document.getElementById('dm-title');
-    if (titleEl) titleEl.textContent = convo.name;
-    renderDMChat(convo);
-    navigateTo('dm');
-}
-
-function renderDMChat(convo) {
-    const chat = document.getElementById('dm-chat-messages');
-    if (!chat) return;
-    const msgs = JSON.parse(localStorage.getItem('dm-' + convo.id) || '[]');
-    const sample = [
-        { text: convo.last, from: 'them', time: convo.time },
-    ];
-    const all = [...sample, ...msgs];
-    chat.innerHTML = '';
-    all.forEach(m => {
-        const bubble = document.createElement('div');
-        const isMe = m.from === 'me';
-        bubble.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-3`;
-        bubble.innerHTML = `<div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${isMe ? 'bg-white text-black rounded-br-sm' : 'bg-[#2c2c2e] text-white rounded-bl-sm'}">${m.text}</div>`;
-        chat.appendChild(bubble);
-    });
-    chat.scrollTop = chat.scrollHeight;
-}
-
-function initDM() {
-    const input   = document.getElementById('dm-input');
-    const sendBtn = document.getElementById('dm-send-btn');
-
-    if (sendBtn && input) {
-        sendBtn.addEventListener('click', sendDMMessage);
-        input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDMMessage(); } });
-    }
-}
-
-function sendDMMessage() {
-    const input = document.getElementById('dm-input');
-    if (!input || !activeDM) return;
-    const text = input.value.trim();
-    if (!text) return;
-    const msgs = JSON.parse(localStorage.getItem('dm-' + activeDM.id) || '[]');
-    msgs.push({ text, from: 'me', time: 'now' });
-    localStorage.setItem('dm-' + activeDM.id, JSON.stringify(msgs));
-    input.value = '';
-    renderDMChat(activeDM);
-}
-
-// ── Explore tabs ──────────────────────────────────────────────
-function initExploreTabs() {
-    document.querySelectorAll('.explore-tab').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.explore-tab').forEach(b =>
-                b.className = `explore-tab px-4 py-1.5 rounded-full text-sm font-semibold ${b === btn ? 'bg-white text-black' : 'bg-[#1C1C1E] text-gray-400'}`
-            );
-            renderExploreFeed();
-        });
-    });
-}
-
-// ── Focus type picker ──────────────────────────────────────────
-function initFocusTypePicker() {
-    document.querySelectorAll('.focus-type-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.focus-type-btn').forEach(b =>
-                b.className = `focus-type-btn py-3 rounded-xl text-sm font-semibold ${b === btn ? 'bg-white text-black' : 'bg-[#2c2c2e] text-gray-400'}`
-            );
-        });
-    });
-}
-
-// ── Home "New Session" button wiring ──────────────────────────
-function initHomeButtons() {
-    const nsBtn = document.getElementById('new-session-btn');
-    if (nsBtn) nsBtn.addEventListener('click', () => navigateTo('start-session'));
-
-    const ha = document.getElementById('home-user-avatar');
-    if (ha) ha.addEventListener('click', () => navigateTo('profile'));
-}
-
-// ── showPage extension: extra page hooks ──────────────────────
-const _origShowPage = showPage;
-// patch showPage to trigger extra renders
-const _showPage = function(pageId) {
-    _origShowPage(pageId);
-    if (pageId === 'messages') renderMessagesList();
-    if (pageId === 'explore')  renderExploreFeed();
-};
-// replace global
-Object.assign(window, { showPage: _showPage, navigateTo: function(p){ pageHistory[pageHistory.length-1]!==p && pageHistory.push(p); _showPage(p); } });
-
-// ── applyLang: extra labels for new pages ─────────────────────
-const _origApplyLang = applyLang;
-function applyLangExtra() {
-    _origApplyLang();
-    const extras = {
-        'explore-page-title': 'explore',
-        'start-session-title': currentLang==='ja'?'新しいセッション':'New Session',
-    };
-    Object.entries(extras).forEach(([id, val]) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = typeof val === 'string' && STRINGS[currentLang]?.[val] ? t(val) : val;
-    });
-    const ph = document.getElementById('explore-search');
-    if (ph) ph.placeholder = currentLang==='ja' ? '投稿を検索…' : 'Search posts…';
-    const startLbl = document.getElementById('start-btn-label');
-    if (startLbl) startLbl.textContent = currentLang==='ja' ? 'セッション開始' : 'Start Session';
-    const nsLbl = document.getElementById('home-new-session-label');
-    if (nsLbl) nsLbl.textContent = currentLang==='ja' ? '新しいセッション' : 'New Session';
-    const dmPh = document.getElementById('dm-input');
-    if (dmPh) dmPh.placeholder = currentLang==='ja' ? 'メッセージを送信…' : 'Send a message…';
-    // home stat labels
-    const hgl = document.getElementById('home-stat-goal-label');
-    if (hgl) hgl.textContent   = currentLang==='ja' ? 'セッション' : 'Sessions';
-    const hsl = document.getElementById('home-stat-streak-label');
-    if (hsl) hsl.textContent   = currentLang==='ja' ? '連続' : 'Streak';
-    const hhl = document.getElementById('home-stat-hours-label');
-    if (hhl) hhl.textContent   = currentLang==='ja' ? 'オフライン時間' : 'Hrs Offline';
-    const hrl = document.getElementById('home-recent-label');
-    if (hrl) hrl.textContent   = currentLang==='ja' ? '最近のセッション' : 'Recent Sessions';
-    // nav labels (existing nav uses text nodes — set aria-label)
-    document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
-        const key = btn.dataset.page;
-        const map = { home:'home', gigs:'gigs', tuneout:'TuneOut', friends:'friends', profile:'profile' };
-        if (map[key]) btn.setAttribute('aria-label', t(key) || map[key]);
-    });
-}
-
-// ── Boot ──────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    initNav();
-    initSettings();
-    initTimerPage();
-    initStartSession();
-    initCreatePost();
-    initGroupsCatFilter();
-    initDM();
-    initExploreTabs();
-    initFocusTypePicker();
-    initHomeButtons();
-    applyLangExtra();
-    renderHomePage();
-
-    // Onboarding check
-    if (!localStorage.getItem('onboarded')) {
-        initOnboarding();
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        const ob = document.getElementById('page-onboarding');
-        if (ob) ob.classList.add('active');
-        document.getElementById('bottom-nav').style.display = 'none';
-    } else {
-        showPage('home');
-    }
-});
+console.log('TuneOut scaffold ready');
 </script>
 </body>
 </html>
