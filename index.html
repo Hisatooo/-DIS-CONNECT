@@ -1575,6 +1575,484 @@ function sendDMMsg() {
 }
 
 // ================================================================
+// PROFILE PAGE
+// ================================================================
+function renderProfile() {
+  const u = getUser() || {};
+  const history = getHistory();
+  const page = document.getElementById('page-profile');
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center justify-between px-4 pt-6 pb-4">
+      <h1 class="text-2xl font-black text-white">Profile</h1>
+      <button id="settings-btn" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#1C1C1E] text-gray-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- User info -->
+    <div class="px-4 flex items-center space-x-4 mb-4">
+      <img id="prof-avatar" src="${u.avatar||''}" class="w-18 h-18 rounded-full border-2 border-[#2C2C2E] cursor-pointer" style="width:72px;height:72px;" alt="">
+      <div class="flex-grow min-w-0">
+        <h2 class="text-xl font-black text-white">${u.name||'ユーザー'}</h2>
+        <p class="text-gray-600 text-sm">${u.handle||''}</p>
+        ${u.bio ? `<p class="text-gray-400 text-sm mt-0.5 line-clamp-2">${u.bio}</p>` : ''}
+      </div>
+    </div>
+
+    <div class="px-4 mb-5">
+      <button id="edit-profile-btn" class="w-full border border-gray-800 text-white font-semibold py-2.5 rounded-full text-sm hover:bg-white/5 transition">
+        プロフィールを編集
+      </button>
+    </div>
+
+    <!-- Weekly Record -->
+    <div class="px-4 mb-5">
+      <div class="card p-4">
+        <div class="flex items-baseline justify-between mb-4">
+          <h3 class="font-bold text-white text-sm">Weekly Record</h3>
+          <p class="text-xs text-gray-600" id="weekly-total-label"></p>
+        </div>
+        <div class="flex items-end space-x-1.5 h-24" id="weekly-chart"></div>
+        <div class="flex space-x-1.5 mt-2"      id="weekly-labels"></div>
+      </div>
+    </div>
+
+    <!-- Session history -->
+    <div class="px-4">
+      <h3 class="font-bold text-white text-sm mb-3">セッション履歴</h3>
+      <div id="history-list" class="space-y-2 pb-4"></div>
+    </div>
+  `;
+
+  document.getElementById('settings-btn').addEventListener('click', () => renderSettings());
+  document.getElementById('edit-profile-btn').addEventListener('click', () => renderEditProfile());
+  document.getElementById('prof-avatar').addEventListener('click', () => renderEditProfile());
+
+  buildWeeklyChart('weekly-chart', 'weekly-labels', 'weekly-total-label', getWeekData(history));
+  buildHistoryList(history);
+}
+
+function getWeekData(history) {
+  const days = [0,0,0,0,0,0,0]; // minutes per day (Sun=0)
+  const now  = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0,0,0,0);
+  history.forEach(h => {
+    const d = new Date(h.date);
+    if (d >= startOfWeek) days[d.getDay()] += Math.floor(h.duration / 60);
+  });
+  return days;
+}
+
+function buildWeeklyChart(chartId, labelsId, totalId, data) {
+  const chartEl  = document.getElementById(chartId);
+  const labelsEl = document.getElementById(labelsId);
+  const totalEl  = document.getElementById(totalId);
+  if (!chartEl || !labelsEl) return;
+
+  const DAY_LABELS = ['日','月','火','水','木','金','土'];
+  const today  = new Date().getDay();
+  const maxVal = Math.max(...data, 1);
+  const total  = data.reduce((a,b) => a+b, 0);
+
+  chartEl.innerHTML  = '';
+  labelsEl.innerHTML = '';
+  if (totalEl) totalEl.textContent = `今週 ${Math.floor(total/60)}h ${total%60}m`;
+
+  DAY_LABELS.forEach((day, i) => {
+    const pct     = data[i] / maxVal * 100;
+    const isToday = i === today;
+
+    // Bar column
+    const col = document.createElement('div');
+    col.className = 'week-col';
+    col.innerHTML = `
+      <div class="week-bar-wrap" style="flex:1;">
+        <div class="week-bar-fill ${isToday?'today':''}" style="height:${pct}%;"></div>
+      </div>
+    `;
+    chartEl.appendChild(col);
+
+    // Label
+    const lbl = document.createElement('div');
+    lbl.className = `flex-1 text-center text-xs ${isToday ? 'text-white font-bold' : 'text-gray-700'}`;
+    lbl.textContent = day;
+    labelsEl.appendChild(lbl);
+  });
+}
+
+function buildHistoryList(history) {
+  const el = document.getElementById('history-list');
+  if (!el) return;
+  const sorted = [...history].reverse().slice(0, 10);
+  if (sorted.length === 0) {
+    el.innerHTML = '<p class="text-gray-700 text-sm text-center mt-4">まだセッションがありません</p>';
+    return;
+  }
+  sorted.forEach(h => {
+    el.insertAdjacentHTML('beforeend', `
+      <div class="card p-3 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 ${h.completed?'text-gray-300':'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+          </svg>
+        </div>
+        <div class="flex-grow">
+          <p class="font-bold text-white text-sm">${fmtDuration(h.duration)}</p>
+          <p class="text-gray-600 text-xs">${fmtDate(h.date)}</p>
+        </div>
+        ${h.completed
+          ? '<span class="text-xs text-gray-600 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">完了</span>'
+          : '<span class="text-xs text-gray-700 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">中断</span>'}
+      </div>
+    `);
+  });
+}
+
+// ================================================================
+// EDIT PROFILE
+// ================================================================
+function renderEditProfile() {
+  const u = getUser() || {};
+  const page = document.getElementById('page-edit-profile');
+  page.innerHTML = `
+    <div class="flex justify-between items-center mb-6">
+      <button id="ep-cancel" class="text-gray-500 font-semibold py-1 px-1">キャンセル</button>
+      <h2 class="text-base font-bold text-white">プロフィール編集</h2>
+      <button id="ep-save" class="text-white font-bold py-1 px-1">保存</button>
+    </div>
+
+    <div class="flex flex-col items-center mb-6">
+      <div class="relative cursor-pointer" id="ep-avatar-wrap">
+        <img id="ep-avatar-preview" src="${u.avatar||''}" class="w-24 h-24 rounded-full object-cover border-2 border-gray-800" alt="">
+        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <input type="file" id="ep-avatar-input" class="hidden" accept="image/*">
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーネーム</label>
+        <input id="ep-name"   class="input-field" type="text" value="${u.name||''}">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーID (@)</label>
+        <input id="ep-handle" class="input-field" type="text" value="${(u.handle||'').replace('@','')}">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">自己紹介</label>
+        <textarea id="ep-bio" class="input-field resize-none h-20 rounded-xl">${u.bio||''}</textarea>
+      </div>
+    </div>
+  `;
+
+  goto('edit-profile');
+
+  document.getElementById('ep-cancel').addEventListener('click', () => goto('profile'));
+  document.getElementById('ep-save').addEventListener('click', () => {
+    const u = getUser() || {};
+    u.name   = document.getElementById('ep-name').value.trim()   || u.name;
+    u.handle = '@' + document.getElementById('ep-handle').value.replace('@','').trim();
+    u.bio    = document.getElementById('ep-bio').value.trim();
+    const prev = document.getElementById('ep-avatar-preview').src;
+    if (prev && !prev.startsWith('https://placehold')) u.avatar = prev;
+    saveUser(u);
+    goto('profile');
+  });
+  document.getElementById('ep-avatar-wrap').addEventListener('click', () =>
+    document.getElementById('ep-avatar-input').click()
+  );
+  document.getElementById('ep-avatar-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { document.getElementById('ep-avatar-preview').src = ev.target.result; };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ================================================================
+// SETTINGS PAGE
+// ================================================================
+function renderSettings() {
+  const u = getUser() || {};
+  const page = document.getElementById('page-settings');
+  page.innerHTML = `
+    <div class="flex items-center mb-6">
+      <button id="st-back" class="p-2 -ml-2 text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="text-xl font-bold text-white ml-2">設定</h2>
+    </div>
+
+    <div class="space-y-4">
+      <!-- Account -->
+      <div class="card p-4 space-y-0">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">アカウント</p>
+        <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">メールアドレス</span>
+          <span class="text-gray-600 text-sm">${u.email||'—'}</span>
+        </div>
+        <div class="flex justify-between items-center py-2.5">
+          <span class="text-white text-sm">アカウントの公開設定</span>
+          <div class="flex items-center space-x-2">
+            <span id="privacy-lbl" class="text-gray-600 text-sm">${u.isPublic?'公開':'非公開'}</span>
+            <div id="privacy-toggle" class="toggle ${u.isPublic?'on':''}">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App settings -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">アプリ設定</p>
+        <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">言語</span>
+          <span class="text-gray-600 text-sm">日本語</span>
+        </div>
+        <div class="flex justify-between items-center py-2.5">
+          <span class="text-white text-sm">通知</span>
+          <div id="notif-toggle" class="toggle on">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blocked apps -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">ブロック対象アプリ</p>
+        <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
+          ${BLOCKED_APPS.map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
+          <button class="w-12 h-12 rounded-xl bg-[#2C2C2E] border border-gray-800 flex items-center justify-center flex-shrink-0 text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button id="logout-btn" class="w-full bg-red-900/25 text-red-400 font-bold py-4 rounded-2xl hover:bg-red-900/40 transition mt-2">
+        ログアウト
+      </button>
+    </div>
+  `;
+
+  goto('settings');
+
+  document.getElementById('st-back').addEventListener('click', () => goto('profile'));
+  document.getElementById('privacy-toggle').addEventListener('click', () => {
+    const u = getUser() || {};
+    u.isPublic = !u.isPublic;
+    saveUser(u);
+    document.getElementById('privacy-toggle').classList.toggle('on', u.isPublic);
+    document.getElementById('privacy-lbl').textContent = u.isPublic ? '公開' : '非公開';
+  });
+  document.getElementById('notif-toggle').addEventListener('click', e => {
+    e.currentTarget.classList.toggle('on');
+  });
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    showConfirm('ログアウト', 'ログアウトしますか？', 'ログアウト', () => {
+      localStorage.removeItem('to_user');
+      goto('login');
+      renderLogin();
+    });
+  });
+}
+
+// ================================================================
+// USER PROFILE (OTHER USERS)
+// ================================================================
+function openUserProfile(userId) {
+  const f = friendById(userId);
+  if (!f) return;
+  S.viewingUserId = userId;
+  const page = document.getElementById('page-user-profile');
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 py-4 border-b border-gray-900">
+      <button id="up-back" class="p-2 -ml-2 text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+    </div>
+    <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10">
+      <div class="flex items-center space-x-4 py-5">
+        <img src="${f.avatar}" class="w-16 h-16 rounded-full border-2 border-gray-800" alt="">
+        <div>
+          <h2 class="text-xl font-black text-white">${f.name}</h2>
+          <p class="text-gray-600 text-sm">${f.handle}</p>
+          ${f.bio ? `<p class="text-gray-400 text-sm mt-1">${f.bio}</p>` : ''}
+        </div>
+      </div>
+
+      <div class="flex space-x-3 mb-6">
+        <button id="up-msg-btn" class="flex-1 bg-white text-black font-bold py-3 rounded-full text-sm">
+          メッセージ
+        </button>
+        ${f.isFriend ? `<button id="up-remove-btn" class="flex-1 border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm">フレンド解除</button>` : ''}
+      </div>
+
+      <!-- Weekly record -->
+      <div class="card p-4 mb-4">
+        <h3 class="font-bold text-white text-sm mb-3">Weekly Record</h3>
+        <div class="flex items-end space-x-1.5 h-16" id="up-chart"></div>
+        <div class="flex space-x-1.5 mt-2"       id="up-labels"></div>
+      </div>
+
+      <!-- Their posts -->
+      <h3 class="font-bold text-white text-sm mb-3">投稿</h3>
+      <div class="space-y-2">
+        ${MOCK_POSTS.filter(p=>p.userId===userId).map(p=>`
+          <div class="card p-3 flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-bold text-white text-sm">${fmtDuration(p.duration)}</p>
+              ${p.task ? `<p class="text-gray-600 text-xs">${p.task}</p>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  goto('user-profile');
+  // mock week data for other user
+  buildWeeklyChart('up-chart','up-labels', null, [45,0,90,30,120,0,60]);
+
+  document.getElementById('up-back').addEventListener('click', () => history.length > 1 ? goto('home') : goto('home'));
+  document.getElementById('up-msg-btn').addEventListener('click', () => openDM(f));
+  document.getElementById('up-remove-btn')?.addEventListener('click', () => {
+    showConfirm('フレンド解除', `${f.name} をフレンドから解除しますか？`, '解除', () => {
+      f.isFriend = false;
+      goto('home');
+    });
+  });
+}
+
+// ================================================================
+// NOTIFICATIONS PAGE
+// ================================================================
+function renderNotifications() {
+  const page = document.getElementById('page-notifications');
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 py-4 border-b border-gray-900">
+      <button id="notif-back" class="p-2 -ml-2 text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="text-xl font-bold text-white ml-2">通知</h2>
+    </div>
+    <div class="flex-grow overflow-y-auto no-scrollbar divide-y divide-gray-900">
+      ${[
+        { icon:'❤️', color:'red', text:'<b>Alice</b> があなたの投稿にいいねしました', sub:'2時間前' },
+        { icon:'💬', color:'gray', text:'<b>Ben</b> がコメントしました: "いいね！"', sub:'5時間前' },
+        { icon:'⏱', color:'gray', text:'<b>Chloe</b> がデトックスを開始しました', sub:'昨日' },
+      ].map(n=>`
+        <div class="flex items-start space-x-3 px-4 py-4">
+          <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5 text-base">${n.icon}</div>
+          <div>
+            <p class="text-sm text-white">${n.text}</p>
+            <p class="text-xs text-gray-700 mt-0.5">${n.sub}</p>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  goto('notifications');
+  document.getElementById('notif-back').addEventListener('click', () => goto('home'));
+}
+
+// ================================================================
+// MANUAL START SHEET (TIME PICKER + SLIDER)
+// ================================================================
+function openManualSheet() {
+  document.getElementById('manual-sheet').classList.add('open');
+  initTimePicker();
+  initSlider('manual-slider','manual-thumb','manual-reveal', () => {
+    const h = getPickerValue('picker-hours');
+    const m = getPickerValue('picker-minutes');
+    const total = h * 3600 + m * 60;
+    if (total === 0) {
+      resetSlider('manual-slider','manual-thumb','manual-reveal');
+      document.getElementById('manual-slider').classList.add('shake');
+      setTimeout(() => document.getElementById('manual-slider').classList.remove('shake'), 450);
+      return;
+    }
+    document.getElementById('manual-sheet').classList.remove('open');
+    S.challengeData = { duration: total };
+    startSession(total, false);
+  });
+}
+document.getElementById('manual-cancel-btn').addEventListener('click', () => {
+  document.getElementById('manual-sheet').classList.remove('open');
+  resetSlider('manual-slider','manual-thumb','manual-reveal');
+});
+
+let pickerInited = false;
+function initTimePicker() {
+  if (pickerInited) return;
+  pickerInited = true;
+  const hPicker = document.getElementById('picker-hours');
+  const mPicker = document.getElementById('picker-minutes');
+
+  function buildPicker(el, count, step) {
+    const pad = document.createElement('div'); pad.className = 'picker-pad';
+    el.appendChild(pad.cloneNode());
+    for (let i = 0; i < count; i += step) {
+      const item = document.createElement('div');
+      item.className = 'picker-item';
+      item.textContent = String(i).padStart(2,'0');
+      el.appendChild(item);
+    }
+    el.appendChild(pad.cloneNode());
+  }
+  buildPicker(hPicker, 6,  1);  // 0-5 hours
+  buildPicker(mPicker, 60, 5);  // 0,5,10...55 min
+
+  [hPicker, mPicker].forEach(p => {
+    p.addEventListener('scroll', () => highlightCenter(p));
+    // scroll to 0 by default
+    setTimeout(() => highlightCenter(p), 50);
+  });
+}
+
+function highlightCenter(picker) {
+  const center = picker.scrollTop + picker.clientHeight / 2;
+  picker.querySelectorAll('.picker-item').forEach(item => {
+    const itemCenter = item.offsetTop + item.offsetHeight / 2;
+    item.style.opacity = Math.abs(center - itemCenter) < item.offsetHeight * 0.6 ? '1' : '0.2';
+  });
+}
+
+function getPickerValue(pickerId) {
+  const picker = document.getElementById(pickerId);
+  const center = picker.scrollTop + picker.clientHeight / 2;
+  let best = null, bestDist = Infinity;
+  picker.querySelectorAll('.picker-item').forEach(item => {
+    const dist = Math.abs(center - (item.offsetTop + item.offsetHeight / 2));
+    if (dist < bestDist) { bestDist = dist; best = item; }
+  });
+  return best ? parseInt(best.textContent) : 0;
+}
+
+// ================================================================
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
