@@ -386,6 +386,24 @@
   <!-- ===================== NOTIFICATIONS ===================== -->
   <div id="page-notifications" class="page flex flex-col"></div>
 
+  <!-- ===================== PREMIUM ===================== -->
+  <div id="page-premium" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
+
+  <!-- ===================== CREATE GROUP ===================== -->
+  <div id="page-create-group" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
+  <!-- ===================== INVITE SHEET ===================== -->
+  <div id="invite-sheet" style="position:fixed;inset:0;z-index:200;pointer-events:none;opacity:0;transition:opacity 0.25s;">
+    <div id="invite-overlay" class="absolute inset-0 bg-black/60"></div>
+    <div id="invite-drawer" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#1C1C1E] rounded-t-3xl p-5" style="transform:translateX(-50%) translateY(100%);transition:transform 0.35s cubic-bezier(0.25,1,0.5,1);">
+      <div class="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-5"></div>
+      <h2 class="text-lg font-black text-white mb-1" id="invite-sheet-title">フレンドを招待</h2>
+      <p class="text-xs text-gray-600 mb-4" id="invite-sheet-subtitle"></p>
+      <div id="invite-friends-list" class="space-y-2 max-h-72 overflow-y-auto no-scrollbar"></div>
+      <button id="invite-close-btn" class="mt-4 w-full py-3 rounded-2xl bg-[#2C2C2E] text-gray-400 font-semibold text-sm">閉じる</button>
+    </div>
+  </div>
+
   <!-- ===== COMMENT PANEL (slide from right) ===== -->
   <div id="comment-panel">
     <div class="flex-shrink-0 flex items-center px-4 py-3 border-b border-gray-900 relative">
@@ -550,6 +568,8 @@ const MOCK_GROUPS = [
     id: 'g1', name: '朝活デトックス部', emoji: '🌅',
     color: '#f97316',
     members: ['alice', 'ben', 'chloe'],
+    maxMembers: 5,
+    inviteOnly: true,
     description: '毎朝7時〜一緒にスマホ断ち！',
     activeSince: Date.now() - 1200000,
     isActive: true,
@@ -558,6 +578,8 @@ const MOCK_GROUPS = [
     id: 'g2', name: '週末チャレンジ', emoji: '🏔️',
     color: '#8b5cf6',
     members: ['david', 'alice'],
+    maxMembers: 5,
+    inviteOnly: true,
     description: '週末は2時間のデジタルデトックスにチャレンジ',
     activeSince: null,
     isActive: false,
@@ -566,9 +588,22 @@ const MOCK_GROUPS = [
     id: 'g3', name: 'スタディグループ', emoji: '📚',
     color: '#14b8a6',
     members: ['chloe', 'david', 'ben', 'alice'],
+    maxMembers: 5,
+    inviteOnly: true,
     description: '試験前の集中タイムをみんなで',
     activeSince: null,
     isActive: false,
+  },
+  {
+    id: 'g4', name: '夜活瞑想部', emoji: '🌙',
+    color: '#6366f1',
+    members: ['alice', 'emma'],
+    maxMembers: 5,
+    inviteOnly: true,
+    description: '夜の瞑想セッションで一日をリセット',
+    activeSince: null,
+    isActive: false,
+    pendingInvite: { from: 'alice' },
   },
 ];
 
@@ -628,6 +663,26 @@ const saveDM     = (id, msgs) => localStorage.setItem(`to_dm_${id}`, JSON.string
 // ================================================================
 // UTILS
 // ================================================================
+function getStreak(history) {
+  const completed = history.filter(h => h.completed);
+  if (!completed.length) return 0;
+  function dateKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  const dates = new Set(completed.map(h => dateKey(new Date(h.date))));
+  const now = new Date();
+  const todayKey = dateKey(now);
+  const startOffset = dates.has(todayKey) ? 0 : 1;
+  let streak = 0;
+  for (let i = startOffset; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    if (dates.has(dateKey(d))) streak++;
+    else break;
+  }
+  return streak;
+}
+
 function fmtDuration(sec, alwaysHours = false) {
   sec = Math.max(0, Math.floor(sec));
   const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
@@ -648,7 +703,8 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // NAVIGATION
 // ================================================================
 const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
-                'notifications','challenge','session','interrupt','post-session'];
+                'notifications','challenge','session','interrupt','post-session',
+                'premium','create-group'];
 
 function goto(page) {
   // Stop friend timers when leaving friends page
@@ -1452,7 +1508,46 @@ function renderGroupsList() {
   if (!list) return;
   list.innerHTML = '';
 
-  MOCK_GROUPS.forEach(g => {
+  // Pending invitations section
+  const pendingGroups = MOCK_GROUPS.filter(g => g.pendingInvite);
+  if (pendingGroups.length) {
+    const inviteSection = document.createElement('div');
+    inviteSection.className = 'mb-4';
+    inviteSection.innerHTML = `
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">招待が届いています</p>
+      ${pendingGroups.map(g => {
+        const fromUser = friendById(g.pendingInvite.from);
+        return `
+          <div class="card p-4 mb-2" style="border-color:${g.color}33;">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" style="background:${g.color}22;border:1.5px solid ${g.color}55">${g.emoji}</div>
+              <div class="flex-grow min-w-0">
+                <p class="font-bold text-white text-sm">${g.name}</p>
+                <p class="text-xs text-gray-500">${fromUser ? fromUser.name : g.pendingInvite.from}から招待が届きました</p>
+              </div>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style="background:${g.color}22;color:${g.color};">招待</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-white invite-accept-btn" data-gid="${g.id}" style="background:${g.color};">参加する</button>
+              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-gray-400 bg-[#2C2C2E] invite-decline-btn" data-gid="${g.id}">断る</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    `;
+    list.appendChild(inviteSection);
+  }
+
+  // My groups (no pendingInvite)
+  const myGroups = MOCK_GROUPS.filter(g => !g.pendingInvite);
+  if (myGroups.length) {
+    const mySection = document.createElement('div');
+    mySection.className = 'mb-3';
+    mySection.innerHTML = `<p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">マイグループ</p>`;
+    list.appendChild(mySection);
+  }
+
+  myGroups.forEach(g => {
     const activeMembers = g.members.filter(id => {
       const f = friendById(id);
       return f && f.sessionStart;
@@ -1460,14 +1555,17 @@ function renderGroupsList() {
     const elapsed = g.isActive ? Math.floor((Date.now() - g.activeSince) / 1000) : 0;
 
     const card = document.createElement('div');
-    card.className = 'card p-4 cursor-pointer hover:bg-[#2C2C2E] transition';
+    card.className = 'card p-4 cursor-pointer hover:bg-[#2C2C2E] transition mb-3';
     card.innerHTML = `
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:${g.color}22; border:1.5px solid ${g.color}55">${g.emoji}</div>
           <div>
-            <p class="font-bold text-white text-base">${g.name}</p>
-            <p class="text-xs text-gray-600">${g.members.length}人のメンバー</p>
+            <div class="flex items-center gap-1.5">
+              <p class="font-bold text-white text-base">${g.name}</p>
+              <svg class="w-3.5 h-3.5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers}人</p>
           </div>
         </div>
         ${g.isActive
@@ -1490,13 +1588,30 @@ function renderGroupsList() {
     list.appendChild(card);
   });
 
+  // Invite accept/decline handlers
+  list.querySelectorAll('.invite-accept-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const g = MOCK_GROUPS.find(x => x.id === btn.dataset.gid);
+      if (g) { delete g.pendingInvite; renderGroupsList(); }
+    });
+  });
+  list.querySelectorAll('.invite-decline-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = MOCK_GROUPS.findIndex(x => x.id === btn.dataset.gid);
+      if (idx !== -1) { MOCK_GROUPS.splice(idx, 1); renderGroupsList(); }
+    });
+  });
+
   // Add "新しいグループ" button
   const addBtn = document.createElement('button');
   addBtn.className = 'w-full card p-4 flex items-center justify-center gap-2 text-gray-600 font-semibold text-sm border-dashed border-gray-800 hover:bg-[#2C2C2E] transition';
   addBtn.innerHTML = `
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-    新しいグループを作成
+    新しいグループを作成（招待制・最大5名）
   `;
+  addBtn.addEventListener('click', () => renderCreateGroup());
   list.appendChild(addBtn);
 }
 
@@ -1513,10 +1628,18 @@ function renderGroupDetail(groupId) {
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:${g.color}22;border:1.5px solid ${g.color}55">${g.emoji}</div>
-      <div>
-        <h1 class="text-xl font-black text-white">${g.name}</h1>
-        <p class="text-xs text-gray-600">${g.members.length}人のメンバー</p>
+      <div class="flex-grow">
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-black text-white">${g.name}</h1>
+          ${g.inviteOnly ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>招待制</span>` : ''}
+        </div>
+        <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5}人 · 最大${g.maxMembers||5}名</p>
       </div>
+      ${g.members.length < (g.maxMembers||5) ? `
+      <button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        招待
+      </button>` : `<span class="text-xs text-gray-600 flex-shrink-0">満員</span>`}
     </div>
 
     ${g.isActive ? `
@@ -1572,11 +1695,9 @@ function renderGroupDetail(groupId) {
 
   document.getElementById('gd-back').addEventListener('click', () => {
     goto('friends');
-    // Switch to groups tab
-    setTimeout(() => {
-      document.getElementById('tab-groups-btn')?.click();
-    }, 50);
+    setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
   });
+  document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
 
   goto('group-detail');
 }
@@ -1791,16 +1912,24 @@ function sendDMMsg() {
 function renderProfile() {
   const u = getUser() || {};
   const history = getHistory();
+  const streak = getStreak(history);
+  const totalSessions = history.filter(h => h.completed).length;
   const page = document.getElementById('page-profile');
   page.innerHTML = `
     <div class="flex-shrink-0 flex items-center justify-between px-4 pt-6 pb-4">
       <h1 class="text-2xl font-black text-white">Profile</h1>
-      <button id="settings-btn" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#1C1C1E] text-gray-500">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-      </button>
+      <div class="flex items-center gap-2">
+        <button id="premium-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold" style="background:linear-gradient(135deg,#f59e0b22,#f9731622);border:1px solid #f59e0b44;color:#f59e0b;">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm2 3h10v2H7v-2z"/></svg>
+          プレミアム
+        </button>
+        <button id="settings-btn" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#1C1C1E] text-gray-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- User info -->
@@ -1817,6 +1946,24 @@ function renderProfile() {
       <button id="edit-profile-btn" class="w-full border border-gray-800 text-white font-semibold py-2.5 rounded-full text-sm hover:bg-white/5 transition">
         プロフィールを編集
       </button>
+    </div>
+
+    <!-- Streak + Stats -->
+    <div class="px-4 mb-5 grid grid-cols-2 gap-3">
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:#f9731618;border:1.5px solid #f9731644;">🔥</div>
+        <div>
+          <p class="text-2xl font-black text-white leading-none">${streak}</p>
+          <p class="text-xs text-gray-600 mt-0.5">日連続</p>
+        </div>
+      </div>
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:#ffffff0d;border:1.5px solid #ffffff18;">✅</div>
+        <div>
+          <p class="text-2xl font-black text-white leading-none">${totalSessions}</p>
+          <p class="text-xs text-gray-600 mt-0.5">完了セッション</p>
+        </div>
+      </div>
     </div>
 
     <!-- Weekly Record -->
@@ -1841,6 +1988,7 @@ function renderProfile() {
   document.getElementById('settings-btn').addEventListener('click', () => renderSettings());
   document.getElementById('edit-profile-btn').addEventListener('click', () => renderEditProfile());
   document.getElementById('prof-avatar').addEventListener('click', () => renderEditProfile());
+  document.getElementById('premium-btn').addEventListener('click', () => renderPremium());
 
   buildWeeklyChart('weekly-chart', 'weekly-labels', 'weekly-total-label', getWeekData(history));
   buildHistoryList(history);
@@ -2333,6 +2481,206 @@ function maybeRestoreSession() {
   }
   localStorage.removeItem('to_active_session');
   return false;
+}
+
+// ================================================================
+// INVITE SHEET
+// ================================================================
+function renderInviteSheet(group) {
+  const sheet = document.getElementById('invite-sheet');
+  const drawer = document.getElementById('invite-drawer');
+  const overlay = document.getElementById('invite-overlay');
+
+  const remaining = (group.maxMembers || 5) - group.members.length;
+  document.getElementById('invite-sheet-title').textContent = `${group.name}に招待`;
+  document.getElementById('invite-sheet-subtitle').textContent = `あと${remaining}人招待できます（最大${group.maxMembers||5}名）`;
+
+  const friendsList = document.getElementById('invite-friends-list');
+  const invitableFriends = MOCK_FRIENDS.filter(f => f.isFriend && !group.members.includes(f.id));
+
+  if (invitableFriends.length === 0) {
+    friendsList.innerHTML = '<p class="text-gray-600 text-sm text-center py-4">招待できるフレンドがいません</p>';
+  } else {
+    friendsList.innerHTML = invitableFriends.map(f => `
+      <div class="flex items-center justify-between py-2">
+        <div class="flex items-center gap-3">
+          <img src="${f.avatar}" class="w-10 h-10 rounded-full" alt="${f.name}">
+          <div>
+            <p class="font-semibold text-white text-sm">${f.name}</p>
+            <p class="text-xs text-gray-600">${f.handle}</p>
+          </div>
+        </div>
+        <button class="text-xs font-bold px-3 py-1.5 rounded-full invite-send-btn" data-uid="${f.id}"
+          style="background:${group.color}22;color:${group.color};border:1px solid ${group.color}44;">招待する</button>
+      </div>
+    `).join('');
+    friendsList.querySelectorAll('.invite-send-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.textContent = '招待済み';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+      });
+    });
+  }
+
+  sheet.style.pointerEvents = 'auto';
+  sheet.style.opacity = '1';
+  requestAnimationFrame(() => {
+    drawer.style.transform = 'translateX(-50%) translateY(0)';
+  });
+
+  function closeSheet() {
+    sheet.style.opacity = '0';
+    drawer.style.transform = 'translateX(-50%) translateY(100%)';
+    setTimeout(() => { sheet.style.pointerEvents = 'none'; }, 350);
+  }
+  document.getElementById('invite-close-btn').onclick = closeSheet;
+  overlay.onclick = closeSheet;
+}
+
+// ================================================================
+// CREATE GROUP
+// ================================================================
+function renderCreateGroup() {
+  const page = document.getElementById('page-create-group');
+  const ALL_COLORS = ['#f97316','#8b5cf6','#14b8a6','#6366f1','#ec4899','#10b981','#f59e0b','#ef4444'];
+  const ALL_EMOJIS = ['🌅','🏔️','📚','🌙','🎯','🧘','💪','🌿','🎵','⭐'];
+  let selectedColor = ALL_COLORS[0];
+  let selectedEmoji = ALL_EMOJIS[0];
+
+  page.innerHTML = `
+    <div class="flex items-center justify-between mb-6 px-1">
+      <button id="cg-cancel" class="text-gray-500 font-semibold">キャンセル</button>
+      <h2 class="text-base font-bold text-white">新規グループ</h2>
+      <button id="cg-create" class="text-white font-bold">作成</button>
+    </div>
+
+    <!-- Emoji + Color picker -->
+    <div class="flex flex-col items-center mb-6">
+      <div id="cg-icon-preview" class="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl mb-3 cursor-pointer" style="background:${selectedColor}22;border:2px solid ${selectedColor}55;">${selectedEmoji}</div>
+      <div class="flex gap-2 flex-wrap justify-center mb-3">
+        ${ALL_EMOJIS.map(e => `<button class="cg-emoji-btn w-9 h-9 text-xl rounded-xl ${e===selectedEmoji?'bg-white/10':'bg-[#2C2C2E]'} flex items-center justify-center" data-emoji="${e}">${e}</button>`).join('')}
+      </div>
+      <div class="flex gap-2">
+        ${ALL_COLORS.map(c => `<button class="cg-color-btn w-7 h-7 rounded-full border-2 ${c===selectedColor?'border-white':'border-transparent'}" data-color="${c}" style="background:${c};"></button>`).join('')}
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">グループ名</label>
+        <input id="cg-name" class="input-field" type="text" placeholder="例: 朝活デトックス部" maxlength="20">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">説明（任意）</label>
+        <input id="cg-desc" class="input-field" type="text" placeholder="グループの目的を一言で">
+      </div>
+      <div class="card p-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <div>
+            <p class="text-sm font-semibold text-white">招待制</p>
+            <p class="text-xs text-gray-600">招待したフレンドのみ参加可能</p>
+          </div>
+        </div>
+        <div class="w-11 h-6 rounded-full bg-white flex items-center px-0.5 justify-end"><div class="w-5 h-5 rounded-full bg-black"></div></div>
+      </div>
+      <div class="card p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-white">最大メンバー数</p>
+          <p class="text-xs text-gray-600">グループに参加できる上限</p>
+        </div>
+        <span class="text-white font-black text-lg">5名</span>
+      </div>
+    </div>
+  `;
+  goto('create-group');
+
+  document.getElementById('cg-cancel').addEventListener('click', () => {
+    goto('friends');
+    setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+  });
+  document.getElementById('cg-create').addEventListener('click', () => {
+    const name = document.getElementById('cg-name').value.trim();
+    if (!name) { document.getElementById('cg-name').classList.add('shake'); setTimeout(() => document.getElementById('cg-name').classList.remove('shake'), 500); return; }
+    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, description: document.getElementById('cg-desc').value.trim() || 'グループの説明なし', activeSince: null, isActive: false };
+    MOCK_GROUPS.push(newGroup);
+    goto('friends');
+    setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+  });
+  page.querySelectorAll('.cg-emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedEmoji = btn.dataset.emoji;
+      page.querySelectorAll('.cg-emoji-btn').forEach(b => b.className = b.className.replace('bg-white/10','bg-[#2C2C2E]'));
+      btn.className = btn.className.replace('bg-[#2C2C2E]','bg-white/10');
+      document.getElementById('cg-icon-preview').textContent = selectedEmoji;
+    });
+  });
+  page.querySelectorAll('.cg-color-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedColor = btn.dataset.color;
+      page.querySelectorAll('.cg-color-btn').forEach(b => b.style.borderColor = 'transparent');
+      btn.style.borderColor = 'white';
+      const preview = document.getElementById('cg-icon-preview');
+      preview.style.background = `${selectedColor}22`;
+      preview.style.borderColor = `${selectedColor}55`;
+    });
+  });
+}
+
+// ================================================================
+// PREMIUM
+// ================================================================
+function renderPremium() {
+  const page = document.getElementById('page-premium');
+  const FEATURES = [
+    { icon: '🔥', title: 'ストリークバッジ', desc: '連続記録を特別なバッジでアピール', locked: true },
+    { icon: '📊', title: '詳細アナリティクス', desc: '月次・年次の統計データを表示', locked: true },
+    { icon: '👥', title: 'グループ無制限作成', desc: '複数グループを自由に作成・管理', locked: true },
+    { icon: '🎨', title: 'カスタムテーマ', desc: 'プロフィールカラーと背景をカスタマイズ', locked: true },
+    { icon: '🔔', title: 'スマートリマインダー', desc: 'AIが最適なデトックス時間を提案', locked: true },
+    { icon: '🏆', title: 'リーダーボード', desc: 'フレンドとのランキング比較', locked: true },
+  ];
+  page.innerHTML = `
+    <div class="flex items-center px-4 pt-6 pb-4 gap-3">
+      <button id="prem-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-2xl font-black text-white">プレミアム</h1>
+    </div>
+
+    <!-- Hero card -->
+    <div class="mx-4 mb-6 rounded-3xl p-6 text-center relative overflow-hidden" style="background:linear-gradient(135deg,#f59e0b18,#f9731618);border:1px solid #f59e0b33;">
+      <div class="text-5xl mb-3">👑</div>
+      <h2 class="text-2xl font-black text-white mb-1">TuneOut Premium</h2>
+      <p class="text-sm text-gray-400 mb-4">デトックス体験をさらにパワーアップ</p>
+      <div class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold text-gray-600 bg-[#2C2C2E] border border-gray-800">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        近日公開予定
+      </div>
+    </div>
+
+    <!-- Features list -->
+    <div class="px-4 space-y-3 pb-10">
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">プレミアム機能（予定）</p>
+      ${FEATURES.map(f => `
+        <div class="card p-4 flex items-center gap-4 opacity-70">
+          <div class="w-12 h-12 rounded-2xl bg-[#2C2C2E] flex items-center justify-center text-2xl flex-shrink-0">${f.icon}</div>
+          <div class="flex-grow">
+            <p class="font-bold text-white text-sm">${f.title}</p>
+            <p class="text-xs text-gray-600 mt-0.5">${f.desc}</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+      `).join('')}
+
+      <div class="card p-4 mt-4" style="border-color:#f59e0b22;">
+        <p class="text-xs text-gray-600 text-center">プレミアムの詳細が決まり次第、<br>こちらでお知らせします。</p>
+      </div>
+    </div>
+  `;
+  goto('premium');
+  document.getElementById('prem-back').addEventListener('click', () => goto('profile'));
 }
 
 // ================================================================
