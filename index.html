@@ -799,6 +799,208 @@ document.getElementById('banner-join-btn').addEventListener('click', () => {
 });
 
 // ================================================================
+// HOME FEED
+// ================================================================
+function renderHome() {
+  const u = getUser();
+  document.getElementById('page-home').innerHTML = `
+    <div class="flex-shrink-0 flex items-center justify-between px-4 pt-6 pb-3">
+      <h1 class="text-2xl font-black text-white">TuneOut</h1>
+      <button id="notif-icon-btn" class="relative w-10 h-10 flex items-center justify-center rounded-full bg-[#1C1C1E]">
+        <div class="notif-dot" id="notif-dot-btn"></div>
+        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </button>
+    </div>
+    <div class="flex-shrink-0 flex space-x-6 px-4 border-b border-gray-900 pb-3">
+      <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">Following</button>
+      <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
+    </div>
+    <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
+  `;
+  document.getElementById('notif-icon-btn').addEventListener('click', () => goto('notifications'));
+  document.querySelectorAll('.feed-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.feedTab = btn.dataset.tab;
+      renderHome();
+    });
+  });
+  renderFeedList();
+}
+
+function renderFeedList() {
+  const list = document.getElementById('feed-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const posts = S.feedTab === 'following'
+    ? MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isFriend)
+    : MOCK_POSTS;
+
+  posts.forEach(p => {
+    if (p.type === 'ad') {
+      list.insertAdjacentHTML('beforeend', `
+        <div class="py-4 border-b border-gray-900">
+          <div class="flex items-center space-x-2 mb-2">
+            <span class="text-xs text-gray-600 border border-gray-700 px-1.5 py-0.5 rounded font-semibold">広告</span>
+            <span class="text-sm font-bold text-white">${p.brand}</span>
+          </div>
+          <p class="text-gray-400 text-sm mb-3">${p.text}</p>
+          <button class="text-sm font-semibold border border-gray-700 text-gray-300 px-4 py-1.5 rounded-full">${p.cta}</button>
+        </div>
+      `);
+      return;
+    }
+    const f = friendById(p.userId) || {};
+    const dur = fmtDuration(p.duration);
+    const el = document.createElement('div');
+    el.className = 'py-4 border-b border-gray-900';
+    el.innerHTML = `
+      <div class="flex items-start space-x-3">
+        <img src="${f.avatar||''}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">
+        <div class="flex-grow min-w-0">
+          <div class="flex items-baseline space-x-2 mb-2">
+            <span class="font-bold text-white text-sm cursor-pointer profile-trig" data-uid="${p.userId}">${f.name||'?'}</span>
+            <span class="text-gray-600 text-xs">${f.handle||''} · ${p.time}</span>
+          </div>
+          <div class="flex items-center space-x-3 bg-[#1C1C1E] border border-gray-800 rounded-2xl p-3 mb-2">
+            <div class="w-9 h-9 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-white font-bold text-sm">${dur}</p>
+              ${p.task ? `<p class="text-gray-500 text-xs mt-0.5">${p.task}</p>` : ''}
+            </div>
+          </div>
+          ${p.comment ? `<p class="text-gray-300 text-sm mb-3">${p.comment}</p>` : ''}
+          <div class="flex items-center space-x-6">
+            <button class="comment-btn flex items-center space-x-1.5 text-gray-600 hover:text-gray-300 transition" data-pid="${p.id}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+              </svg>
+              <span class="text-xs">${(MOCK_COMMENTS[p.id]||[]).length}</span>
+            </button>
+            <button class="like-btn flex items-center space-x-1.5 transition" data-pid="${p.id}">
+              <svg class="w-5 h-5 heart-ico ${p.liked?'text-red-500':'text-gray-600'}" fill="${p.liked?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+              <span class="text-xs like-cnt ${p.liked?'text-red-500':'text-gray-600'}">${p.likes}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    // like
+    el.querySelector('.like-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      p.liked = !p.liked;
+      p.likes += p.liked ? 1 : -1;
+      const heart = el.querySelector('.heart-ico');
+      const cnt   = el.querySelector('.like-cnt');
+      heart.setAttribute('fill', p.liked ? 'currentColor' : 'none');
+      heart.className = `w-5 h-5 heart-ico ${p.liked?'text-red-500':'text-gray-600'}`;
+      cnt.textContent = p.likes;
+      cnt.className   = `text-xs like-cnt ${p.liked?'text-red-500':'text-gray-600'}`;
+      heart.classList.add('like-pop');
+      heart.addEventListener('animationend', () => heart.classList.remove('like-pop'), {once:true});
+    });
+    // comment
+    el.querySelector('.comment-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      openCommentPanel(p.id);
+    });
+    // profile
+    el.querySelectorAll('.profile-trig').forEach(t => {
+      t.addEventListener('click', e => { e.stopPropagation(); openUserProfile(t.dataset.uid); });
+    });
+    list.appendChild(el);
+  });
+}
+
+// ================================================================
+// COMMENT PANEL
+// ================================================================
+function openCommentPanel(postId) {
+  S.commentPostId = postId;
+  const post = MOCK_POSTS.find(p => p.id === postId);
+  const f    = friendById(post.userId) || {};
+  const comments = MOCK_COMMENTS[postId] || [];
+
+  // Post preview
+  document.getElementById('comment-post-body').innerHTML = `
+    <div class="flex items-start space-x-3">
+      <img src="${f.avatar||''}" class="w-9 h-9 rounded-full flex-shrink-0" alt="">
+      <div class="flex-grow">
+        <p class="font-bold text-white text-sm">${f.name} <span class="text-gray-600 font-normal text-xs">${f.handle} · ${post.time}</span></p>
+        <div class="flex items-center space-x-2 mt-2 bg-[#1C1C1E] border border-gray-800 rounded-xl p-2.5">
+          <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+          </svg>
+          <span class="text-white font-bold text-sm">${fmtDuration(post.duration)}</span>
+          ${post.task ? `<span class="text-gray-500 text-xs">· ${post.task}</span>` : ''}
+        </div>
+        ${post.comment ? `<p class="text-gray-300 text-sm mt-2">${post.comment}</p>` : ''}
+      </div>
+    </div>
+  `;
+
+  // Comments
+  const cl = document.getElementById('comment-list');
+  cl.innerHTML = '';
+  if (comments.length === 0) {
+    cl.innerHTML = '<p class="text-gray-600 text-sm text-center mt-4">まだコメントはありません</p>';
+  } else {
+    comments.forEach(c => {
+      const cf = friendById(c.userId) || {};
+      cl.insertAdjacentHTML('beforeend', `
+        <div class="flex items-start space-x-3">
+          <img src="${cf.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+          <div>
+            <p class="text-sm font-bold text-white">${cf.name||'?'} <span class="text-gray-600 font-normal text-xs">${cf.handle||''}</span></p>
+            <p class="text-sm text-gray-300 mt-0.5">${c.text}</p>
+          </div>
+        </div>
+      `);
+    });
+  }
+
+  document.getElementById('comment-panel').classList.add('open');
+  document.getElementById('nav-bar').classList.add('nav-hidden');
+}
+
+document.getElementById('comment-close-btn').addEventListener('click', () => {
+  document.getElementById('comment-panel').classList.remove('open');
+  if (!NO_NAV.includes(S.page)) document.getElementById('nav-bar').classList.remove('nav-hidden');
+});
+
+document.getElementById('comment-send-btn').addEventListener('click', () => {
+  const input = document.getElementById('comment-input');
+  const text  = input.value.trim();
+  if (!text || S.commentPostId === null) return;
+  if (!MOCK_COMMENTS[S.commentPostId]) MOCK_COMMENTS[S.commentPostId] = [];
+  const u = getUser();
+  MOCK_COMMENTS[S.commentPostId].push({ userId: 'me', text });
+  // Re-render comment list inline
+  const cl = document.getElementById('comment-list');
+  cl.insertAdjacentHTML('beforeend', `
+    <div class="flex items-start space-x-3">
+      <img src="${u?.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+      <div>
+        <p class="text-sm font-bold text-white">${u?.name||'You'}</p>
+        <p class="text-sm text-gray-300 mt-0.5">${text}</p>
+      </div>
+    </div>
+  `);
+  cl.scrollTop = cl.scrollHeight;
+  input.value = '';
+  // Update count in feed
+  renderFeedList();
+});
+
+// ================================================================
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
