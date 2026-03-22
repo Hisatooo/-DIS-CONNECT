@@ -2391,7 +2391,9 @@ function renderSettings() {
         <p class="text-xs text-gray-700 font-bold uppercase mb-3">アプリ設定</p>
         <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
           <span class="text-white text-sm">言語</span>
-          <span class="text-gray-600 text-sm">日本語</span>
+          <button id="lang-toggle-btn" class="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#2C2C2E] border border-gray-700 px-3 py-1 rounded-full hover:bg-[#3A3A3C] transition">
+            🇯🇵 日本語
+          </button>
         </div>
         <div class="flex justify-between items-center py-2.5">
           <span class="text-white text-sm">通知</span>
@@ -2436,6 +2438,10 @@ function renderSettings() {
   goto('settings');
 
   document.getElementById('st-back').addEventListener('click', () => goto('profile'));
+  document.getElementById('lang-toggle-btn').addEventListener('click', () => {
+    localStorage.setItem('to_lang', 'en');
+    window.location.href = 'index_en.html';
+  });
   document.getElementById('st-terms-btn').addEventListener('click', () => {
     S._prevPage = 'settings';
     renderTerms();
@@ -3097,6 +3103,7 @@ function renderPremium() {
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('to_lang') === 'en') { window.location.href = 'index_en.html'; return; }
   renderLogin();
   renderRegister();
   renderInterruptPage();
