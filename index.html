@@ -580,6 +580,7 @@ const MOCK_GROUPS = [
     activeSince: Date.now() - 1200000,
     isActive: true,
     streak: 5,
+    pendingDetox: { hostId: 'alice', duration: 3600, apps: ['YouTube', 'Instagram', 'X'] },
   },
   {
     id: 'g2', name: '週末チャレンジ', emoji: '🏔️',
@@ -2400,49 +2401,125 @@ function renderGroupDetail(groupId) {
     // ── SETUP ─────────────────────────────────────────────────
     const detoxCount  = getGroupDetoxCount();
     const limitBanner = (!isPremium() && detoxCount >= 3)
-      ? `<div class="rounded-2xl p-3 mb-1" style="background:#f59e0b15;border:1px solid #f59e0b44;">
+      ? `<div class="rounded-2xl p-3" style="background:#f59e0b15;border:1px solid #f59e0b44;">
            <p class="text-xs font-bold text-yellow-400 mb-0.5">本日の上限に達しました</p>
            <p class="text-xs text-gray-500">グループデトックスは1日3回までです。<button class="text-yellow-400 font-semibold underline" onclick="goto('premium')">プレミアムへ</button></p>
          </div>`
       : '';
-    bodyHtml = `
-      ${limitBanner}
-      <div class="card p-4">
-        <div class="flex items-center justify-between mb-3">
-          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">デトックス時間</p>
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">ホストが設定</span>
-        </div>
-        <div class="flex justify-center items-center relative" style="height:12rem;">
-          <div class="absolute left-1/2 -translate-x-1/2 w-40 h-14 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
-          <div class="absolute inset-0 bg-gradient-to-b from-[#1C1C1E] via-transparent to-[#1C1C1E] pointer-events-none z-10"></div>
-          <div class="z-20 flex items-center space-x-1">
-            <div id="gd-picker-hours" class="picker-col"></div>
-            <span class="text-3xl font-black text-gray-600">:</span>
-            <div id="gd-picker-minutes" class="picker-col"></div>
+
+    // Determine host: if group has a pendingDetox set by someone else → member view
+    const isHost = !g.pendingDetox || g.pendingDetox.hostId === 'me';
+    const leaveBtn = `
+      <button id="gd-leave-btn" class="w-full py-3 rounded-2xl font-semibold text-sm text-red-500 border border-red-500/30 flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        グループから退出
+      </button>`;
+
+    if (isHost) {
+      // ── HOST VIEW: editable time + apps ──────────────────────
+      bodyHtml = `
+        ${limitBanner}
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">デトックス時間</p>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">あなたが設定</span>
           </div>
+          <div class="flex justify-center items-center relative" style="height:12rem;">
+            <div class="absolute left-1/2 -translate-x-1/2 w-40 h-14 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
+            <div class="absolute inset-0 bg-gradient-to-b from-[#1C1C1E] via-transparent to-[#1C1C1E] pointer-events-none z-10"></div>
+            <div class="z-20 flex items-center space-x-1">
+              <div id="gd-picker-hours" class="picker-col"></div>
+              <span class="text-3xl font-black text-gray-600">:</span>
+              <div id="gd-picker-minutes" class="picker-col"></div>
+            </div>
+          </div>
+          <p class="text-center text-xs text-gray-600 mt-2">メンバー全員がこの時間でデトックスします</p>
         </div>
-        <p class="text-center text-xs text-gray-600 mt-2">メンバー全員がこの時間でデトックスします</p>
-      </div>
-      <div class="card p-4">
-        <div class="flex items-center justify-between mb-3">
-          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">ブロックするアプリ</p>
-          <span class="text-xs text-gray-600">各自選択</span>
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">ブロックするアプリ</p>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">あなたが設定</span>
+          </div>
+          <div id="gd-app-chips" class="flex flex-wrap gap-2"></div>
         </div>
-        <div id="gd-app-chips" class="flex flex-wrap gap-2"></div>
-      </div>
-      <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
-        <div>${memberListRows(['me', ...g.members])}</div>
-      </div>
-      <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
-        <p class="text-sm text-gray-400">${g.description}</p>
-        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
-      </div>
-      <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
-        準備完了にする
-      </button>
-      <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>`;
+        <div class="card p-4">
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
+          <div>${memberListRows(['me', ...g.members])}</div>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
+          <p class="text-sm text-gray-400">${g.description}</p>
+          ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
+        </div>
+        <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+          準備完了にする
+        </button>
+        <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>
+        ${leaveBtn}`;
+
+    } else {
+      // ── MEMBER VIEW: read-only (host already set time + apps) ─
+      const pd = g.pendingDetox;
+      const hostF = friendById(pd.hostId);
+      const hostName = hostF ? hostF.name : pd.hostId;
+      const readonlyApps = pd.apps.map(a =>
+        `<span class="text-xs px-3 py-1.5 rounded-full border border-gray-700 text-gray-400">${a}</span>`
+      ).join('');
+      const membersWithHost = [pd.hostId, ...g.members.filter(id => id !== pd.hostId)];
+      const memberRowsHtml = membersWithHost.map(id => {
+        const isMe2 = id === 'me';
+        const f2 = isMe2 ? null : friendById(id);
+        const u2 = getUser();
+        const name2 = isMe2 ? (u2?.name || 'あなた') : (f2?.name || id);
+        const avatar2 = isMe2
+          ? `https://placehold.co/40x40/334155/FFF?text=${(u2?.name||'あ')[0].toUpperCase()}`
+          : (f2?.avatar || `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+        const isHostMember = id === pd.hostId;
+        return `
+          <div class="flex items-center gap-3 py-2">
+            <img src="${avatar2}" class="w-9 h-9 rounded-full flex-shrink-0" alt="${name2}">
+            <div class="min-w-0 flex-grow">
+              <p class="text-sm font-semibold text-white">${name2}${isMe2?' (あなた)':''}</p>
+            </div>
+            ${isHostMember ? `<span class="text-xs font-bold px-2 py-0.5 rounded flex-shrink-0" style="background:${g.color}22;color:${g.color}">ホスト</span>` : ''}
+          </div>`;
+      }).join('');
+      bodyHtml = `
+        ${limitBanner}
+        <div class="rounded-2xl p-3" style="background:${g.color}12;border:1px solid ${g.color}33;">
+          <p class="text-xs font-bold mb-0.5" style="color:${g.color}">${hostName}がデトックスを設定しました</p>
+          <p class="text-xs text-gray-500">内容はホストのみ変更できます</p>
+        </div>
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">デトックス時間</p>
+            <span class="text-xs text-gray-600">ホストが設定</span>
+          </div>
+          <p class="text-3xl font-black text-white text-center py-3">${fmtDur(pd.duration)}</p>
+          <p class="text-center text-xs text-gray-600">メンバー全員がこの時間でデトックスします</p>
+        </div>
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">ブロックするアプリ</p>
+            <span class="text-xs text-gray-600">ホストが設定</span>
+          </div>
+          <div class="flex flex-wrap gap-2">${readonlyApps}</div>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
+          <div>${memberRowsHtml}</div>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
+          <p class="text-sm text-gray-400">${g.description}</p>
+          ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
+        </div>
+        <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+          準備完了にする
+        </button>
+        <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>
+        ${leaveBtn}`;
+    }
   }
 
   // ── Render page (detox tab layout / pending preview layout) ──
@@ -2489,68 +2566,123 @@ function renderGroupDetail(groupId) {
     });
 
   } else {
-    createTimePicker('gd-picker-hours', 'gd-picker-minutes');
+    const isHost = !g.pendingDetox || g.pendingDetox.hostId === 'me';
 
-    const gdApps = new Set(S.selectedApps);
-    const chipsEl = document.getElementById('gd-app-chips');
-    function renderGdChips() {
-      chipsEl.innerHTML = ALL_APPS.map(a => {
-        const sel = gdApps.has(a.label);
-        return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel?'border-white/30 bg-white/10 text-white':'border-gray-800 text-gray-600'}" data-app="${a.label}">
-          <img src="https://placehold.co/14x14/${a.bg}/FFF?text=${a.label[0]}" class="w-3.5 h-3.5 rounded" alt="">
-          ${a.label}
-        </button>`;
-      }).join('');
-      chipsEl.querySelectorAll('.gd-app-chip').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const app = btn.dataset.app;
-          if (gdApps.has(app)) gdApps.delete(app); else gdApps.add(app);
-          renderGdChips();
+    if (isHost) {
+      // Host: wire up editable time picker + app chips
+      createTimePicker('gd-picker-hours', 'gd-picker-minutes');
+      const gdApps = new Set(S.selectedApps);
+      const chipsEl = document.getElementById('gd-app-chips');
+      function renderGdChips() {
+        chipsEl.innerHTML = ALL_APPS.map(a => {
+          const sel = gdApps.has(a.label);
+          return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel?'border-white/30 bg-white/10 text-white':'border-gray-800 text-gray-600'}" data-app="${a.label}">
+            <img src="https://placehold.co/14x14/${a.bg}/FFF?text=${a.label[0]}" class="w-3.5 h-3.5 rounded" alt="">
+            ${a.label}
+          </button>`;
+        }).join('');
+        chipsEl.querySelectorAll('.gd-app-chip').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const app = btn.dataset.app;
+            if (gdApps.has(app)) gdApps.delete(app); else gdApps.add(app);
+            renderGdChips();
+          });
+        });
+      }
+      renderGdChips();
+
+      document.getElementById('gd-ready-btn').addEventListener('click', () => {
+        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
+        const h = getPickerValue('gd-picker-hours');
+        const m = getPickerValue('gd-picker-minutes');
+        const totalSec = h * 3600 + m * 60;
+        if (totalSec === 0) {
+          const card = document.getElementById('gd-picker-hours')?.closest('.card');
+          if (card) { card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 450); }
+          return;
+        }
+        // Save host's settings on the group for member views
+        g.pendingDetox = { hostId: 'me', duration: totalSec, apps: [...gdApps] };
+        S.groupDetox = {
+          groupId,
+          duration: totalSec,
+          blockedApps: [...gdApps],
+          readyMembers: ['me'],
+          allMembers: ['me', ...g.members],
+          startTime: null,
+          failed: false,
+          failedBy: null,
+        };
+        renderGroupDetail(groupId);
+        [...g.members].forEach((id, i) => {
+          setTimeout(() => {
+            if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
+            S.groupDetox.readyMembers.push(id);
+            const rows = document.getElementById('gd-member-rows');
+            const cnt  = document.getElementById('gd-ready-count');
+            if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
+            if (cnt)  cnt.textContent = S.lang === 'en'
+              ? `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length} ready`
+              : `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
+            if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
+              S.groupDetox.startTime = Date.now();
+              addGroupDetoxCount();
+              setTimeout(() => startSession(S.groupDetox.duration, false), 600);
+            }
+          }, (i + 1) * 1500);
+        });
+      });
+
+    } else {
+      // Member (non-host): ready button uses host's settings
+      document.getElementById('gd-ready-btn').addEventListener('click', () => {
+        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
+        const pd = g.pendingDetox;
+        S.groupDetox = {
+          groupId,
+          duration: pd.duration,
+          blockedApps: pd.apps,
+          readyMembers: ['me'],
+          allMembers: ['me', ...g.members],
+          startTime: null,
+          failed: false,
+          failedBy: null,
+        };
+        renderGroupDetail(groupId);
+        [...g.members].forEach((id, i) => {
+          setTimeout(() => {
+            if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
+            S.groupDetox.readyMembers.push(id);
+            const rows = document.getElementById('gd-member-rows');
+            const cnt  = document.getElementById('gd-ready-count');
+            if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
+            if (cnt)  cnt.textContent = S.lang === 'en'
+              ? `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length} ready`
+              : `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
+            if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
+              S.groupDetox.startTime = Date.now();
+              addGroupDetoxCount();
+              setTimeout(() => startSession(S.groupDetox.duration, false), 600);
+            }
+          }, (i + 1) * 1500);
         });
       });
     }
-    renderGdChips();
 
-    document.getElementById('gd-ready-btn').addEventListener('click', () => {
-      // Check daily group detox limit (max 3/day for free users)
-      if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
-
-      const h = getPickerValue('gd-picker-hours');
-      const m = getPickerValue('gd-picker-minutes');
-      const totalSec = h * 3600 + m * 60;
-      if (totalSec === 0) {
-        const card = document.getElementById('gd-picker-hours')?.closest('.card');
-        if (card) { card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 450); }
-        return;
-      }
-      S.groupDetox = {
-        groupId,
-        duration: totalSec,
-        blockedApps: [...gdApps],
-        readyMembers: ['me'],
-        allMembers: ['me', ...g.members],
-        startTime: null,
-        failed: false,
-        failedBy: null,
-      };
-      renderGroupDetail(groupId);
-      [...g.members].forEach((id, i) => {
-        setTimeout(() => {
-          if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
-          S.groupDetox.readyMembers.push(id);
-          const rows = document.getElementById('gd-member-rows');
-          const cnt  = document.getElementById('gd-ready-count');
-          if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
-          if (cnt)  cnt.textContent = S.lang === 'en'
-            ? `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length} ready`
-            : `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
-          if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
-            S.groupDetox.startTime = Date.now();
-            addGroupDetoxCount();
-            setTimeout(() => startSession(S.groupDetox.duration, false), 600);
-          }
-        }, (i + 1) * 1500);
-      });
+    // Leave group button (both host and member)
+    document.getElementById('gd-leave-btn')?.addEventListener('click', () => {
+      showConfirm(
+        'グループから退出',
+        `「${g.name}」から退出しますか？退出後は再度招待が必要です。`,
+        '退出する',
+        () => {
+          const idx = MOCK_GROUPS.findIndex(x => x.id === groupId);
+          if (idx !== -1) MOCK_GROUPS.splice(idx, 1);
+          S.groupDetailTab = 'detox';
+          goto('friends');
+          setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+        }
+      );
     });
   }
 
