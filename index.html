@@ -914,6 +914,10 @@ const TRANSLATIONS_EN = {
   '人がデトックス中': ' detoxing',
   '待機中': 'Waiting',
   '準備完了にする': 'Mark Ready',
+  'グループデトックスを作成': 'Create Group Detox',
+  '参加する': 'Join',
+  'メンバーが参加すると自動でスタートします': 'Session starts automatically when members join',
+  '参加するとデトックスが開始されます': 'Detox starts when you join',
   '全員が準備完了になると自動でスタートします': 'Session starts automatically when everyone is ready',
   '作成者が設定': 'Set by creator',
   'ホストが設定': 'Set by creator',
@@ -2453,10 +2457,11 @@ function renderGroupDetail(groupId) {
           <p class="text-sm text-gray-400">${g.description}</p>
           ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
         </div>
-        <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
-          準備完了にする
+        <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black flex items-center justify-center gap-2" style="background:${g.color}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          グループデトックスを作成
         </button>
-        <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>
+        <p class="text-center text-xs text-gray-700">メンバーが参加すると自動でスタートします</p>
         ${leaveBtn}`;
 
     } else {
@@ -2516,10 +2521,11 @@ function renderGroupDetail(groupId) {
           <p class="text-sm text-gray-400">${g.description}</p>
           ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
         </div>
-        <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
-          準備完了にする
+        <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black flex items-center justify-center gap-2" style="background:${g.color}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          参加する
         </button>
-        <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>
+        <p class="text-center text-xs text-gray-700">参加するとデトックスが開始されます</p>
         ${leaveBtn}`;
     }
   }
