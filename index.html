@@ -672,7 +672,7 @@ const TRANSLATIONS_EN = {
   '法律・サポート': 'Legal & Support',
   '言語': 'Language',
   '通知': 'Notifications',
-  'メールアドレス': 'Email',
+  'メールアドレス': 'Email Address',
   'アカウントの公開設定': 'Account Privacy',
   '公開': 'Public',
   '非公開': 'Private',
@@ -785,6 +785,8 @@ const TRANSLATIONS_EN = {
 
 function applyLang() {
   if (S.lang !== 'en') return;
+  // Sort entries longest-key-first so compound words match before substrings
+  const entries = Object.entries(TRANSLATIONS_EN).sort((a, b) => b[0].length - a[0].length);
   // Walk all text nodes
   const walker = document.createTreeWalker(
     document.body,
@@ -796,7 +798,7 @@ function applyLang() {
     let txt = node.textContent;
     if (!txt.trim()) continue;
     let changed = false;
-    for (const [ja, en] of Object.entries(TRANSLATIONS_EN)) {
+    for (const [ja, en] of entries) {
       if (txt.includes(ja)) {
         txt = txt.split(ja).join(en);
         changed = true;
@@ -807,7 +809,7 @@ function applyLang() {
   // Placeholders
   document.querySelectorAll('[placeholder]').forEach(el => {
     let p = el.getAttribute('placeholder');
-    for (const [ja, en] of Object.entries(TRANSLATIONS_EN)) {
+    for (const [ja, en] of entries) {
       if (p.includes(ja)) p = p.split(ja).join(en);
     }
     el.setAttribute('placeholder', p);
