@@ -891,6 +891,11 @@ const TRANSLATIONS_EN = {
   '待機中': 'Waiting',
   '準備完了にする': 'Mark Ready',
   '全員が準備完了になると自動でスタートします': 'Session starts automatically when everyone is ready',
+  'ホストが設定': 'Set by host',
+  '各自選択': 'Each member chooses',
+  'メンバー全員がこの時間でデトックスします': 'All members detox for this duration',
+  'ホスト設定時間': 'Host duration',
+  '（全員共通）': '(shared)',
   '準備完了': 'Ready',
   '人 準備完了': ' ready',
   // Post session
@@ -2137,7 +2142,8 @@ function renderGroupDetail(groupId) {
           <img src="${avatar}" class="w-9 h-9 rounded-full flex-shrink-0" alt="${name}">
           <div class="min-w-0">
             <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
-            ${apps !== null ? `<div class="flex flex-wrap gap-1 mt-0.5">${apps.map(a=>`<span class="text-xs px-1.5 py-0.5 rounded bg-[#2C2C2E] text-gray-500">${a}</span>`).join('')}</div>` : '<p class="text-xs text-gray-600">（ここで選択）</p>'}
+            ${isMe ? `<span class="text-xs font-bold px-1.5 py-0.5 rounded" style="background:${g.color}22;color:${g.color}">ホスト</span>` : ''}
+            ${apps !== null ? `<div class="flex flex-wrap gap-1 mt-0.5">${apps.map(a=>`<span class="text-xs px-1.5 py-0.5 rounded bg-[#2C2C2E] text-gray-500">${a}</span>`).join('')}</div>` : '<p class="text-xs text-gray-600 mt-0.5">（ここで選択）</p>'}
           </div>
         </div>`;
     }).join('');
@@ -2185,8 +2191,8 @@ function renderGroupDetail(groupId) {
         <div class="space-y-0" id="gd-member-rows">
           ${memberReadyRows(gd.readyMembers)}
         </div>
-        <div class="mt-3 flex items-center justify-between">
-          <span class="text-xs text-gray-600">時間: <span class="text-white font-bold">${fmtDur(gd.duration)}</span></span>
+        <div class="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
+          <span class="text-xs text-gray-600">ホスト設定時間 <span class="text-white font-bold">${fmtDur(gd.duration)}</span><span class="text-gray-600 ml-1">（全員共通）</span></span>
           <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${1+g.members.length}人 準備完了</span>
         </div>
       </div>
@@ -2196,7 +2202,10 @@ function renderGroupDetail(groupId) {
     // ── STATE: SETUP (time picker + app chips) ────────────────────
     bodyHtml = `
       <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">デトックス時間</p>
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">デトックス時間</p>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">ホストが設定</span>
+        </div>
         <div class="flex justify-center items-center relative" style="height:12rem;">
           <div class="absolute left-1/2 -translate-x-1/2 w-40 h-14 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
           <div class="absolute inset-0 bg-gradient-to-b from-[#1C1C1E] via-transparent to-[#1C1C1E] pointer-events-none z-10"></div>
@@ -2206,10 +2215,14 @@ function renderGroupDetail(groupId) {
             <div id="gd-picker-minutes" class="picker-col"></div>
           </div>
         </div>
+        <p class="text-center text-xs text-gray-600 mt-2">メンバー全員がこの時間でデトックスします</p>
       </div>
 
       <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">ブロックするアプリ</p>
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">ブロックするアプリ</p>
+          <span class="text-xs text-gray-600">各自選択</span>
+        </div>
         <div id="gd-app-chips" class="flex flex-wrap gap-2"></div>
       </div>
 
