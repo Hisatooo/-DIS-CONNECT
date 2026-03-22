@@ -580,7 +580,7 @@ const MOCK_GROUPS = [
     activeSince: Date.now() - 1200000,
     isActive: true,
     streak: 5,
-    pendingDetox: { hostId: 'alice', duration: 3600, apps: ['YouTube', 'Instagram', 'X'] },
+    pendingDetox: { creatorId: 'alice', duration: 3600, apps: ['YouTube', 'Instagram', 'X'] },
   },
   {
     id: 'g2', name: '週末チャレンジ', emoji: '🏔️',
@@ -915,10 +915,12 @@ const TRANSLATIONS_EN = {
   '待機中': 'Waiting',
   '準備完了にする': 'Mark Ready',
   '全員が準備完了になると自動でスタートします': 'Session starts automatically when everyone is ready',
-  'ホストが設定': 'Set by host',
+  '作成者が設定': 'Set by creator',
+  'ホストが設定': 'Set by creator',
   '各自選択': 'Each member chooses',
   'メンバー全員がこの時間でデトックスします': 'All members detox for this duration',
-  'ホスト設定時間': 'Host duration',
+  '作成者設定時間': 'Creator duration',
+  'ホスト設定時間': 'Creator duration',
   '（全員共通）': '(shared)',
   '準備完了': 'Ready',
   '人 準備完了': ' ready',
@@ -2219,7 +2221,7 @@ function renderGroupDetail(groupId) {
           <img src="${avatar}" class="w-9 h-9 rounded-full flex-shrink-0" alt="${name}">
           <div class="min-w-0">
             <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
-            ${isMe ? `<span class="text-xs font-bold px-1.5 py-0.5 rounded" style="background:${g.color}22;color:${g.color}">ホスト</span>` : ''}
+            ${isMe ? `<span class="text-xs font-bold px-1.5 py-0.5 rounded" style="background:${g.color}22;color:${g.color}">作成者</span>` : ''}
             ${apps !== null ? `<div class="flex flex-wrap gap-1 mt-0.5">${apps.map(a=>`<span class="text-xs px-1.5 py-0.5 rounded bg-[#2C2C2E] text-gray-500">${a}</span>`).join('')}</div>` : '<p class="text-xs text-gray-600 mt-0.5">（ここで選択）</p>'}
           </div>
         </div>`;
@@ -2391,7 +2393,7 @@ function renderGroupDetail(groupId) {
           ${memberReadyRows(gd.readyMembers)}
         </div>
         <div class="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
-          <span class="text-xs text-gray-600">ホスト設定時間 <span class="text-white font-bold">${fmtDur(gd.duration)}</span><span class="text-gray-600 ml-1">（全員共通）</span></span>
+          <span class="text-xs text-gray-600">作成者設定時間 <span class="text-white font-bold">${fmtDur(gd.duration)}</span><span class="text-gray-600 ml-1">（全員共通）</span></span>
           <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${1+g.members.length}人 準備完了</span>
         </div>
       </div>
@@ -2408,7 +2410,7 @@ function renderGroupDetail(groupId) {
       : '';
 
     // Determine host: if group has a pendingDetox set by someone else → member view
-    const isHost = !g.pendingDetox || g.pendingDetox.hostId === 'me';
+    const isHost = !g.pendingDetox || g.pendingDetox.creatorId === 'me';
     const leaveBtn = `
       <button id="gd-leave-btn" class="w-full py-3 rounded-2xl font-semibold text-sm text-red-500 border border-red-500/30 flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -2422,7 +2424,7 @@ function renderGroupDetail(groupId) {
         <div class="card p-4">
           <div class="flex items-center justify-between mb-3">
             <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">デトックス時間</p>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">あなたが設定</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">あなたが作成</span>
           </div>
           <div class="flex justify-center items-center relative" style="height:12rem;">
             <div class="absolute left-1/2 -translate-x-1/2 w-40 h-14 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
@@ -2438,7 +2440,7 @@ function renderGroupDetail(groupId) {
         <div class="card p-4">
           <div class="flex items-center justify-between mb-3">
             <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">ブロックするアプリ</p>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">あなたが設定</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">あなたが作成</span>
           </div>
           <div id="gd-app-chips" class="flex flex-wrap gap-2"></div>
         </div>
@@ -2460,12 +2462,12 @@ function renderGroupDetail(groupId) {
     } else {
       // ── MEMBER VIEW: read-only (host already set time + apps) ─
       const pd = g.pendingDetox;
-      const hostF = friendById(pd.hostId);
-      const hostName = hostF ? hostF.name : pd.hostId;
+      const hostF = friendById(pd.creatorId);
+      const hostName = hostF ? hostF.name : pd.creatorId;
       const readonlyApps = pd.apps.map(a =>
         `<span class="text-xs px-3 py-1.5 rounded-full border border-gray-700 text-gray-400">${a}</span>`
       ).join('');
-      const membersWithHost = [pd.hostId, ...g.members.filter(id => id !== pd.hostId)];
+      const membersWithHost = [pd.creatorId, ...g.members.filter(id => id !== pd.creatorId)];
       const memberRowsHtml = membersWithHost.map(id => {
         const isMe2 = id === 'me';
         const f2 = isMe2 ? null : friendById(id);
@@ -2474,26 +2476,26 @@ function renderGroupDetail(groupId) {
         const avatar2 = isMe2
           ? `https://placehold.co/40x40/334155/FFF?text=${(u2?.name||'あ')[0].toUpperCase()}`
           : (f2?.avatar || `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
-        const isHostMember = id === pd.hostId;
+        const isHostMember = id === pd.creatorId;
         return `
           <div class="flex items-center gap-3 py-2">
             <img src="${avatar2}" class="w-9 h-9 rounded-full flex-shrink-0" alt="${name2}">
             <div class="min-w-0 flex-grow">
               <p class="text-sm font-semibold text-white">${name2}${isMe2?' (あなた)':''}</p>
             </div>
-            ${isHostMember ? `<span class="text-xs font-bold px-2 py-0.5 rounded flex-shrink-0" style="background:${g.color}22;color:${g.color}">ホスト</span>` : ''}
+            ${isHostMember ? `<span class="text-xs font-bold px-2 py-0.5 rounded flex-shrink-0" style="background:${g.color}22;color:${g.color}">作成者</span>` : ''}
           </div>`;
       }).join('');
       bodyHtml = `
         ${limitBanner}
         <div class="rounded-2xl p-3" style="background:${g.color}12;border:1px solid ${g.color}33;">
-          <p class="text-xs font-bold mb-0.5" style="color:${g.color}">${hostName}がデトックスを設定しました</p>
-          <p class="text-xs text-gray-500">内容はホストのみ変更できます</p>
+          <p class="text-xs font-bold mb-0.5" style="color:${g.color}">${hostName}がデトックスを作成しました</p>
+          <p class="text-xs text-gray-500">内容は作成者のみ変更できます</p>
         </div>
         <div class="card p-4">
           <div class="flex items-center justify-between mb-2">
             <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">デトックス時間</p>
-            <span class="text-xs text-gray-600">ホストが設定</span>
+            <span class="text-xs text-gray-600">作成者が設定</span>
           </div>
           <p class="text-3xl font-black text-white text-center py-3">${fmtDur(pd.duration)}</p>
           <p class="text-center text-xs text-gray-600">メンバー全員がこの時間でデトックスします</p>
@@ -2501,7 +2503,7 @@ function renderGroupDetail(groupId) {
         <div class="card p-4">
           <div class="flex items-center justify-between mb-3">
             <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">ブロックするアプリ</p>
-            <span class="text-xs text-gray-600">ホストが設定</span>
+            <span class="text-xs text-gray-600">作成者が設定</span>
           </div>
           <div class="flex flex-wrap gap-2">${readonlyApps}</div>
         </div>
@@ -2566,7 +2568,7 @@ function renderGroupDetail(groupId) {
     });
 
   } else {
-    const isHost = !g.pendingDetox || g.pendingDetox.hostId === 'me';
+    const isHost = !g.pendingDetox || g.pendingDetox.creatorId === 'me';
 
     if (isHost) {
       // Host: wire up editable time picker + app chips
@@ -2602,7 +2604,7 @@ function renderGroupDetail(groupId) {
           return;
         }
         // Save host's settings on the group for member views
-        g.pendingDetox = { hostId: 'me', duration: totalSec, apps: [...gdApps] };
+        g.pendingDetox = { creatorId: 'me', duration: totalSec, apps: [...gdApps] };
         S.groupDetox = {
           groupId,
           duration: totalSec,
