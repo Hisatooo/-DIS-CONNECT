@@ -1,0 +1,3116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>(DIS)CONNECT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ===== BASE ===== */
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: #000;
+      color: #E2E2E2;
+      overscroll-behavior: none;
+    }
+    input, textarea, select, button { font-family: 'Sora', sans-serif; }
+
+    /* ===== SCROLLBAR ===== */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* ===== PAGE SYSTEM ===== */
+    .page {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      overflow: hidden;
+    }
+    .page.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: #1C1C1E;
+      border-radius: 1.25rem;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    /* ===== INPUTS ===== */
+    .input-field {
+      background: #1C1C1E;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      border-radius: 0.875rem;
+      padding: 0.9rem 1rem;
+      width: 100%;
+      font-size: 0.9375rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: rgba(255,255,255,0.35); }
+    .input-field::placeholder { color: #6B7280; }
+
+    /* ===== BOTTOM NAV ===== */
+    .nav-bar {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 2rem);
+      max-width: 400px;
+      background: rgba(22,22,24,0.82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 9999px;
+      z-index: 100;
+      transition: transform 0.4s cubic-bezier(0.25,1,0.5,1), opacity 0.3s ease;
+    }
+    .nav-bar.nav-hidden {
+      transform: translate(-50%, 200%);
+      opacity: 0;
+    }
+    .nav-btn { transition: color 0.18s ease; position: relative; }
+    .nav-btn .icon-solid { display: none; }
+    .nav-btn.active-nav .icon-outline { display: none; }
+    .nav-btn.active-nav .icon-solid { display: block; }
+
+    /* ===== NOTIFICATION DOT ===== */
+    .notif-dot {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.35rem;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 1.5px solid #000;
+    }
+
+    /* ===== SLIDER ===== */
+    .slider-track {
+      background: #1C1C1E;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 9999px;
+      padding: 6px;
+      position: relative;
+      user-select: none;
+      touch-action: none;
+      overflow: hidden;
+    }
+    .slider-reveal {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 0;
+      background: rgba(255,255,255,0.12);
+      border-radius: 9999px;
+      pointer-events: none;
+    }
+    .slider-thumb {
+      background: white;
+      border-radius: 9999px;
+      position: absolute;
+      top: 6px; left: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      cursor: grab;
+      transition: box-shadow 0.2s;
+    }
+    .slider-thumb:active { cursor: grabbing; box-shadow: 0 0 0 6px rgba(255,255,255,0.1); }
+    .slider-label {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      color: #6B7280;
+      pointer-events: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      z-index: 1;
+      transition: opacity 0.15s;
+    }
+
+    /* ===== COUNTDOWN RING ===== */
+    .countdown-ring { transform: rotate(-90deg); }
+    .countdown-ring circle { transition: stroke-dashoffset 1s linear; }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes like-pop {
+      0%   { transform: scale(1); }
+      45%  { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+    .like-pop { animation: like-pop 0.28s ease; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%     { transform: translateX(-5px); }
+      40%     { transform: translateX(5px); }
+      60%     { transform: translateX(-5px); }
+      80%     { transform: translateX(5px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+
+    @keyframes pulse-ring {
+      0%,100% { opacity: 1; }
+      50%     { opacity: 0.55; }
+    }
+    .pulse-ring { animation: pulse-ring 2.2s ease infinite; }
+
+    /* ===== COMMENT PANEL ===== */
+    #comment-panel {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 300;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.25,1,0.5,1);
+      display: flex;
+      flex-direction: column;
+    }
+    #comment-panel.open { transform: translateX(0); }
+
+    /* ===== CHALLENGE BANNER ===== */
+    #challenge-banner {
+      position: fixed;
+      top: 1rem; left: 1rem; right: 1rem;
+      max-width: 400px;
+      margin: 0 auto;
+      background: rgba(25,25,27,0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 1.1rem;
+      padding: 0.9rem 1rem;
+      z-index: 9999;
+      transform: translateY(-160%);
+      transition: transform 0.5s cubic-bezier(0.19,1,0.22,1);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+    }
+    #challenge-banner.visible { transform: translateY(0); }
+
+    /* ===== BOTTOM SHEET MODAL ===== */
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 400;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .sheet-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sheet-body {
+      width: 100%;
+      max-width: 400px;
+      background: #111113;
+      border-radius: 1.5rem 1.5rem 0 0;
+      padding: 0 1.25rem 2rem;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.25,1,0.5,1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .sheet-overlay.open .sheet-body { transform: translateY(0); }
+    .sheet-handle {
+      width: 2.5rem; height: 4px;
+      background: #3a3a3c;
+      border-radius: 2px;
+      margin: 0.75rem auto 1.25rem;
+    }
+
+    /* ===== TIME PICKER ===== */
+    .picker-col {
+      width: 5rem;
+      height: 15rem;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .picker-col::-webkit-scrollbar { display: none; }
+    .picker-item {
+      height: 4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      scroll-snap-align: center;
+      font-size: 2rem;
+      font-weight: 900;
+      color: white;
+      opacity: 0.25;
+      transition: opacity 0.15s;
+    }
+    .picker-pad { height: 5.5rem; flex-shrink: 0; }
+
+    /* ===== WEEKLY CHART ===== */
+    .week-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .week-bar-wrap {
+      flex: 1;
+      width: 100%;
+      max-width: 28px;
+      background: #2C2C2E;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .week-bar-fill {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: #606060;
+      border-radius: 4px;
+      transition: height 0.6s cubic-bezier(0.25,1,0.5,1);
+    }
+    .week-bar-fill.today { background: white; }
+
+    /* ===== TOGGLE SWITCH ===== */
+    .toggle {
+      position: relative;
+      width: 2.75rem;
+      height: 1.5rem;
+      border-radius: 9999px;
+      background: #3a3a3c;
+      cursor: pointer;
+      transition: background 0.25s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: white; }
+    .toggle-knob {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 1.25rem; height: 1.25rem;
+      border-radius: 50%;
+      background: #888;
+      transition: transform 0.25s, background 0.25s;
+    }
+    .toggle.on .toggle-knob {
+      transform: translateX(1.25rem);
+      background: #000;
+    }
+
+    /* ===== FEED TABS ===== */
+    .feed-tab {
+      position: relative;
+      padding-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: #6B7280;
+      transition: color 0.2s;
+    }
+    .feed-tab.active-tab { color: white; }
+    .feed-tab.active-tab::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 1.5rem; height: 2px;
+      background: white;
+      border-radius: 1px;
+    }
+
+    /* ===== PADDING FOR NAV ===== */
+    .pb-nav { padding-bottom: 7rem; }
+  </style>
+</head>
+<body class="antialiased overflow-hidden h-screen w-screen">
+
+<!-- ========================================================== -->
+<!-- APP ROOT                                                    -->
+<!-- ========================================================== -->
+<div id="app" class="h-full w-full max-w-md mx-auto relative overflow-hidden bg-black">
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="page-login" class="page active flex flex-col justify-center px-8"></div>
+
+  <!-- ===================== REGISTER ===================== -->
+  <div id="page-register" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-14 pb-10"></div>
+
+  <!-- ===================== HOME (FEED) ===================== -->
+  <div id="page-home" class="page flex flex-col"></div>
+
+  <!-- ===================== CHALLENGE ===================== -->
+  <div id="page-challenge" class="page flex flex-col items-center justify-between px-6 py-10"></div>
+
+  <!-- ===================== SESSION ACTIVE ===================== -->
+  <div id="page-session" class="page flex flex-col items-center justify-between px-6 pt-10 pb-8"></div>
+
+  <!-- ===================== INTERRUPT ===================== -->
+  <div id="page-interrupt" class="page flex flex-col items-center justify-center px-6 text-center"></div>
+
+  <!-- ===================== POST SESSION ===================== -->
+  <div id="page-post-session" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-8 pb-nav"></div>
+
+  <!-- ===================== FRIENDS ===================== -->
+  <div id="page-friends" class="page flex flex-col"></div>
+  <div id="page-group-detail" class="page flex flex-col"></div>
+
+  <!-- ===================== MESSAGES ===================== -->
+  <div id="page-messages" class="page flex flex-col"></div>
+
+  <!-- ===================== DM ===================== -->
+  <div id="page-dm" class="page flex flex-col"></div>
+
+  <!-- ===================== PROFILE ===================== -->
+  <div id="page-profile" class="page flex flex-col overflow-y-auto no-scrollbar pb-nav"></div>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <div id="page-settings" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
+  <!-- ===================== EDIT PROFILE ===================== -->
+  <div id="page-edit-profile" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
+  <!-- ===================== USER PROFILE ===================== -->
+  <div id="page-user-profile" class="page flex flex-col"></div>
+
+  <!-- ===================== NOTIFICATIONS ===================== -->
+  <div id="page-notifications" class="page flex flex-col"></div>
+
+  <!-- ===================== PREMIUM ===================== -->
+  <div id="page-premium" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
+
+  <!-- ===================== CREATE GROUP ===================== -->
+  <div id="page-create-group" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
+  <!-- ===================== TERMS ===================== -->
+  <div id="page-terms" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
+
+  <!-- ===================== PRIVACY ===================== -->
+  <div id="page-privacy" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
+
+  <!-- ===================== INVITE SHEET ===================== -->
+  <div id="invite-sheet" style="position:fixed;inset:0;z-index:200;pointer-events:none;opacity:0;transition:opacity 0.25s;">
+    <div id="invite-overlay" class="absolute inset-0 bg-black/60"></div>
+    <div id="invite-drawer" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#1C1C1E] rounded-t-3xl p-5" style="transform:translateX(-50%) translateY(100%);transition:transform 0.35s cubic-bezier(0.25,1,0.5,1);">
+      <div class="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-5"></div>
+      <h2 class="text-lg font-black text-white mb-1" id="invite-sheet-title">Invite Friends</h2>
+      <p class="text-xs text-gray-600 mb-4" id="invite-sheet-subtitle"></p>
+      <div id="invite-friends-list" class="space-y-2 max-h-72 overflow-y-auto no-scrollbar"></div>
+      <button id="invite-close-btn" class="mt-4 w-full py-3 rounded-2xl bg-[#2C2C2E] text-gray-400 font-semibold text-sm">Close</button>
+    </div>
+  </div>
+
+  <!-- ===== COMMENT PANEL (slide from right) ===== -->
+  <div id="comment-panel">
+    <div class="flex-shrink-0 flex items-center px-4 py-3 border-b border-gray-900 relative">
+      <button id="comment-close-btn" class="p-2 -ml-2 text-gray-400 z-10">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="absolute left-1/2 -translate-x-1/2 font-bold text-white text-base">Post</h2>
+    </div>
+    <div class="flex-grow overflow-y-auto no-scrollbar">
+      <div id="comment-post-body" class="border-b border-gray-900 p-4"></div>
+      <div id="comment-list" class="p-4 space-y-5"></div>
+    </div>
+    <div class="flex-shrink-0 flex items-center space-x-2 px-4 py-3 border-t border-gray-900">
+      <input id="comment-input" class="input-field rounded-full py-3 flex-grow" placeholder="Add a comment...">
+      <button id="comment-send-btn" class="w-10 h-10 bg-[#2C2C2E] rounded-full flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 text-white" style="transform:rotate(45deg)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== CHALLENGE NOTIFICATION BANNER ===== -->
+  <div id="challenge-banner">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-bold text-white text-sm">Detox Challenge!</p>
+          <p id="banner-sub" class="text-xs text-gray-400">Loading...</p>
+        </div>
+      </div>
+      <button id="banner-join-btn" class="ml-3 bg-white text-black px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">
+        Join
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== MANUAL START SHEET ===== -->
+  <div id="manual-sheet" class="sheet-overlay">
+    <div class="sheet-body">
+      <div class="sheet-handle"></div>
+      <h3 class="text-xl font-black text-white text-center mb-1">Start Detox</h3>
+      <p class="text-gray-600 text-sm text-center mb-5">Set apps to block and duration</p>
+
+      <!-- App Selection -->
+      <div class="mb-5">
+        <p class="text-xs text-gray-600 font-semibold mb-3">Apps to Block</p>
+        <div id="app-chip-list" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Divider -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex-1 h-px bg-gray-800"></div>
+        <p class="text-xs text-gray-600 font-semibold">hours</p>
+        <div class="flex-1 h-px bg-gray-800"></div>
+      </div>
+
+      <!-- Picker -->
+      <div class="flex justify-center items-center mb-6 relative" style="height:15rem;">
+        <div class="absolute left-1/2 -translate-x-1/2 w-44 h-16 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-[#111113] via-transparent to-[#111113] pointer-events-none z-10"></div>
+        <div class="z-20 flex items-center space-x-1">
+          <div id="picker-hours" class="picker-col"></div>
+          <span class="text-3xl font-black text-gray-600">:</span>
+          <div id="picker-minutes" class="picker-col"></div>
+        </div>
+      </div>
+
+      <!-- Slider -->
+      <div class="slider-track h-16" id="manual-slider">
+        <div class="slider-reveal" id="manual-reveal"></div>
+        <div class="slider-thumb w-20 h-14" id="manual-thumb">
+          <svg class="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+        <span class="slider-label">Swipe to Start</span>
+      </div>
+
+      <button id="manual-cancel-btn" class="w-full text-gray-600 font-semibold py-3 mt-1 text-sm">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ===== CONFIRM MODAL ===== -->
+  <div id="confirm-overlay" class="sheet-overlay" style="align-items:center;">
+    <div style="width:100%;max-width:360px;margin:1rem;background:#1C1C1E;border-radius:1.25rem;padding:1.5rem;">
+      <h3 id="confirm-title" class="text-xl font-black text-white text-center mb-2"></h3>
+      <p id="confirm-msg" class="text-gray-500 text-sm text-center mb-6"></p>
+      <div class="flex space-x-3">
+        <button id="confirm-cancel-btn" class="flex-1 border border-gray-700 text-gray-300 font-semibold py-3 rounded-full text-sm">Cancel</button>
+        <button id="confirm-ok-btn" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-full text-sm"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BOTTOM NAV ===== -->
+  <nav id="nav-bar" class="nav-bar flex justify-around items-center h-16 px-2">
+    <button class="nav-btn p-3 text-gray-500" data-page="home">
+      <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 22V12h6v10"/>
+      </svg>
+      <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V19a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1v-8.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+      </svg>
+    </button>
+    <button class="nav-btn p-3 text-gray-500" data-page="friends">
+      <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+        <circle cx="9" cy="7" r="4" stroke-width="1.75"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z"/>
+      </svg>
+    </button>
+    <!-- CENTER: (DIS)CONNECT -->
+    <button class="nav-btn p-3 text-gray-500" id="disconnect-nav-btn" data-page="disconnect">
+      <svg class="icon-outline w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+      </svg>
+      <svg class="icon-solid w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M6 2v6l4.002 4.002L6 16v6h12v-6l-4.002-4.002L18 8V2H6z"/>
+      </svg>
+    </button>
+    <button class="nav-btn p-3 text-gray-500" data-page="messages">
+      <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+      </svg>
+      <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z"/>
+        <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z"/>
+      </svg>
+    </button>
+    <button class="nav-btn p-3 text-gray-500" data-page="profile">
+      <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+      </svg>
+      <svg class="icon-solid w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd"/>
+      </svg>
+    </button>
+  </nav>
+
+</div><!-- #app -->
+
+<script>
+'use strict';
+
+// ================================================================
+// MOCK DATA
+// ================================================================
+const MOCK_GROUPS = [
+  {
+    id: 'g1', name: 'Morning Detox Club', emoji: '🌅',
+    color: '#f97316',
+    members: ['alice', 'ben', 'chloe'],
+    maxMembers: 5,
+    inviteOnly: true,
+    description: 'Phone-free every morning at 7am!',
+    activeSince: Date.now() - 1200000,
+    isActive: true,
+    streak: 5,
+  },
+  {
+    id: 'g2', name: 'Weekend Challenge', emoji: '🏔️',
+    color: '#8b5cf6',
+    members: ['david', 'alice'],
+    maxMembers: 5,
+    inviteOnly: true,
+    description: '2-hour digital detox challenge on weekends',
+    activeSince: null,
+    isActive: false,
+    streak: 2,
+  },
+  {
+    id: 'g3', name: 'Study Group', emoji: '📚',
+    color: '#14b8a6',
+    members: ['chloe', 'david', 'ben', 'alice'],
+    maxMembers: 5,
+    inviteOnly: true,
+    description: 'Focus time before exams, together',
+    activeSince: null,
+    isActive: false,
+    streak: 0,
+  },
+  {
+    id: 'g4', name: 'Night Meditation Club', emoji: '🌙',
+    color: '#6366f1',
+    members: ['alice', 'emma'],
+    maxMembers: 5,
+    inviteOnly: true,
+    description: 'Reset your day with evening meditation sessions',
+    activeSince: null,
+    isActive: false,
+    pendingInvite: { from: 'alice' },
+    streak: 0,
+  },
+];
+
+const MOCK_FRIENDS = [
+  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'Frontend Developer', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
+  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: 'Improving focus',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
+  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', isFriend: true,  bio: 'UI Designer',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'Running enthusiast',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+];
+
+const MOCK_POSTS = [
+  { id: 1, userId: 'alice', duration: 5400, task: 'Read 2 chapters, 100 vocab words', comment: 'Best focus session in a while!', time: '2 hours ago', likes: 12, liked: false, img: null },
+  { id: 2, userId: 'ben',   duration: 3600, task: 'Programming assignment',       comment: null,               time: '5 hours ago', likes: 8,  liked: false, img: null },
+  { id: 3, userId: 'chloe', duration: 1800, task: null,                       comment: 'Short session done!', time: 'Yesterday',   likes: 5,  liked: true,  img: null },
+  { id: 'ad1', type: 'ad', brand: 'Notion', text: 'Your workspace for better thinking. Start today.', cta: 'Learn More' },
+  { id: 4, userId: 'david', duration: 7200, task: 'Reading AI papers', comment: '2 hours, no phone!', time: '2 days ago', likes: 21, liked: false, img: null },
+];
+
+const MOCK_COMMENTS = {
+  1: [{ userId: 'ben',   text: 'Amazing! Keep the streak going!' },
+      { userId: 'chloe', text: "I'll do my best too!" }],
+  2: [{ userId: 'alice', text: 'Great work!' }],
+  3: [],
+  4: [{ userId: 'chloe', text: 'Awesome!' }, { userId: 'ben', text: '2 hours is impressive!' }],
+};
+
+// ================================================================
+// STATE
+// ================================================================
+const S = {
+  page: 'login',
+  feedTab: 'following',
+  activeSession: null,   // { startTime, totalDuration, timerId, isChallenge }
+  challengeData: null,   // { duration }
+  challengeAcceptTimerId: null,
+  viewingUserId: null,
+  commentPostId: null,
+  pendingConfirm: null,
+  friendsTimerId: null,
+  selectedApps: new Set(['YouTube', 'Instagram', 'X']),
+  groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy }
+};
+
+// ================================================================
+// STORAGE HELPERS
+// ================================================================
+const getUser    = () => JSON.parse(localStorage.getItem('to_user'))    || null;
+const saveUser   = u  => localStorage.setItem('to_user', JSON.stringify(u));
+const getHistory = () => JSON.parse(localStorage.getItem('to_history')) || [];
+const saveHistory= h  => localStorage.setItem('to_history', JSON.stringify(h));
+const getDM      = id => JSON.parse(localStorage.getItem(`to_dm_${id}`)) || [
+  { from: id,  text: 'Hey! Been keeping up with your detox?',    time: 'Yesterday' },
+  { from: 'me',text: "Little by little! Let's crush it today!",     time: 'Yesterday' },
+];
+const saveDM     = (id, msgs) => localStorage.setItem(`to_dm_${id}`, JSON.stringify(msgs));
+
+// ================================================================
+// UTILS
+// ================================================================
+function getStreak(history) {
+  const completed = history.filter(h => h.completed);
+  if (!completed.length) return 0;
+  function dateKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  const dates = new Set(completed.map(h => dateKey(new Date(h.date))));
+  const now = new Date();
+  const todayKey = dateKey(now);
+  const startOffset = dates.has(todayKey) ? 0 : 1;
+  let streak = 0;
+  for (let i = startOffset; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    if (dates.has(dateKey(d))) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function fmtDuration(sec, alwaysHours = false) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  if (h > 0 || alwaysHours) return `${h}h${m > 0 ? ' ' + m + 'm' : ''}`;
+  return `${m}m`;
+}
+function fmtCountdown(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
+                'notifications','challenge','session','interrupt','post-session',
+                'premium','create-group','terms','privacy'];
+
+function goto(page) {
+  // Stop friend timers when leaving friends page
+  if (S.page === 'friends' && page !== 'friends' && S.friendsTimerId) {
+    clearInterval(S.friendsTimerId);
+    S.friendsTimerId = null;
+  }
+  // Close comment panel if open
+  document.getElementById('comment-panel').classList.remove('open');
+
+  // Deactivate all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById(`page-${page}`);
+  if (el) el.classList.add('active');
+  S.page = page;
+
+  // Nav bar visibility
+  const nav = document.getElementById('nav-bar');
+  if (NO_NAV.includes(page)) {
+    nav.classList.add('nav-hidden');
+  } else {
+    nav.classList.remove('nav-hidden');
+  }
+
+  // Active nav button highlight
+  document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+    const match = btn.dataset.page === page ||
+                  (btn.dataset.page === 'home' && page === 'home') ||
+                  (btn.dataset.page === 'friends' && page === 'group-detail');
+    btn.classList.toggle('active-nav', match);
+    btn.classList.toggle('text-white',  match);
+    btn.classList.toggle('text-gray-500', !match);
+  });
+
+  // Page-specific render
+  if (page === 'home')         renderHome();
+  if (page === 'friends')      renderFriends();
+  if (page === 'messages')     renderMessages();
+  if (page === 'profile')      renderProfile();
+  if (page === 'notifications') renderNotifications();
+}
+
+// ================================================================
+// NAV BUTTON WIRING
+// ================================================================
+document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.page;
+    if (page === 'disconnect') {
+      if (S.activeSession) goto('session');
+      else openManualSheet();
+    } else {
+      goto(page);
+    }
+  });
+});
+
+// ================================================================
+// LOGIN PAGE
+// ================================================================
+function renderLogin() {
+  document.getElementById('page-login').innerHTML = `
+    <div class="text-center mb-10">
+      <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5">
+        <svg class="w-8 h-8 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+        </svg>
+      </div>
+      <h1 class="text-4xl font-black text-white">(DIS)CONNECT</h1>
+      <p class="text-gray-500 mt-2 text-sm">Digital detox, together.</p>
+    </div>
+    <div class="space-y-3">
+      <input id="li-email" class="input-field" type="email" placeholder="Email / Phone number">
+      <input id="li-pass"  class="input-field" type="password" placeholder="Password">
+      <button id="li-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
+        Log In
+      </button>
+      <button id="li-reg-btn" class="w-full border border-gray-800 text-gray-300 font-semibold py-4 rounded-full text-base hover:bg-white/5 transition">
+        Sign Up
+      </button>
+    </div>
+  `;
+  document.getElementById('li-btn').addEventListener('click', handleLogin);
+  document.getElementById('li-reg-btn').addEventListener('click', () => goto('register'));
+}
+
+function handleLogin() {
+  let u = getUser();
+  if (!u) {
+    u = { name: 'Alex', handle: '@alex', bio: 'On a digital detox journey',
+          avatar: 'https://placehold.co/72x72/334155/FFF?text=U',
+          email: 'user@example.com', isPublic: true };
+    saveUser(u);
+  }
+  goto('home');
+  setTimeout(triggerChallengeBanner, 2500);
+}
+
+// ================================================================
+// REGISTER PAGE
+// ================================================================
+function renderRegister() {
+  document.getElementById('page-register').innerHTML = `
+    <button id="reg-back" class="mb-6 p-2 -ml-2 text-gray-400">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <h2 class="text-3xl font-black text-white mb-8">Create Account</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Username</label>
+        <input id="reg-name" class="input-field" type="text" placeholder="Display name">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">User ID (@)</label>
+        <input id="reg-handle" class="input-field" type="text" placeholder="e.g. disconnect_user">
+        <p class="text-xs text-gray-700 mt-1 ml-1">3-30 chars, alphanumeric, _ and . only</p>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Email</label>
+        <input id="reg-email" class="input-field" type="email" placeholder="mail@example.com">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Date of Birth</label>
+        <input id="reg-birth" class="input-field" type="text" placeholder="YYYY/MM/DD">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Password</label>
+        <input id="reg-pass" class="input-field" type="password" placeholder="8+ characters">
+      </div>
+      <label class="flex items-start space-x-3 pt-1 cursor-pointer">
+        <input id="reg-agree" type="checkbox" class="mt-1 flex-shrink-0 accent-white w-4 h-4">
+        <span class="text-sm text-gray-400">
+          <span id="open-terms" class="text-white underline">Terms of Service</span> and
+          <span id="open-privacy" class="text-white underline">Privacy Policy</span>I agree to the
+        </span>
+      </label>
+      <button id="reg-submit" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
+        Register
+      </button>
+    </div>
+  `;
+  document.getElementById('reg-back').addEventListener('click', () => goto('login'));
+  document.getElementById('open-terms').addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    S._prevPage = 'register';
+    renderTerms();
+    goto('terms');
+  });
+  document.getElementById('open-privacy').addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    S._prevPage = 'register';
+    renderPrivacy();
+    goto('privacy');
+  });
+  document.getElementById('reg-submit').addEventListener('click', () => {
+    const name   = document.getElementById('reg-name').value.trim();
+    const handle = document.getElementById('reg-handle').value.trim();
+    const email  = document.getElementById('reg-email').value.trim();
+    const agree  = document.getElementById('reg-agree').checked;
+    if (!name || !handle || !email) { alert('Please fill in all required fields'); return; }
+    if (!agree) { alert('Please agree to the Terms of Service'); return; }
+    const u = {
+      name, handle: `@${handle.replace('@','')}`,
+      bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
+      email, isPublic: true,
+    };
+    saveUser(u);
+    goto('home');
+    setTimeout(triggerChallengeBanner, 2500);
+  });
+}
+
+// ================================================================
+// CONFIRM MODAL
+// ================================================================
+function showConfirm(title, msg, okLabel, onOk) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  document.getElementById('confirm-ok-btn').textContent = okLabel;
+  S.pendingConfirm = onOk;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  S.pendingConfirm = null;
+});
+document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  if (S.pendingConfirm) { S.pendingConfirm(); S.pendingConfirm = null; }
+});
+
+// ================================================================
+// CHALLENGE BANNER
+// ================================================================
+function triggerChallengeBanner() {
+  const choices = [30,45,60,90,120,150];
+  const dur = choices[Math.floor(Math.random() * choices.length)];
+  S.challengeData = { duration: dur * 60 };
+  document.getElementById('banner-sub').textContent = `Today's detox: ${dur} min`;
+  document.getElementById('challenge-banner').classList.add('visible');
+  setTimeout(() => document.getElementById('challenge-banner').classList.remove('visible'), 9000);
+}
+document.getElementById('banner-join-btn').addEventListener('click', () => {
+  document.getElementById('challenge-banner').classList.remove('visible');
+  if (S.challengeData) openChallengePage();
+});
+
+// ================================================================
+// HOME FEED
+// ================================================================
+function renderHome() {
+  const u = getUser();
+  document.getElementById('page-home').innerHTML = `
+    <div class="flex-shrink-0 flex items-center justify-between px-4 pt-6 pb-3">
+      <h1 class="text-2xl font-black text-white">(DIS)CONNECT</h1>
+      <button id="notif-icon-btn" class="relative w-10 h-10 flex items-center justify-center rounded-full bg-[#1C1C1E]">
+        <div class="notif-dot" id="notif-dot-btn"></div>
+        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </button>
+    </div>
+    <div class="flex-shrink-0 flex space-x-6 px-4 border-b border-gray-900 pb-3">
+      <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">Following</button>
+      <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
+    </div>
+    <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
+  `;
+  document.getElementById('notif-icon-btn').addEventListener('click', () => goto('notifications'));
+  document.querySelectorAll('.feed-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.feedTab = btn.dataset.tab;
+      renderHome();
+    });
+  });
+  renderFeedList();
+}
+
+function renderFeedList() {
+  const list = document.getElementById('feed-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const posts = S.feedTab === 'following'
+    ? MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isFriend)
+    : MOCK_POSTS;
+
+  posts.forEach(p => {
+    if (p.type === 'ad') {
+      list.insertAdjacentHTML('beforeend', `
+        <div class="py-4 border-b border-gray-900">
+          <div class="flex items-center space-x-2 mb-2">
+            <span class="text-xs text-gray-600 border border-gray-700 px-1.5 py-0.5 rounded font-semibold">Ad</span>
+            <span class="text-sm font-bold text-white">${p.brand}</span>
+          </div>
+          <p class="text-gray-400 text-sm mb-3">${p.text}</p>
+          <button class="text-sm font-semibold border border-gray-700 text-gray-300 px-4 py-1.5 rounded-full">${p.cta}</button>
+        </div>
+      `);
+      return;
+    }
+    const f = friendById(p.userId) || {};
+    const dur = fmtDuration(p.duration);
+    const el = document.createElement('div');
+    el.className = 'py-4 border-b border-gray-900';
+    el.innerHTML = `
+      <div class="flex items-start space-x-3">
+        <img src="${f.avatar||''}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">
+        <div class="flex-grow min-w-0">
+          <div class="flex items-baseline space-x-2 mb-2">
+            <span class="font-bold text-white text-sm cursor-pointer profile-trig" data-uid="${p.userId}">${f.name||'?'}</span>
+            <span class="text-gray-600 text-xs">${f.handle||''} · ${p.time}</span>
+          </div>
+          <div class="flex items-center space-x-3 bg-[#1C1C1E] border border-gray-800 rounded-2xl p-3 mb-2">
+            <div class="w-9 h-9 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-white font-bold text-sm">${dur}</p>
+              ${p.task ? `<p class="text-gray-500 text-xs mt-0.5">${p.task}</p>` : ''}
+            </div>
+          </div>
+          ${p.comment ? `<p class="text-gray-300 text-sm mb-3">${p.comment}</p>` : ''}
+          <div class="flex items-center space-x-6">
+            <button class="comment-btn flex items-center space-x-1.5 text-gray-600 hover:text-gray-300 transition" data-pid="${p.id}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+              </svg>
+              <span class="text-xs">${(MOCK_COMMENTS[p.id]||[]).length}</span>
+            </button>
+            <button class="like-btn flex items-center space-x-1.5 transition" data-pid="${p.id}">
+              <svg class="w-5 h-5 heart-ico ${p.liked?'text-red-500':'text-gray-600'}" fill="${p.liked?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+              <span class="text-xs like-cnt ${p.liked?'text-red-500':'text-gray-600'}">${p.likes}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    // like
+    el.querySelector('.like-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      p.liked = !p.liked;
+      p.likes += p.liked ? 1 : -1;
+      const heart = el.querySelector('.heart-ico');
+      const cnt   = el.querySelector('.like-cnt');
+      heart.setAttribute('fill', p.liked ? 'currentColor' : 'none');
+      heart.className = `w-5 h-5 heart-ico ${p.liked?'text-red-500':'text-gray-600'}`;
+      cnt.textContent = p.likes;
+      cnt.className   = `text-xs like-cnt ${p.liked?'text-red-500':'text-gray-600'}`;
+      heart.classList.add('like-pop');
+      heart.addEventListener('animationend', () => heart.classList.remove('like-pop'), {once:true});
+    });
+    // comment
+    el.querySelector('.comment-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      openCommentPanel(p.id);
+    });
+    // profile
+    el.querySelectorAll('.profile-trig').forEach(t => {
+      t.addEventListener('click', e => { e.stopPropagation(); openUserProfile(t.dataset.uid); });
+    });
+    list.appendChild(el);
+  });
+}
+
+// ================================================================
+// COMMENT PANEL
+// ================================================================
+function openCommentPanel(postId) {
+  S.commentPostId = postId;
+  const post = MOCK_POSTS.find(p => p.id === postId);
+  const f    = friendById(post.userId) || {};
+  const comments = MOCK_COMMENTS[postId] || [];
+
+  // Post preview
+  document.getElementById('comment-post-body').innerHTML = `
+    <div class="flex items-start space-x-3">
+      <img src="${f.avatar||''}" class="w-9 h-9 rounded-full flex-shrink-0" alt="">
+      <div class="flex-grow">
+        <p class="font-bold text-white text-sm">${f.name} <span class="text-gray-600 font-normal text-xs">${f.handle} · ${post.time}</span></p>
+        <div class="flex items-center space-x-2 mt-2 bg-[#1C1C1E] border border-gray-800 rounded-xl p-2.5">
+          <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+          </svg>
+          <span class="text-white font-bold text-sm">${fmtDuration(post.duration)}</span>
+          ${post.task ? `<span class="text-gray-500 text-xs">· ${post.task}</span>` : ''}
+        </div>
+        ${post.comment ? `<p class="text-gray-300 text-sm mt-2">${post.comment}</p>` : ''}
+      </div>
+    </div>
+  `;
+
+  // Comments
+  const cl = document.getElementById('comment-list');
+  cl.innerHTML = '';
+  if (comments.length === 0) {
+    cl.innerHTML = '<p class="text-gray-600 text-sm text-center mt-4">No comments yet</p>';
+  } else {
+    comments.forEach(c => {
+      const cf = friendById(c.userId) || {};
+      cl.insertAdjacentHTML('beforeend', `
+        <div class="flex items-start space-x-3">
+          <img src="${cf.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+          <div>
+            <p class="text-sm font-bold text-white">${cf.name||'?'} <span class="text-gray-600 font-normal text-xs">${cf.handle||''}</span></p>
+            <p class="text-sm text-gray-300 mt-0.5">${c.text}</p>
+          </div>
+        </div>
+      `);
+    });
+  }
+
+  document.getElementById('comment-panel').classList.add('open');
+  document.getElementById('nav-bar').classList.add('nav-hidden');
+}
+
+document.getElementById('comment-close-btn').addEventListener('click', () => {
+  document.getElementById('comment-panel').classList.remove('open');
+  if (!NO_NAV.includes(S.page)) document.getElementById('nav-bar').classList.remove('nav-hidden');
+});
+
+document.getElementById('comment-send-btn').addEventListener('click', () => {
+  const input = document.getElementById('comment-input');
+  const text  = input.value.trim();
+  if (!text || S.commentPostId === null) return;
+  if (!MOCK_COMMENTS[S.commentPostId]) MOCK_COMMENTS[S.commentPostId] = [];
+  const u = getUser();
+  MOCK_COMMENTS[S.commentPostId].push({ userId: 'me', text });
+  // Re-render comment list inline
+  const cl = document.getElementById('comment-list');
+  cl.insertAdjacentHTML('beforeend', `
+    <div class="flex items-start space-x-3">
+      <img src="${u?.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+      <div>
+        <p class="text-sm font-bold text-white">${u?.name||'You'}</p>
+        <p class="text-sm text-gray-300 mt-0.5">${text}</p>
+      </div>
+    </div>
+  `);
+  cl.scrollTop = cl.scrollHeight;
+  input.value = '';
+  // Update count in feed
+  renderFeedList();
+});
+
+// ================================================================
+// CHALLENGE PAGE
+// ================================================================
+const ALL_APPS = [
+  { label: 'YouTube',   bg: 'FF0000' },
+  { label: 'Instagram', bg: 'C13584' },
+  { label: 'X',         bg: '1D9BF0' },
+  { label: 'TikTok',   bg: '010101' },
+  { label: 'LINE',      bg: '06C755' },
+  { label: 'Facebook',  bg: '1877F2' },
+  { label: 'Discord',   bg: '5865F2' },
+  { label: 'Twitch',    bg: '9146FF' },
+];
+const getBlockedApps = () => ALL_APPS.filter(a => S.selectedApps.has(a.label));
+
+function openChallengePage() {
+  const durMin = Math.round((S.challengeData?.duration || 3600) / 60);
+  document.getElementById('page-challenge').innerHTML = `
+    <div class="text-center">
+      <p class="text-xs text-gray-600 font-bold uppercase tracking-widest mb-3">Today's Challenge</p>
+      <h2 class="text-7xl font-black text-white leading-none">${durMin}</h2>
+      <p class="text-2xl text-gray-500 font-bold mt-1"> min</p>
+      <p class="text-gray-600 text-sm mt-2">digital detox</p>
+    </div>
+
+    <div class="w-full text-center">
+      <p class="text-gray-600 text-xs mb-1">Time to accept</p>
+      <p id="ch-countdown" class="text-4xl font-black text-white tabular-nums">2:00</p>
+    </div>
+
+    <div class="card p-4 w-full">
+      <p class="text-xs text-gray-600 font-semibold mb-3">Apps to Block</p>
+      <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar">
+        ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
+      </div>
+    </div>
+
+    <div class="w-full">
+      <div class="slider-track h-16" id="ch-slider">
+        <div class="slider-reveal" id="ch-reveal"></div>
+        <div class="slider-thumb w-20 h-14" id="ch-thumb">
+          <svg class="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+        <span class="slider-label">Swipe to Start Detox</span>
+      </div>
+      <button id="ch-skip-btn" class="w-full text-gray-700 font-semibold py-3 mt-2 text-sm">Skip for now</button>
+    </div>
+  `;
+
+  goto('challenge');
+
+  // Accept countdown 2 min
+  let remaining = 120;
+  updateChallengeCountdown(remaining);
+  if (S.challengeAcceptTimerId) clearInterval(S.challengeAcceptTimerId);
+  S.challengeAcceptTimerId = setInterval(() => {
+    remaining--;
+    updateChallengeCountdown(remaining);
+    if (remaining <= 0) {
+      clearInterval(S.challengeAcceptTimerId);
+      goto('home');
+    }
+  }, 1000);
+
+  initSlider('ch-slider', 'ch-thumb', 'ch-reveal', () => {
+    clearInterval(S.challengeAcceptTimerId);
+    startSession(S.challengeData.duration, true);
+  });
+
+  document.getElementById('ch-skip-btn').addEventListener('click', () => {
+    clearInterval(S.challengeAcceptTimerId);
+    goto('home');
+  });
+}
+
+function updateChallengeCountdown(sec) {
+  const el = document.getElementById('ch-countdown');
+  if (!el) return;
+  const m = Math.floor(sec / 60), s = sec % 60;
+  el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+}
+
+// ================================================================
+// SESSION ACTIVE
+// ================================================================
+const RING_R    = 110;
+const RING_CIRC = 2 * Math.PI * RING_R;
+
+function renderSessionPage() {
+  const gd = S.groupDetox;
+  const g  = gd ? MOCK_GROUPS.find(x => x.id === gd.groupId) : null;
+
+  document.getElementById('page-session').innerHTML = `
+    ${g ? `
+    <div class="w-full rounded-2xl px-4 py-3 flex items-center gap-3" style="background:${g.color}18;border:1px solid ${g.color}33">
+      <span class="text-xl">${g.emoji}</span>
+      <div class="flex-grow">
+        <p class="text-xs font-bold" style="color:${g.color}">${g.name} · Group Detox Active</p>
+        <div class="flex gap-1 mt-1" id="gd-sess-avatars">
+          ${gd.allMembers.map(id => {
+            const isMe = id === 'me';
+            const f = isMe ? null : friendById(id);
+            const u2 = getUser();
+            const name = isMe ? (u2?u2.name:'You') : (f?f.name:id);
+            const avatar = isMe
+              ? `https://placehold.co/24x24/334155/FFF?text=${(u2?u2.name:'You')[0].toUpperCase()}`
+              : (f?f.avatar.replace('48x48','24x24'):`https://placehold.co/24x24/555/FFF?text=${id[0].toUpperCase()}`);
+            return `<img src="${avatar}" class="w-6 h-6 rounded-full border-2 border-black" title="${name}">`;
+          }).join('')}
+        </div>
+      </div>
+      <span class="text-xs font-black" style="color:${g.color}" id="gd-sess-cnt">${gd.allMembers.length}/${gd.allMembers.length}</span>
+    </div>
+    ` : `
+    <div class="text-center w-full">
+      <p class="text-gray-700 text-xs font-bold uppercase tracking-widest">Disconnecting...</p>
+    </div>`}
+
+    <div class="relative flex items-center justify-center" style="width:240px;height:240px;">
+      <svg class="countdown-ring absolute" width="240" height="240" viewBox="0 0 240 240">
+        <circle stroke="#2C2C2E" stroke-width="8" fill="transparent" r="${RING_R}" cx="120" cy="120"/>
+        <circle id="sess-ring" class="pulse-ring" stroke="#E2E2E2" stroke-width="8" fill="transparent"
+          r="${RING_R}" cx="120" cy="120"
+          stroke-dasharray="${RING_CIRC} ${RING_CIRC}"
+          stroke-dashoffset="0"/>
+      </svg>
+      <div class="text-center">
+        <div id="sess-timer" class="text-5xl font-black text-white tabular-nums">00:00:00</div>
+        <div class="text-gray-700 text-xs mt-1">Remaining</div>
+      </div>
+    </div>
+
+    <div class="w-full space-y-3">
+      <div class="card p-3">
+        <p class="text-xs text-gray-600 mb-2 font-semibold">Blocking</p>
+        <div class="flex space-x-2">
+          ${getBlockedApps().map(a=>`<img src="https://placehold.co/36x36/${a.bg}/FFF?text=${a.label[0]}" class="rounded-lg w-9 h-9" alt="${a.label}">`).join('')}
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="card p-3">
+          <p class="text-2xl font-black text-white">1,247,831</p>
+          <p class="text-xs text-gray-600 mt-1">people detoxing nationwide</p>
+        </div>
+        <div class="card p-3">
+          <p class="text-2xl font-black text-white" id="sess-friend-cnt">
+            ${MOCK_FRIENDS.filter(f=>f.isFriend&&f.sessionStart).length}
+          </p>
+          <p class="text-xs text-gray-600 mt-1">friends detoxing</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full space-y-2">
+      <button id="go-mainroom-btn" class="w-full border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm hover:bg-white/5 transition">
+        Go to Main Room
+      </button>
+      <button id="interrupt-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">
+        Quit Detox
+      </button>
+    </div>
+  `;
+
+  document.getElementById('go-mainroom-btn').addEventListener('click', () => goto('home'));
+  document.getElementById('interrupt-btn').addEventListener('click', () => goto('interrupt'));
+}
+
+function startSession(durationSec, isChallenge = false) {
+  if (S.activeSession) return;
+  const sess = { startTime: Date.now(), totalDuration: durationSec, isChallenge };
+  S.activeSession = { ...sess, timerId: null };
+  localStorage.setItem('to_active_session', JSON.stringify(sess));
+  renderSessionPage();
+  goto('session');
+  tickSession();
+  S.activeSession.timerId = setInterval(tickSession, 1000);
+  // update tuneout nav icon
+  const tb = document.getElementById('tuneout-nav-btn');
+  if (tb) { tb.classList.add('active-nav','text-white'); tb.classList.remove('text-gray-500'); }
+}
+
+function tickSession() {
+  const sess = S.activeSession;
+  if (!sess) return;
+  const elapsed   = (Date.now() - sess.startTime) / 1000;
+  const remaining = sess.totalDuration - elapsed;
+  const timerEl   = document.getElementById('sess-timer');
+  const ringEl    = document.getElementById('sess-ring');
+  if (timerEl) timerEl.textContent = fmtCountdown(remaining);
+  if (ringEl) {
+    const pct    = Math.max(0, remaining / sess.totalDuration);
+    ringEl.style.strokeDashoffset = RING_CIRC * (1 - pct);
+  }
+  if (remaining <= 0) endSession(true);
+}
+
+function endSession(completed) {
+  const sess = S.activeSession;
+  if (!sess) return;
+  clearInterval(sess.timerId);
+  localStorage.removeItem('to_active_session');
+  const elapsed  = (Date.now() - sess.startTime) / 1000;
+  const duration = completed ? sess.totalDuration : elapsed;
+  if (elapsed > 10) {
+    const h = getHistory();
+    h.push({ duration, date: Date.now(), completed });
+    saveHistory(h);
+  }
+  S.activeSession = null;
+  const tb = document.getElementById('tuneout-nav-btn');
+  if (tb) { tb.classList.remove('active-nav','text-white'); tb.classList.add('text-gray-500'); }
+
+  // Group detox result
+  const gd = S.groupDetox;
+  if (gd) {
+    const g = MOCK_GROUPS.find(x => x.id === gd.groupId);
+    if (completed) {
+      // Team success — increment streak
+      if (g) g.streak = (g.streak || 0) + 1;
+      renderPostSession(duration, true, { groupSuccess: true, group: g });
+    } else {
+      // Team failed
+      if (g) g.streak = 0;
+      const u = getUser();
+      gd.failed = true;
+      gd.failedBy = u ? u.name : 'You';
+      renderPostSession(duration, false, { groupFailed: true, group: g, failedBy: gd.failedBy });
+    }
+    S.groupDetox = null;
+  } else {
+    renderPostSession(duration, completed);
+  }
+}
+
+// ================================================================
+// INTERRUPT PAGE
+// ================================================================
+function renderInterruptPage() {
+  const gd = S.groupDetox;
+  const g  = gd ? MOCK_GROUPS.find(x => x.id === gd.groupId) : null;
+
+  document.getElementById('page-interrupt').innerHTML = `
+    ${g ? `
+    <div class="w-full rounded-2xl px-4 py-3 mb-6 text-center" style="background:${g.color}18;border:1px solid ${g.color}44">
+      <p class="text-base font-black mb-1" style="color:${g.color}">${g.emoji} ${g.name}</p>
+      <p class="text-sm text-white font-semibold">Group session in progress!</p>
+      <p class="text-xs text-gray-400 mt-1">Quitting causes <span class="text-red-400 font-bold">the entire team to fail</span></p>
+    </div>
+    ` : ''}
+    <div class="w-16 h-16 rounded-full bg-red-900/25 flex items-center justify-center mb-6">
+      <svg class="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+    </div>
+    <h2 class="text-2xl font-black text-white mb-2">Are you sure you want to quit?</h2>
+    <p class="text-gray-500 text-sm mb-1">Quitting will play an <span class="text-white font-semibold">ad video</span>.</p>
+    <p class="text-gray-700 text-xs mb-10">(15-30 sec, skippable)</p>
+
+    <div class="w-full mb-4">
+      <div class="slider-track h-16" id="int-slider" style="border-color:rgba(127,29,29,0.4);">
+        <div class="slider-reveal" id="int-reveal" style="background:rgba(239,68,68,0.15);"></div>
+        <div class="slider-thumb w-20 h-14 bg-red-500" id="int-thumb">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+        <span class="slider-label">Swipe to Quit</span>
+      </div>
+    </div>
+    <button id="int-back-btn" class="text-gray-600 font-semibold py-2 text-sm">Back (continue detox)</button>
+  `;
+
+  initSlider('int-slider', 'int-thumb', 'int-reveal', () => {
+    // Show "ad" then end
+    endSession(false);
+    setTimeout(() => alert('📺 Ad video playing (simulation)\nA skippable video ad would play in the real app.'), 100);
+  });
+  document.getElementById('int-back-btn').addEventListener('click', () => goto('session'));
+}
+
+// ================================================================
+// POST SESSION
+// ================================================================
+function renderPostSession(duration, completed, groupResult = null) {
+  const dur = fmtDuration(duration);
+  const isGroupSuccess = groupResult?.groupSuccess;
+  const isGroupFailed  = groupResult?.groupFailed;
+  const grp = groupResult?.group;
+
+  document.getElementById('page-post-session').innerHTML = `
+    ${isGroupSuccess && grp ? `
+    <div class="rounded-2xl px-4 py-4 mb-4 text-center" style="background:${grp.color}18;border:1px solid ${grp.color}44">
+      <p class="text-2xl mb-1">${grp.emoji}</p>
+      <p class="text-base font-black text-white mb-1">Team Goal Achieved!</p>
+      <p class="text-xs text-gray-400 mb-2">${grp.name}: everyone completed the detox</p>
+      <div class="flex items-center justify-center gap-2">
+        <span class="text-3xl font-black text-orange-400">🔥 ${grp.streak}日</span>
+        <span class="text-xs text-gray-500">Group Streak</span>
+      </div>
+    </div>
+    ` : ''}
+    ${isGroupFailed && grp ? `
+    <div class="rounded-2xl px-4 py-4 mb-4 text-center bg-red-900/15 border border-red-900/30">
+      <p class="text-2xl mb-1">${grp.emoji}</p>
+      <p class="text-base font-black text-red-400 mb-1">Team Failed...</p>
+      <p class="text-xs text-gray-500">${groupResult.failedBy}quit, ending the group session</p>
+      <p class="text-xs text-gray-700 mt-1">Streak has been reset</p>
+    </div>
+    ` : ''}
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 rounded-full ${completed?'bg-white/10':'bg-red-900/20'} flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 ${completed?'text-white':'text-red-400'}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          ${completed
+            ? '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+            : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
+        </svg>
+      </div>
+      <p class="text-gray-500 text-sm">${completed?'Detox Complete!':'Session Interrupted'}</p>
+      <h2 class="text-5xl font-black text-white mt-1">${dur}</h2>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">What did you accomplish? (optional)</label>
+        <textarea id="ps-task" class="input-field resize-none rounded-xl h-20" placeholder="e.g. Read 3 chapters, 100 vocab words..."></textarea>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Quick comment (optional)</label>
+        <input id="ps-comment" class="input-field" type="text" placeholder="How was your detox session?">
+      </div>
+      <button id="ps-img-btn" class="card w-full p-4 flex items-center space-x-3 text-left hover:bg-[#2C2C2E] transition">
+        <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-gray-400 text-sm">Add photo</span>
+      </button>
+      <input type="file" id="ps-img-input" class="hidden" accept="image/*">
+      <div id="ps-img-preview" class="hidden rounded-2xl overflow-hidden">
+        <img id="ps-img-preview-src" class="w-full max-h-48 object-cover" alt="">
+      </div>
+      <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">Post</button>
+      <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">Skip</button>
+    </div>
+  `;
+
+  goto('post-session');
+
+  document.getElementById('ps-img-btn').addEventListener('click', () => document.getElementById('ps-img-input').click());
+  document.getElementById('ps-img-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('ps-img-preview-src').src = ev.target.result;
+      document.getElementById('ps-img-preview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('ps-post-btn').addEventListener('click', () => goto('home'));
+  document.getElementById('ps-skip-btn').addEventListener('click', () => goto('home'));
+}
+
+// ================================================================
+// SLIDER UTILITY
+// ================================================================
+function initSlider(trackId, thumbId, revealId, onComplete) {
+  const track  = document.getElementById(trackId);
+  const thumb  = document.getElementById(thumbId);
+  const reveal = document.getElementById(revealId);
+  if (!track || !thumb || !reveal) return;
+
+  let dragging = false;
+
+  function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+
+  function onStart(e) { e.preventDefault(); dragging = true; }
+
+  function onMove(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    const rect   = track.getBoundingClientRect();
+    const maxPos = rect.width - thumb.offsetWidth - 12;
+    let pos = getX(e) - rect.left - thumb.offsetWidth / 2;
+    pos = Math.max(0, Math.min(pos, maxPos));
+    thumb.style.left = `${pos + 6}px`;
+    reveal.style.width = `${pos + thumb.offsetWidth / 2}px`;
+    const label = track.querySelector('.slider-label');
+    if (label) label.style.opacity = Math.max(0, 1 - (pos / maxPos) * 2);
+  }
+
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    const rect   = track.getBoundingClientRect();
+    const maxPos = rect.width - thumb.offsetWidth - 12;
+    const pos    = parseFloat(thumb.style.left || '6') - 6;
+    if (pos >= maxPos * 0.85) {
+      onComplete();
+    } else {
+      resetSlider(trackId, thumbId, revealId);
+    }
+  }
+
+  thumb.addEventListener('mousedown',  onStart);
+  thumb.addEventListener('touchstart', onStart, { passive: false });
+  document.addEventListener('mousemove',  onMove);
+  document.addEventListener('touchmove',  onMove, { passive: false });
+  document.addEventListener('mouseup',  onEnd);
+  document.addEventListener('touchend', onEnd);
+}
+
+function resetSlider(trackId, thumbId, revealId) {
+  const thumb  = document.getElementById(thumbId);
+  const reveal = document.getElementById(revealId);
+  const track  = document.getElementById(trackId);
+  if (!thumb || !reveal) return;
+  thumb.style.transition  = 'left 0.3s ease';
+  reveal.style.transition = 'width 0.3s ease';
+  thumb.style.left   = '6px';
+  reveal.style.width = '0px';
+  const label = track?.querySelector('.slider-label');
+  if (label) label.style.opacity = '1';
+  setTimeout(() => { thumb.style.transition = ''; reveal.style.transition = ''; }, 320);
+}
+
+// ================================================================
+// FRIENDS PAGE
+// ================================================================
+function renderFriends() {
+  const page = document.getElementById('page-friends');
+  page.innerHTML = `
+    <div class="flex-shrink-0 px-4 pt-6 pb-3">
+      <h1 class="text-3xl font-black text-white">Friends</h1>
+    </div>
+    <div class="flex-shrink-0 px-4 pb-3 flex gap-2">
+      <button id="tab-friends-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black">Friends</button>
+      <button id="tab-groups-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400">Group</button>
+    </div>
+    <div id="friends-tab-content" class="flex-grow overflow-y-auto no-scrollbar pb-28">
+      <div id="friends-panel">
+        <div class="px-4 pb-3 relative">
+          <input id="friend-search" class="input-field rounded-full pl-10" placeholder="Search friends">
+          <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <div id="friends-list" class="px-4 space-y-2"></div>
+      </div>
+      <div id="groups-panel" class="hidden px-4 space-y-3"></div>
+    </div>
+  `;
+
+  document.getElementById('friend-search').addEventListener('input', e => renderFriendsList(e.target.value));
+  renderFriendsList('');
+  renderGroupsList();
+
+  document.getElementById('tab-friends-btn').addEventListener('click', () => {
+    document.getElementById('tab-friends-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-groups-btn').className  = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    document.getElementById('friends-panel').classList.remove('hidden');
+    document.getElementById('groups-panel').classList.add('hidden');
+  });
+  document.getElementById('tab-groups-btn').addEventListener('click', () => {
+    document.getElementById('tab-groups-btn').className  = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-friends-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    document.getElementById('groups-panel').classList.remove('hidden');
+    document.getElementById('friends-panel').classList.add('hidden');
+  });
+
+  // Start live timer for active friends
+  if (S.friendsTimerId) clearInterval(S.friendsTimerId);
+  S.friendsTimerId = setInterval(() => updateFriendTimers(), 1000);
+}
+
+function renderGroupsList() {
+  const list = document.getElementById('groups-panel');
+  if (!list) return;
+  list.innerHTML = '';
+
+  // Pending invitations section
+  const pendingGroups = MOCK_GROUPS.filter(g => g.pendingInvite);
+  if (pendingGroups.length) {
+    const inviteSection = document.createElement('div');
+    inviteSection.className = 'mb-4';
+    inviteSection.innerHTML = `
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">Pending Invitations</p>
+      ${pendingGroups.map(g => {
+        const fromUser = friendById(g.pendingInvite.from);
+        return `
+          <div class="card p-4 mb-2" style="border-color:${g.color}33;">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" style="background:${g.color}22;border:1.5px solid ${g.color}55">${g.emoji}</div>
+              <div class="flex-grow min-w-0">
+                <p class="font-bold text-white text-sm">${g.name}</p>
+                <p class="text-xs text-gray-500">${fromUser ? fromUser.name : g.pendingInvite.from} invited you</p>
+              </div>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style="background:${g.color}22;color:${g.color};">Invited</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-white invite-accept-btn" data-gid="${g.id}" style="background:${g.color};">Join</button>
+              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-gray-400 bg-[#2C2C2E] invite-decline-btn" data-gid="${g.id}">Decline</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    `;
+    list.appendChild(inviteSection);
+  }
+
+  // My groups (no pendingInvite)
+  const myGroups = MOCK_GROUPS.filter(g => !g.pendingInvite);
+  if (myGroups.length) {
+    const mySection = document.createElement('div');
+    mySection.className = 'mb-3';
+    mySection.innerHTML = `<p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">My Groups</p>`;
+    list.appendChild(mySection);
+  }
+
+  myGroups.forEach(g => {
+    const activeMembers = g.members.filter(id => {
+      const f = friendById(id);
+      return f && f.sessionStart;
+    });
+    const elapsed = g.isActive ? Math.floor((Date.now() - g.activeSince) / 1000) : 0;
+
+    const card = document.createElement('div');
+    card.className = 'card p-4 cursor-pointer hover:bg-[#2C2C2E] transition mb-3';
+    card.innerHTML = `
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:${g.color}22; border:1.5px solid ${g.color}55">${g.emoji}</div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <p class="font-bold text-white text-base">${g.name}</p>
+              <svg class="w-3.5 h-3.5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers} members</p>
+          </div>
+        </div>
+        ${g.isActive
+          ? `<div class="flex flex-col items-end"><span class="text-xs font-bold px-2 py-0.5 rounded-full mb-1" style="background:${g.color}33;color:${g.color}">Active</span><span class="text-xs text-gray-500">${fmtCountdown(elapsed)}</span></div>`
+          : `<button class="text-xs font-bold px-3 py-1.5 rounded-full border" style="border-color:${g.color};color:${g.color}">Start</button>`
+        }
+      </div>
+      <p class="text-xs text-gray-600 mb-3">${g.description}</p>
+      <div class="flex items-center gap-1.5">
+        ${g.members.slice(0, 4).map(id => {
+          const f = friendById(id);
+          if (!f) return '';
+          const isOn = !!f.sessionStart;
+          return `<div class="relative"><img src="${f.avatar}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
+        }).join('')}
+        ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length} detoxing</span>` : `<span class="text-xs text-gray-700 ml-1">Waiting</span>`}
+      </div>
+    `;
+    card.addEventListener('click', () => renderGroupDetail(g.id));
+    list.appendChild(card);
+  });
+
+  // Invite accept/decline handlers
+  list.querySelectorAll('.invite-accept-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const g = MOCK_GROUPS.find(x => x.id === btn.dataset.gid);
+      if (g) { delete g.pendingInvite; renderGroupsList(); }
+    });
+  });
+  list.querySelectorAll('.invite-decline-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = MOCK_GROUPS.findIndex(x => x.id === btn.dataset.gid);
+      if (idx !== -1) { MOCK_GROUPS.splice(idx, 1); renderGroupsList(); }
+    });
+  });
+
+  // Add "New Group" button
+  const addBtn = document.createElement('button');
+  addBtn.className = 'w-full card p-4 flex items-center justify-center gap-2 text-gray-600 font-semibold text-sm border-dashed border-gray-800 hover:bg-[#2C2C2E] transition';
+  addBtn.innerHTML = `
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    Create New Group (invite-only, max 5)
+  `;
+  addBtn.addEventListener('click', () => renderCreateGroup());
+  list.appendChild(addBtn);
+}
+
+function renderGroupDetail(groupId) {
+  const g = MOCK_GROUPS.find(x => x.id === groupId);
+  if (!g) return;
+  const page = document.getElementById('page-group-detail');
+  const gd = S.groupDetox;
+  const isMyGroup = gd && gd.groupId === groupId;
+  const inLobby = isMyGroup && !gd.startTime;
+  const inSession = isMyGroup && !!gd.startTime;
+
+  // Preset durations for group detox
+  const GD_DURATIONS = [
+    { label: '30 min', sec: 1800 },
+    { label: '1 hour', sec: 3600 },
+    { label: '2 hours', sec: 7200 },
+  ];
+  const selectedDur = (isMyGroup ? gd.duration : GD_DURATIONS[1].sec);
+
+  // Member ready status html
+  function memberReadyRows(readyList) {
+    const u = getUser();
+    const myName = u ? u.name : 'You';
+    const allIds = ['me', ...g.members];
+    return allIds.map(id => {
+      const isMe = id === 'me';
+      const f = isMe ? null : friendById(id);
+      const name = isMe ? myName : (f ? f.name : id);
+      const avatar = isMe
+        ? `https://placehold.co/40x40/334155/FFF?text=${myName[0].toUpperCase()}`
+        : (f ? f.avatar : `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+      const ready = readyList.includes(id);
+      return `
+        <div class="flex items-center justify-between py-2">
+          <div class="flex items-center gap-3">
+            <img src="${avatar}" class="w-9 h-9 rounded-full ${ready?'':'opacity-40'}" alt="${name}">
+            <div>
+              <p class="text-sm font-semibold text-white">${name}${isMe?' (You)':''}</p>
+            </div>
+          </div>
+          ${ready
+            ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Ready</span>`
+            : `<span class="text-xs text-gray-600">Waiting...</span>`
+          }
+        </div>
+      `;
+    }).join('');
+  }
+
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3 gap-3">
+      <button id="gd-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:${g.color}22;border:1.5px solid ${g.color}55">${g.emoji}</div>
+      <div class="flex-grow">
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-black text-white">${g.name}</h1>
+          ${g.inviteOnly ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Invite Only</span>` : ''}
+        </div>
+        <div class="flex items-center gap-2">
+          <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5} members</p>
+          ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}day streak</span>` : ''}
+        </div>
+      </div>
+      ${g.members.length < (g.maxMembers||5) ? `
+      <button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        Invite
+      </button>` : `<span class="text-xs text-gray-600 flex-shrink-0">Full</span>`}
+    </div>
+
+    <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10 space-y-3">
+
+      ${inLobby ? `
+      <!-- LOBBY: waiting for all to be ready -->
+      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
+        <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:${g.color}">Lobby — Session starts when everyone is ready</p>
+        <div class="space-y-0" id="gd-member-rows">
+          ${memberReadyRows(gd.readyMembers)}
+        </div>
+        <div class="mt-3 flex items-center justify-between">
+          <span class="text-xs text-gray-600">Duration: <span class="text-white font-bold">${GD_DURATIONS.find(d=>d.sec===gd.duration)?.label||'1 hour'}</span></span>
+          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${1+g.members.length} Ready</span>
+        </div>
+      </div>
+      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">Cancel</button>
+      ` : `
+      <!-- DEFAULT: setup -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">Detox Duration</p>
+        <div class="flex gap-2" id="gd-dur-btns">
+          ${GD_DURATIONS.map(d => `
+            <button class="gd-dur flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${d.sec===selectedDur?'text-black border-transparent':'border-gray-800 text-gray-500'}"
+              style="${d.sec===selectedDur?`background:${g.color};`:'background:#1C1C1E;'}"
+              data-sec="${d.sec}">${d.label}</button>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">Members</p>
+        <div class="space-y-0">
+          ${['me', ...g.members].map(id => {
+            const isMe = id === 'me';
+            const f = isMe ? null : friendById(id);
+            const u2 = getUser();
+            const name = isMe ? (u2?u2.name:'You') : (f?f.name:id);
+            const avatar = isMe
+              ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:'You')[0].toUpperCase()}`
+              : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+            return `
+              <div class="flex items-center gap-3 py-2">
+                <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
+                <p class="text-sm font-semibold text-white">${name}${isMe?' (You)':''}</p>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">About This Group</p>
+        <p class="text-sm text-gray-400">${g.description}</p>
+        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 Group Streak ${g.streak}日</p>` : ''}
+      </div>
+
+      <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+        Mark Ready
+      </button>
+      <p class="text-center text-xs text-gray-700">Session auto-starts when all members are ready</p>
+      `}
+    </div>
+  `;
+
+  document.getElementById('gd-back').addEventListener('click', () => {
+    goto('friends');
+    setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+  });
+  document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
+
+  if (inLobby) {
+    document.getElementById('gd-cancel-lobby').addEventListener('click', () => {
+      S.groupDetox = null;
+      renderGroupDetail(groupId);
+    });
+    // Simulate others joining (already handled by the simulation timers set when lobby started)
+  } else {
+    // Duration selector
+    let gdSelectedDur = selectedDur;
+    page.querySelectorAll('.gd-dur').forEach(btn => {
+      btn.addEventListener('click', () => {
+        gdSelectedDur = parseInt(btn.dataset.sec);
+        page.querySelectorAll('.gd-dur').forEach(b => {
+          const active = parseInt(b.dataset.sec) === gdSelectedDur;
+          b.style.background = active ? g.color : '#1C1C1E';
+          b.style.borderColor = active ? 'transparent' : '';
+          b.className = b.className.replace(/text-black|text-gray-500/g, '');
+          b.classList.add(active ? 'text-black' : 'text-gray-500');
+          b.style.borderColor = active ? 'transparent' : '#374151';
+        });
+      });
+    });
+
+    document.getElementById('gd-ready-btn').addEventListener('click', () => {
+      // Enter lobby - mark "me" as ready
+      S.groupDetox = {
+        groupId,
+        duration: gdSelectedDur,
+        readyMembers: ['me'],
+        allMembers: ['me', ...g.members],
+        startTime: null,
+        failed: false,
+        failedBy: null,
+      };
+      renderGroupDetail(groupId);
+      // Simulate other members getting ready one by one
+      const others = [...g.members];
+      others.forEach((id, i) => {
+        setTimeout(() => {
+          if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
+          S.groupDetox.readyMembers.push(id);
+          // Update UI if still on group-detail page
+          const rows = document.getElementById('gd-member-rows');
+          const cnt  = document.getElementById('gd-ready-count');
+          if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
+          if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length} Ready`;
+          // All ready → start
+          if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
+            S.groupDetox.startTime = Date.now();
+            setTimeout(() => {
+              startSession(S.groupDetox.duration, false);
+            }, 600);
+          }
+        }, (i + 1) * 1500);
+      });
+    });
+  }
+
+  goto('group-detail');
+}
+
+function renderFriendsList(filter = '') {
+  const list = document.getElementById('friends-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const friends = MOCK_FRIENDS.filter(f =>
+    f.isFriend &&
+    (!filter || f.name.toLowerCase().includes(filter.toLowerCase()) || f.handle.toLowerCase().includes(filter.toLowerCase()))
+  );
+
+  const active  = friends.filter(f => f.sessionStart);
+  const offline = friends.filter(f => !f.sessionStart);
+
+  // Active friends
+  if (active.length) {
+    active.forEach(f => list.appendChild(buildFriendCard(f, true)));
+  }
+
+  // Separator
+  if (active.length && offline.length) {
+    const sep = document.createElement('div');
+    sep.className = 'text-center text-gray-800 text-xs font-bold uppercase tracking-widest py-2';
+    sep.textContent = 'Offline';
+    list.appendChild(sep);
+  }
+
+  // Offline friends
+  offline.forEach(f => list.appendChild(buildFriendCard(f, false)));
+
+  if (friends.length === 0) {
+    list.innerHTML = '<p class="text-gray-700 text-sm text-center mt-8">No friends found</p>';
+  }
+}
+
+function buildFriendCard(f, isActive) {
+  const el = document.createElement('div');
+  el.className = 'card p-4 flex items-center justify-between cursor-pointer hover:bg-[#2C2C2E] transition';
+  el.dataset.uid = f.id;
+
+  const elapsed = isActive ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
+  const blockText = (isActive && f.isPublic && f.blockPublic)
+    ? '<p class="text-xs text-gray-500 mt-0.5">Blocking YouTube, Instagram</p>'
+    : '';
+
+  el.innerHTML = `
+    <div class="flex items-center space-x-3">
+      <div class="relative">
+        <img src="${f.avatar}" class="w-12 h-12 rounded-full ${isActive?'':'opacity-50'}" alt="">
+        ${isActive ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
+      </div>
+      <div>
+        <p class="font-bold text-white">${f.name}</p>
+        <p class="text-xs text-gray-600">${f.handle}</p>
+        ${blockText}
+      </div>
+    </div>
+    <div class="text-right flex-shrink-0 ml-2">
+      ${isActive
+        ? `<p class="font-bold text-white text-sm friend-elapsed" data-start="${f.sessionStart}">${fmtCountdown(elapsed)}</p>
+           <p class="text-xs text-gray-700">Elapsed</p>`
+        : `<svg class="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+           </svg>`
+      }
+    </div>
+  `;
+  el.addEventListener('click', () => openUserProfile(f.id));
+  return el;
+}
+
+function updateFriendTimers() {
+  document.querySelectorAll('.friend-elapsed').forEach(el => {
+    const start   = parseInt(el.dataset.start);
+    const elapsed = Math.floor((Date.now() - start) / 1000);
+    el.textContent = fmtCountdown(elapsed);
+  });
+}
+
+// ================================================================
+// MESSAGES PAGE
+// ================================================================
+function renderMessages(filter = '') {
+  const page = document.getElementById('page-messages');
+  page.innerHTML = `
+    <div class="flex-shrink-0 px-4 pt-6 pb-3">
+      <h1 class="text-3xl font-black text-white">Messages</h1>
+    </div>
+    <div class="flex-shrink-0 px-4 pb-3 relative">
+      <input id="msg-search" class="input-field rounded-full pl-10" placeholder="Search friends">
+      <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </div>
+    <div id="msg-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 space-y-2"></div>
+  `;
+  document.getElementById('msg-search').addEventListener('input', e => renderMsgList(e.target.value));
+  renderMsgList(filter);
+}
+
+function renderMsgList(filter = '') {
+  const list = document.getElementById('msg-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const friends = MOCK_FRIENDS.filter(f =>
+    f.isFriend &&
+    (!filter || f.name.toLowerCase().includes(filter.toLowerCase()))
+  );
+
+  if (friends.length === 0) {
+    list.innerHTML = '<p class="text-gray-700 text-sm text-center mt-8">No friends found</p>';
+    return;
+  }
+
+  friends.forEach(f => {
+    const msgs = getDM(f.id);
+    const last = msgs[msgs.length - 1];
+    const el   = document.createElement('div');
+    el.className = 'card flex items-center space-x-3 p-4 cursor-pointer hover:bg-[#2C2C2E] transition';
+    el.innerHTML = `
+      <div class="relative flex-shrink-0">
+        <img src="${f.avatar}" class="w-12 h-12 rounded-full" alt="">
+        ${f.sessionStart ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
+      </div>
+      <div class="flex-grow min-w-0">
+        <p class="font-bold text-white text-sm">${f.name}</p>
+        <p class="text-gray-600 text-sm truncate">${last ? last.text : 'Start a conversation'}</p>
+      </div>
+      <p class="text-gray-800 text-xs flex-shrink-0">${last ? last.time : ''}</p>
+    `;
+    el.addEventListener('click', () => openDM(f));
+    list.appendChild(el);
+  });
+}
+
+// ================================================================
+// DM PAGE
+// ================================================================
+function openDM(friend) {
+  S.viewingUserId = friend.id;
+  const page = document.getElementById('page-dm');
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 py-3 border-b border-gray-900 space-x-3">
+      <button id="dm-back-btn" class="p-2 -ml-2 text-gray-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <img src="${friend.avatar}" class="w-9 h-9 rounded-full" alt="">
+      <div>
+        <p class="font-bold text-white text-sm">${friend.name}</p>
+        <p class="text-xs text-gray-700">No reads yet</p>
+      </div>
+    </div>
+    <div id="dm-msg-list" class="flex-grow overflow-y-auto no-scrollbar px-4 py-4 space-y-3"></div>
+    <div class="flex-shrink-0 flex items-center space-x-2 px-4 py-3 border-t border-gray-900">
+      <input id="dm-input" class="input-field rounded-full py-3 flex-grow" placeholder="Message..." type="text">
+      <button id="dm-send-btn" class="w-11 h-11 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-black" style="transform:rotate(45deg)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+      </button>
+    </div>
+  `;
+
+  document.getElementById('dm-back-btn').addEventListener('click', () => goto('messages'));
+  document.getElementById('dm-send-btn').addEventListener('click', sendDMMsg);
+  document.getElementById('dm-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendDMMsg(); });
+
+  renderDMMessages(friend.id);
+  goto('dm');
+}
+
+function renderDMMessages(userId) {
+  const msgs = getDM(userId);
+  const list = document.getElementById('dm-msg-list');
+  if (!list) return;
+  list.innerHTML = '';
+  msgs.forEach(msg => {
+    const isMe = msg.from === 'me';
+    const el   = document.createElement('div');
+    el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+    el.innerHTML = `
+      <div class="max-w-xs px-4 py-2.5 rounded-2xl text-sm
+        ${isMe ? 'bg-white text-black rounded-br-sm' : 'bg-[#2C2C2E] text-white rounded-bl-sm'}">
+        ${msg.text}
+      </div>
+    `;
+    list.appendChild(el);
+  });
+  list.scrollTop = list.scrollHeight;
+}
+
+function sendDMMsg() {
+  const input = document.getElementById('dm-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  const msgs = getDM(S.viewingUserId);
+  msgs.push({ from: 'me', text, time: 'Now' });
+  saveDM(S.viewingUserId, msgs);
+  input.value = '';
+  renderDMMessages(S.viewingUserId);
+}
+
+// ================================================================
+// PROFILE PAGE
+// ================================================================
+function renderProfile() {
+  const u = getUser() || {};
+  const history = getHistory();
+  const streak = getStreak(history);
+  const totalSessions = history.filter(h => h.completed).length;
+  const page = document.getElementById('page-profile');
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center justify-between px-4 pt-6 pb-4">
+      <h1 class="text-2xl font-black text-white">Profile</h1>
+      <div class="flex items-center gap-2">
+        <button id="premium-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold" style="background:linear-gradient(135deg,#f59e0b22,#f9731622);border:1px solid #f59e0b44;color:#f59e0b;">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm2 3h10v2H7v-2z"/></svg>
+          Premium
+        </button>
+        <button id="settings-btn" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#1C1C1E] text-gray-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- User info -->
+    <div class="px-4 flex items-center space-x-4 mb-4">
+      <img id="prof-avatar" src="${u.avatar||''}" class="w-18 h-18 rounded-full border-2 border-[#2C2C2E] cursor-pointer" style="width:72px;height:72px;" alt="">
+      <div class="flex-grow min-w-0">
+        <h2 class="text-xl font-black text-white">${u.name||'User'}</h2>
+        <p class="text-gray-600 text-sm">${u.handle||''}</p>
+        ${u.bio ? `<p class="text-gray-400 text-sm mt-0.5 line-clamp-2">${u.bio}</p>` : ''}
+      </div>
+    </div>
+
+    <div class="px-4 mb-5">
+      <button id="edit-profile-btn" class="w-full border border-gray-800 text-white font-semibold py-2.5 rounded-full text-sm hover:bg-white/5 transition">
+        Edit Profile
+      </button>
+    </div>
+
+    <!-- Streak + Stats -->
+    <div class="px-4 mb-5 grid grid-cols-2 gap-3">
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:#f9731618;border:1.5px solid #f9731644;">🔥</div>
+        <div>
+          <p class="text-2xl font-black text-white leading-none">${streak}</p>
+          <p class="text-xs text-gray-600 mt-0.5">day streak</p>
+        </div>
+      </div>
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:#ffffff0d;border:1.5px solid #ffffff18;">✅</div>
+        <div>
+          <p class="text-2xl font-black text-white leading-none">${totalSessions}</p>
+          <p class="text-xs text-gray-600 mt-0.5">Sessions Completed</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Record -->
+    <div class="px-4 mb-5">
+      <div class="card p-4">
+        <div class="flex items-baseline justify-between mb-4">
+          <h3 class="font-bold text-white text-sm">Weekly Record</h3>
+          <p class="text-xs text-gray-600" id="weekly-total-label"></p>
+        </div>
+        <div class="flex items-end space-x-1.5 h-24" id="weekly-chart"></div>
+        <div class="flex space-x-1.5 mt-2"      id="weekly-labels"></div>
+      </div>
+    </div>
+
+    <!-- Session history -->
+    <div class="px-4">
+      <h3 class="font-bold text-white text-sm mb-3">Session History</h3>
+      <div id="history-list" class="space-y-2 pb-4"></div>
+    </div>
+  `;
+
+  document.getElementById('settings-btn').addEventListener('click', () => renderSettings());
+  document.getElementById('edit-profile-btn').addEventListener('click', () => renderEditProfile());
+  document.getElementById('prof-avatar').addEventListener('click', () => renderEditProfile());
+  document.getElementById('premium-btn').addEventListener('click', () => renderPremium());
+
+  buildWeeklyChart('weekly-chart', 'weekly-labels', 'weekly-total-label', getWeekData(history));
+  buildHistoryList(history);
+}
+
+function getWeekData(history) {
+  const days = [0,0,0,0,0,0,0]; // minutes per day (Sun=0)
+  const now  = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0,0,0,0);
+  history.forEach(h => {
+    const d = new Date(h.date);
+    if (d >= startOfWeek) days[d.getDay()] += Math.floor(h.duration / 60);
+  });
+  return days;
+}
+
+function buildWeeklyChart(chartId, labelsId, totalId, data) {
+  const chartEl  = document.getElementById(chartId);
+  const labelsEl = document.getElementById(labelsId);
+  const totalEl  = document.getElementById(totalId);
+  if (!chartEl || !labelsEl) return;
+
+  const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const today  = new Date().getDay();
+  const maxVal = Math.max(...data, 1);
+  const total  = data.reduce((a,b) => a+b, 0);
+
+  chartEl.innerHTML  = '';
+  labelsEl.innerHTML = '';
+  if (totalEl) totalEl.textContent = `This week ${Math.floor(total/60)}h ${total%60}m`;
+
+  DAY_LABELS.forEach((day, i) => {
+    const pct     = data[i] / maxVal * 100;
+    const isToday = i === today;
+
+    // Bar column
+    const col = document.createElement('div');
+    col.className = 'week-col';
+    col.innerHTML = `
+      <div class="week-bar-wrap" style="flex:1;">
+        <div class="week-bar-fill ${isToday?'today':''}" style="height:${pct}%;"></div>
+      </div>
+    `;
+    chartEl.appendChild(col);
+
+    // Label
+    const lbl = document.createElement('div');
+    lbl.className = `flex-1 text-center text-xs ${isToday ? 'text-white font-bold' : 'text-gray-700'}`;
+    lbl.textContent = day;
+    labelsEl.appendChild(lbl);
+  });
+}
+
+function buildHistoryList(history) {
+  const el = document.getElementById('history-list');
+  if (!el) return;
+  const sorted = [...history].reverse().slice(0, 10);
+  if (sorted.length === 0) {
+    el.innerHTML = '<p class="text-gray-700 text-sm text-center mt-4">No sessions yet</p>';
+    return;
+  }
+  sorted.forEach(h => {
+    el.insertAdjacentHTML('beforeend', `
+      <div class="card p-3 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 ${h.completed?'text-gray-300':'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+          </svg>
+        </div>
+        <div class="flex-grow">
+          <p class="font-bold text-white text-sm">${fmtDuration(h.duration)}</p>
+          <p class="text-gray-600 text-xs">${fmtDate(h.date)}</p>
+        </div>
+        ${h.completed
+          ? '<span class="text-xs text-gray-600 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">Done</span>'
+          : '<span class="text-xs text-gray-700 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">Quit</span>'}
+      </div>
+    `);
+  });
+}
+
+// ================================================================
+// EDIT PROFILE
+// ================================================================
+function renderEditProfile() {
+  const u = getUser() || {};
+  const page = document.getElementById('page-edit-profile');
+  page.innerHTML = `
+    <div class="flex justify-between items-center mb-6">
+      <button id="ep-cancel" class="text-gray-500 font-semibold py-1 px-1">Cancel</button>
+      <h2 class="text-base font-bold text-white">Edit Profile</h2>
+      <button id="ep-save" class="text-white font-bold py-1 px-1">Save</button>
+    </div>
+
+    <div class="flex flex-col items-center mb-6">
+      <div class="relative cursor-pointer" id="ep-avatar-wrap">
+        <img id="ep-avatar-preview" src="${u.avatar||''}" class="w-24 h-24 rounded-full object-cover border-2 border-gray-800" alt="">
+        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <input type="file" id="ep-avatar-input" class="hidden" accept="image/*">
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Username</label>
+        <input id="ep-name"   class="input-field" type="text" value="${u.name||''}">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">User ID (@)</label>
+        <input id="ep-handle" class="input-field" type="text" value="${(u.handle||'').replace('@','')}">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Bio</label>
+        <textarea id="ep-bio" class="input-field resize-none h-20 rounded-xl">${u.bio||''}</textarea>
+      </div>
+    </div>
+  `;
+
+  goto('edit-profile');
+
+  document.getElementById('ep-cancel').addEventListener('click', () => goto('profile'));
+  document.getElementById('ep-save').addEventListener('click', () => {
+    const u = getUser() || {};
+    u.name   = document.getElementById('ep-name').value.trim()   || u.name;
+    u.handle = '@' + document.getElementById('ep-handle').value.replace('@','').trim();
+    u.bio    = document.getElementById('ep-bio').value.trim();
+    const prev = document.getElementById('ep-avatar-preview').src;
+    if (prev && !prev.startsWith('https://placehold')) u.avatar = prev;
+    saveUser(u);
+    goto('profile');
+  });
+  document.getElementById('ep-avatar-wrap').addEventListener('click', () =>
+    document.getElementById('ep-avatar-input').click()
+  );
+  document.getElementById('ep-avatar-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { document.getElementById('ep-avatar-preview').src = ev.target.result; };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ================================================================
+// SETTINGS PAGE
+// ================================================================
+function renderSettings() {
+  const u = getUser() || {};
+  const page = document.getElementById('page-settings');
+  page.innerHTML = `
+    <div class="flex items-center mb-6">
+      <button id="st-back" class="p-2 -ml-2 text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="text-xl font-bold text-white ml-2">Settings</h2>
+    </div>
+
+    <div class="space-y-4">
+      <!-- Account -->
+      <div class="card p-4 space-y-0">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">Account</p>
+        <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">Email</span>
+          <span class="text-gray-600 text-sm">${u.email||'—'}</span>
+        </div>
+        <div class="flex justify-between items-center py-2.5">
+          <span class="text-white text-sm">Account Visibility</span>
+          <div class="flex items-center space-x-2">
+            <span id="privacy-lbl" class="text-gray-600 text-sm">${u.isPublic?'Public':'Private'}</span>
+            <div id="privacy-toggle" class="toggle ${u.isPublic?'on':''}">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App settings -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">App Settings</p>
+        <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">Language</span>
+          <span class="text-gray-600 text-sm">English</span>
+        </div>
+        <div class="flex justify-between items-center py-2.5">
+          <span class="text-white text-sm">Notifications</span>
+          <div id="notif-toggle" class="toggle on">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blocked apps -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">Apps to Block</p>
+        <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
+          ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
+          <button class="w-12 h-12 rounded-xl bg-[#2C2C2E] border border-gray-800 flex items-center justify-center flex-shrink-0 text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Legal -->
+      <div class="card p-4 space-y-0">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">Legal & Support</p>
+        <button id="st-terms-btn" class="w-full flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">Terms of Service</span>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button id="st-privacy-btn" class="w-full flex justify-between items-center py-2.5">
+          <span class="text-white text-sm">Privacy Policy</span>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <button id="logout-btn" class="w-full bg-red-900/25 text-red-400 font-bold py-4 rounded-2xl hover:bg-red-900/40 transition mt-2">
+        Log Out
+      </button>
+    </div>
+  `;
+
+  goto('settings');
+
+  document.getElementById('st-back').addEventListener('click', () => goto('profile'));
+  document.getElementById('st-terms-btn').addEventListener('click', () => {
+    S._prevPage = 'settings';
+    renderTerms();
+    goto('terms');
+  });
+  document.getElementById('st-privacy-btn').addEventListener('click', () => {
+    S._prevPage = 'settings';
+    renderPrivacy();
+    goto('privacy');
+  });
+  document.getElementById('privacy-toggle').addEventListener('click', () => {
+    const u = getUser() || {};
+    u.isPublic = !u.isPublic;
+    saveUser(u);
+    document.getElementById('privacy-toggle').classList.toggle('on', u.isPublic);
+    document.getElementById('privacy-lbl').textContent = u.isPublic ? 'Public' : 'Private';
+  });
+  document.getElementById('notif-toggle').addEventListener('click', e => {
+    e.currentTarget.classList.toggle('on');
+  });
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    showConfirm('Log Out', 'Are you sure you want to log out?', 'Log Out', () => {
+      localStorage.removeItem('to_user');
+      goto('login');
+      renderLogin();
+    });
+  });
+}
+
+// ================================================================
+// USER PROFILE (OTHER USERS)
+// ================================================================
+function openUserProfile(userId) {
+  const f = friendById(userId);
+  if (!f) return;
+  S.viewingUserId = userId;
+  const page = document.getElementById('page-user-profile');
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 py-4 border-b border-gray-900">
+      <button id="up-back" class="p-2 -ml-2 text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+    </div>
+    <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10">
+      <div class="flex items-center space-x-4 py-5">
+        <img src="${f.avatar}" class="w-16 h-16 rounded-full border-2 border-gray-800" alt="">
+        <div>
+          <h2 class="text-xl font-black text-white">${f.name}</h2>
+          <p class="text-gray-600 text-sm">${f.handle}</p>
+          ${f.bio ? `<p class="text-gray-400 text-sm mt-1">${f.bio}</p>` : ''}
+        </div>
+      </div>
+
+      <div class="flex space-x-3 mb-6">
+        <button id="up-msg-btn" class="flex-1 bg-white text-black font-bold py-3 rounded-full text-sm">
+          Message
+        </button>
+        ${f.isFriend ? `<button id="up-remove-btn" class="flex-1 border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm">Remove Friend</button>` : ''}
+      </div>
+
+      <!-- Weekly record -->
+      <div class="card p-4 mb-4">
+        <h3 class="font-bold text-white text-sm mb-3">Weekly Record</h3>
+        <div class="flex items-end space-x-1.5 h-16" id="up-chart"></div>
+        <div class="flex space-x-1.5 mt-2"       id="up-labels"></div>
+      </div>
+
+      <!-- Their posts -->
+      <h3 class="font-bold text-white text-sm mb-3">Post</h3>
+      <div class="space-y-2">
+        ${MOCK_POSTS.filter(p=>p.userId===userId).map(p=>`
+          <div class="card p-3 flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-bold text-white text-sm">${fmtDuration(p.duration)}</p>
+              ${p.task ? `<p class="text-gray-600 text-xs">${p.task}</p>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  goto('user-profile');
+  // mock week data for other user
+  buildWeeklyChart('up-chart','up-labels', null, [45,0,90,30,120,0,60]);
+
+  document.getElementById('up-back').addEventListener('click', () => history.length > 1 ? goto('home') : goto('home'));
+  document.getElementById('up-msg-btn').addEventListener('click', () => openDM(f));
+  document.getElementById('up-remove-btn')?.addEventListener('click', () => {
+    showConfirm('Remove Friend', `Remove ${f.name} from friends?`, 'Remove', () => {
+      f.isFriend = false;
+      goto('home');
+    });
+  });
+}
+
+// ================================================================
+// NOTIFICATIONS PAGE
+// ================================================================
+function renderNotifications() {
+  const page = document.getElementById('page-notifications');
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 py-4 border-b border-gray-900">
+      <button id="notif-back" class="p-2 -ml-2 text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="text-xl font-bold text-white ml-2">Notifications</h2>
+    </div>
+    <div class="flex-grow overflow-y-auto no-scrollbar divide-y divide-gray-900">
+      ${[
+        { icon:'❤️', color:'red', text:'<b>Alice</b> liked your post', sub:'2 hours ago' },
+        { icon:'💬', color:'gray', text:'<b>Ben</b> commented: "Nice!"', sub:'5 hours ago' },
+        { icon:'⏱', color:'gray', text:'<b>Chloe</b> started a detox session', sub:'Yesterday' },
+      ].map(n=>`
+        <div class="flex items-start space-x-3 px-4 py-4">
+          <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5 text-base">${n.icon}</div>
+          <div>
+            <p class="text-sm text-white">${n.text}</p>
+            <p class="text-xs text-gray-700 mt-0.5">${n.sub}</p>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  goto('notifications');
+  document.getElementById('notif-back').addEventListener('click', () => goto('home'));
+}
+
+// ================================================================
+// MANUAL START SHEET (TIME PICKER + SLIDER)
+// ================================================================
+function renderAppChips() {
+  const container = document.getElementById('app-chip-list');
+  if (!container) return;
+  container.innerHTML = ALL_APPS.map(a => {
+    const sel = S.selectedApps.has(a.label);
+    return `<button class="app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
+      <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
+      ${a.label}
+    </button>`;
+  }).join('');
+  container.querySelectorAll('.app-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const app = btn.dataset.app;
+      if (S.selectedApps.has(app)) {
+        S.selectedApps.delete(app);
+        btn.className = btn.className.replace('border-white/30 bg-white/10 text-white', 'border-gray-800 text-gray-600');
+      } else {
+        S.selectedApps.add(app);
+        btn.className = btn.className.replace('border-gray-800 text-gray-600', 'border-white/30 bg-white/10 text-white');
+      }
+    });
+  });
+}
+
+function openManualSheet() {
+  document.getElementById('manual-sheet').classList.add('open');
+  renderAppChips();
+  initTimePicker();
+  initSlider('manual-slider','manual-thumb','manual-reveal', () => {
+    const h = getPickerValue('picker-hours');
+    const m = getPickerValue('picker-minutes');
+    const total = h * 3600 + m * 60;
+    if (total === 0) {
+      resetSlider('manual-slider','manual-thumb','manual-reveal');
+      document.getElementById('manual-slider').classList.add('shake');
+      setTimeout(() => document.getElementById('manual-slider').classList.remove('shake'), 450);
+      return;
+    }
+    document.getElementById('manual-sheet').classList.remove('open');
+    S.challengeData = { duration: total };
+    startSession(total, false);
+  });
+}
+document.getElementById('manual-cancel-btn').addEventListener('click', () => {
+  document.getElementById('manual-sheet').classList.remove('open');
+  resetSlider('manual-slider','manual-thumb','manual-reveal');
+});
+
+let pickerInited = false;
+function initTimePicker() {
+  if (pickerInited) return;
+  pickerInited = true;
+  const hPicker = document.getElementById('picker-hours');
+  const mPicker = document.getElementById('picker-minutes');
+
+  function buildPicker(el, count, step) {
+    const pad = document.createElement('div'); pad.className = 'picker-pad';
+    el.appendChild(pad.cloneNode());
+    for (let i = 0; i < count; i += step) {
+      const item = document.createElement('div');
+      item.className = 'picker-item';
+      item.textContent = String(i).padStart(2,'0');
+      el.appendChild(item);
+    }
+    el.appendChild(pad.cloneNode());
+  }
+  buildPicker(hPicker, 6,  1);  // 0-5 hours
+  buildPicker(mPicker, 60, 5);  // 0,5,10...55 min
+
+  [hPicker, mPicker].forEach(p => {
+    p.addEventListener('scroll', () => highlightCenter(p));
+    // scroll to 0 by default
+    setTimeout(() => highlightCenter(p), 50);
+  });
+}
+
+function highlightCenter(picker) {
+  const center = picker.scrollTop + picker.clientHeight / 2;
+  picker.querySelectorAll('.picker-item').forEach(item => {
+    const itemCenter = item.offsetTop + item.offsetHeight / 2;
+    item.style.opacity = Math.abs(center - itemCenter) < item.offsetHeight * 0.6 ? '1' : '0.2';
+  });
+}
+
+function getPickerValue(pickerId) {
+  const picker = document.getElementById(pickerId);
+  const center = picker.scrollTop + picker.clientHeight / 2;
+  let best = null, bestDist = Infinity;
+  picker.querySelectorAll('.picker-item').forEach(item => {
+    const dist = Math.abs(center - (item.offsetTop + item.offsetHeight / 2));
+    if (dist < bestDist) { bestDist = dist; best = item; }
+  });
+  return best ? parseInt(best.textContent) : 0;
+}
+
+// ================================================================
+// STOP FRIEND TIMERS ON PAGE LEAVE (hooked into goto)
+// ================================================================
+// Note: friend timer cleanup is handled inside renderFriends()
+// by clearing S.friendsTimerId before setting a new interval.
+
+// ================================================================
+// GLOBAL CLICK: close manual sheet on backdrop tap
+// ================================================================
+document.getElementById('manual-sheet').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.remove('open');
+    resetSlider('manual-slider','manual-thumb','manual-reveal');
+  }
+});
+document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.remove('open');
+    S.pendingConfirm = null;
+  }
+});
+
+// ================================================================
+// BACK BUTTON: navigate properly from sub-pages
+// ================================================================
+// (handled per-page in renderXxx functions)
+
+// ================================================================
+// SESSION RESTORE: reconnect if page reloaded during a session
+// ================================================================
+function maybeRestoreSession() {
+  const stored = JSON.parse(localStorage.getItem('to_active_session') || 'null');
+  if (!stored) return false;
+  const elapsed   = (Date.now() - stored.startTime) / 1000;
+  const remaining = stored.totalDuration - elapsed;
+  if (remaining > 5) {
+    S.activeSession = { ...stored, timerId: null };
+    renderSessionPage();
+    goto('session');
+    S.activeSession.timerId = setInterval(tickSession, 1000);
+    tickSession();
+    return true;
+  }
+  localStorage.removeItem('to_active_session');
+  return false;
+}
+
+// ================================================================
+// INVITE SHEET
+// ================================================================
+function renderInviteSheet(group) {
+  const sheet = document.getElementById('invite-sheet');
+  const drawer = document.getElementById('invite-drawer');
+  const overlay = document.getElementById('invite-overlay');
+
+  const remaining = (group.maxMembers || 5) - group.members.length;
+  document.getElementById('invite-sheet-title').textContent = `${group.name}Invite to `;
+  document.getElementById('invite-sheet-subtitle').textContent = `Can invite ${remaining} more (max ${group.maxMembers||5})`;
+
+  const friendsList = document.getElementById('invite-friends-list');
+  const invitableFriends = MOCK_FRIENDS.filter(f => f.isFriend && !group.members.includes(f.id));
+
+  if (invitableFriends.length === 0) {
+    friendsList.innerHTML = '<p class="text-gray-600 text-sm text-center py-4">No friends to invite</p>';
+  } else {
+    friendsList.innerHTML = invitableFriends.map(f => `
+      <div class="flex items-center justify-between py-2">
+        <div class="flex items-center gap-3">
+          <img src="${f.avatar}" class="w-10 h-10 rounded-full" alt="${f.name}">
+          <div>
+            <p class="font-semibold text-white text-sm">${f.name}</p>
+            <p class="text-xs text-gray-600">${f.handle}</p>
+          </div>
+        </div>
+        <button class="text-xs font-bold px-3 py-1.5 rounded-full invite-send-btn" data-uid="${f.id}"
+          style="background:${group.color}22;color:${group.color};border:1px solid ${group.color}44;">Invite</button>
+      </div>
+    `).join('');
+    friendsList.querySelectorAll('.invite-send-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.textContent = 'Invited';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+      });
+    });
+  }
+
+  sheet.style.pointerEvents = 'auto';
+  sheet.style.opacity = '1';
+  requestAnimationFrame(() => {
+    drawer.style.transform = 'translateX(-50%) translateY(0)';
+  });
+
+  function closeSheet() {
+    sheet.style.opacity = '0';
+    drawer.style.transform = 'translateX(-50%) translateY(100%)';
+    setTimeout(() => { sheet.style.pointerEvents = 'none'; }, 350);
+  }
+  document.getElementById('invite-close-btn').onclick = closeSheet;
+  overlay.onclick = closeSheet;
+}
+
+// ================================================================
+// CREATE GROUP
+// ================================================================
+function renderCreateGroup() {
+  const page = document.getElementById('page-create-group');
+  const ALL_COLORS = ['#f97316','#8b5cf6','#14b8a6','#6366f1','#ec4899','#10b981','#f59e0b','#ef4444'];
+  const ALL_EMOJIS = ['🌅','🏔️','📚','🌙','🎯','🧘','💪','🌿','🎵','⭐'];
+  let selectedColor = ALL_COLORS[0];
+  let selectedEmoji = ALL_EMOJIS[0];
+
+  page.innerHTML = `
+    <div class="flex items-center justify-between mb-6 px-1">
+      <button id="cg-cancel" class="text-gray-500 font-semibold">Cancel</button>
+      <h2 class="text-base font-bold text-white">New Group</h2>
+      <button id="cg-create" class="text-white font-bold">Create</button>
+    </div>
+
+    <!-- Emoji + Color picker -->
+    <div class="flex flex-col items-center mb-6">
+      <div id="cg-icon-preview" class="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl mb-3 cursor-pointer" style="background:${selectedColor}22;border:2px solid ${selectedColor}55;">${selectedEmoji}</div>
+      <div class="flex gap-2 flex-wrap justify-center mb-3">
+        ${ALL_EMOJIS.map(e => `<button class="cg-emoji-btn w-9 h-9 text-xl rounded-xl ${e===selectedEmoji?'bg-white/10':'bg-[#2C2C2E]'} flex items-center justify-center" data-emoji="${e}">${e}</button>`).join('')}
+      </div>
+      <div class="flex gap-2">
+        ${ALL_COLORS.map(c => `<button class="cg-color-btn w-7 h-7 rounded-full border-2 ${c===selectedColor?'border-white':'border-transparent'}" data-color="${c}" style="background:${c};"></button>`).join('')}
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Group Name</label>
+        <input id="cg-name" class="input-field" type="text" placeholder="e.g. Morning Detox Club" maxlength="20">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">Description (optional)</label>
+        <input id="cg-desc" class="input-field" type="text" placeholder="Describe the group goal">
+      </div>
+      <div class="card p-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <div>
+            <p class="text-sm font-semibold text-white">Invite Only</p>
+            <p class="text-xs text-gray-600">Only invited friends can join</p>
+          </div>
+        </div>
+        <div class="w-11 h-6 rounded-full bg-white flex items-center px-0.5 justify-end"><div class="w-5 h-5 rounded-full bg-black"></div></div>
+      </div>
+      <div class="card p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-white">Max Members</p>
+          <p class="text-xs text-gray-600">Maximum number of members</p>
+        </div>
+        <span class="text-white font-black text-lg">5 people</span>
+      </div>
+    </div>
+  `;
+  goto('create-group');
+
+  document.getElementById('cg-cancel').addEventListener('click', () => {
+    goto('friends');
+    setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+  });
+  document.getElementById('cg-create').addEventListener('click', () => {
+    const name = document.getElementById('cg-name').value.trim();
+    if (!name) { document.getElementById('cg-name').classList.add('shake'); setTimeout(() => document.getElementById('cg-name').classList.remove('shake'), 500); return; }
+    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, description: document.getElementById('cg-desc').value.trim() || 'No description', activeSince: null, isActive: false };
+    MOCK_GROUPS.push(newGroup);
+    goto('friends');
+    setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+  });
+  page.querySelectorAll('.cg-emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedEmoji = btn.dataset.emoji;
+      page.querySelectorAll('.cg-emoji-btn').forEach(b => b.className = b.className.replace('bg-white/10','bg-[#2C2C2E]'));
+      btn.className = btn.className.replace('bg-[#2C2C2E]','bg-white/10');
+      document.getElementById('cg-icon-preview').textContent = selectedEmoji;
+    });
+  });
+  page.querySelectorAll('.cg-color-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedColor = btn.dataset.color;
+      page.querySelectorAll('.cg-color-btn').forEach(b => b.style.borderColor = 'transparent');
+      btn.style.borderColor = 'white';
+      const preview = document.getElementById('cg-icon-preview');
+      preview.style.background = `${selectedColor}22`;
+      preview.style.borderColor = `${selectedColor}55`;
+    });
+  });
+}
+
+// ================================================================
+// TERMS OF SERVICE
+// ================================================================
+function renderTerms() {
+  const page = document.getElementById('page-terms');
+  page.innerHTML = `
+    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
+      <button id="terms-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-black text-white">Terms of Service</h1>
+    </div>
+    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
+      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
+      <p class="text-sm text-gray-400 leading-relaxed">Welcome to (DIS)CONNECT (the "App"). By downloading, installing, or using the App, you agree to these Terms of Service with the operator.</p>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 1 — Service Description</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The App is a tool that helps users temporarily restrict access to specific applications and share their progress with friends and community to support digital detox. The App is developed and operated by an individual.</p>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">Article 2 — Eligibility</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">1. The App is only available to users aged 13 and older. Users under 18 are assumed to have obtained parental consent.</p>
+        <p class="text-sm text-gray-400 leading-relaxed">2. Certain features (such as the "Campus" feed) may require verification via a method designated by the operator (e.g., university email address).</p>
+      </div>
+
+      <div class="space-y-2">
+        <div class="card p-4 border border-yellow-500/30 bg-yellow-500/5">
+          <h2 class="text-base font-bold text-yellow-400 mb-2">Article 3 — Detox Feature & Disclaimer ⚠️ Important</h2>
+          <p class="text-xs text-gray-400 leading-relaxed mb-3">The core feature of the App is to block or restrict access to other apps and notifications on your device (Detox Sessions). By using this feature, you acknowledge and accept the following.</p>
+          <div class="space-y-2">
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">1. Missed Communications:</span> During a session, you may miss important calls, messages, notifications, or emergency alerts.</p>
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">2. No Liability:</span> The operator is not liable for any damages resulting from your inability to access your device or other apps during a session.</p>
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">3. Your Responsibility:</span> Ensuring access to emergency communications during a session is solely your responsibility.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 4 — Account Management</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">Users are responsible for managing their own account information. The operator reserves the right to suspend or delete accounts with false registration information.</p>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">Article 5 — User Content</h2>
+        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">License:</span> You retain copyright over content you post, but grant the operator a non-exclusive right to display and distribute that content within the App.</p>
+        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">Prohibited Content:</span> Posting illegal, offensive, defamatory, or harassing content is prohibited.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 6 — Service Changes & Termination</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The operator may modify, suspend, or terminate the App's features at any time without prior notice. The operator is not liable for any damages arising from such changes.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 7 — Limitation of Liability</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The operator is not liable for any damages related to your use of the App, except in cases of intentional misconduct or gross negligence. Even where liability exists, it is limited to direct damages only.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 8 — Governing Law & Jurisdiction</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">These Terms are governed by the laws of Japan. Any disputes related to the App shall be subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 9 — Contact</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">For inquiries regarding these Terms, please contact us at the following email address.</p>
+        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-xs text-gray-600 text-center">Terms of Service / Effective Date: January 4, 2026</p>
+        <p class="text-xs text-gray-700 leading-relaxed mt-2">(DIS)CONNECT is a social digital detox application. By using the App, you acknowledge that you may miss calls, messages, and emergency alerts during a Detox Session. The Operator is NOT liable for any resulting damages. These Terms are governed by the laws of Japan.</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('terms-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); goto(p); });
+}
+
+// ================================================================
+// PRIVACY POLICY
+// ================================================================
+function renderPrivacy() {
+  const page = document.getElementById('page-privacy');
+  page.innerHTML = `
+    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
+      <button id="privacy-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-black text-white">Privacy Policy</h1>
+    </div>
+    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
+      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
+      <p class="text-sm text-gray-400 leading-relaxed">The operator of (DIS)CONNECT respects your privacy. This policy explains how personal information is handled in this individually operated app.</p>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">1. Information We Collect</h2>
+        <div class="card p-4 space-y-3">
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Information You Provide</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Account information (name, email, profile photo, etc.), campus feature verification data, user-generated content (posts, messages).</p>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Automatically Collected</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Usage data (detox duration, status), device info (model, OS), push notification tokens.</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <p class="text-sm font-semibold text-white mb-1">App Usage Detection</p>
+            <p class="text-xs text-gray-400 leading-relaxed">The App detects which apps you attempt to open during a session. However, <span class="text-white">message content (e.g., LINE chat content) is never collected or stored.</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">2. How We Use Your Information</h2>
+        <div class="space-y-1">
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To provide, maintain, and improve App features</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To provide social features between users</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To verify student authentication</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To deliver important announcements and event notifications</p></div>
+        </div>
+        <div class="card p-3 flex items-center gap-3 mt-2">
+          <span class="text-xl">🚫</span>
+          <p class="text-sm text-gray-300 font-semibold">We will <span class="text-white">never sell</span> your personal information to third parties</p>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">3. Data Sharing & Third-Party Services</h2>
+        <div class="card p-4 space-y-3">
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Between Users</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Profiles and posts are visible to other users per the App's design.</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-base">🔥</span>
+              <p class="text-sm font-semibold text-white">Google Firebase</p>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">The App uses Google Firebase for data storage, authentication, and analytics. Your information may be stored and processed on Firebase servers (including overseas).</p>
+            <p class="text-xs text-gray-600 mt-1">Google Privacy Policy: https://policies.google.com/privacy</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <p class="text-sm font-semibold text-white mb-1">Legal Requirements</p>
+            <p class="text-xs text-gray-400">We may disclose information when required by law.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">4. Data Security</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The operator takes appropriate security measures to prevent data breaches. Please note that as an individually operated app, we cannot guarantee enterprise-level security.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">5. Data Deletion</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">You can delete your account and all associated data at any time through the App settings.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">6. Contact</h2>
+        <p class="text-sm text-gray-400">For questions about this Privacy Policy, please contact us at:</p>
+        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-xs text-gray-600 text-center">Privacy Policy / Effective Date: January 4, 2026</p>
+        <p class="text-xs text-gray-700 leading-relaxed mt-2">We use Google Firebase to host data, manage authentication, and analyze app usage. We do NOT sell your personal data. You may request deletion of your account and data at any time through the App settings.</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('privacy-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); goto(p); });
+}
+
+// ================================================================
+// PREMIUM
+// ================================================================
+function renderPremium() {
+  const page = document.getElementById('page-premium');
+  const FEATURES = [
+    { icon: '🔥', title: 'Streak Badge', desc: 'Show off your consecutive streak with a special badge', locked: true },
+    { icon: '📊', title: 'Advanced Analytics', desc: 'View monthly and yearly stats', locked: true },
+    { icon: '👥', title: 'Unlimited Groups', desc: 'Create and manage multiple groups freely', locked: true },
+    { icon: '🎨', title: 'Custom Theme', desc: 'Customize your profile color and background', locked: true },
+    { icon: '🔔', title: 'Smart Reminders', desc: 'AI suggests the best time for your detox', locked: true },
+    { icon: '🏆', title: 'Leaderboard', desc: 'Compare rankings with friends', locked: true },
+  ];
+  page.innerHTML = `
+    <div class="flex items-center px-4 pt-6 pb-4 gap-3">
+      <button id="prem-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-2xl font-black text-white">Premium</h1>
+    </div>
+
+    <!-- Hero card -->
+    <div class="mx-4 mb-6 rounded-3xl p-6 text-center relative overflow-hidden" style="background:linear-gradient(135deg,#f59e0b18,#f9731618);border:1px solid #f59e0b33;">
+      <div class="text-5xl mb-3">👑</div>
+      <h2 class="text-2xl font-black text-white mb-1">(DIS)CONNECT Premium</h2>
+      <p class="text-sm text-gray-400 mb-4">Supercharge your detox experience</p>
+      <div class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold text-gray-600 bg-[#2C2C2E] border border-gray-800">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Coming Soon
+      </div>
+    </div>
+
+    <!-- Features list -->
+    <div class="px-4 space-y-3 pb-10">
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">Premium Features (Planned)</p>
+      ${FEATURES.map(f => `
+        <div class="card p-4 flex items-center gap-4 opacity-70">
+          <div class="w-12 h-12 rounded-2xl bg-[#2C2C2E] flex items-center justify-center text-2xl flex-shrink-0">${f.icon}</div>
+          <div class="flex-grow">
+            <p class="font-bold text-white text-sm">${f.title}</p>
+            <p class="text-xs text-gray-600 mt-0.5">${f.desc}</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+      `).join('')}
+
+      <div class="card p-4 mt-4" style="border-color:#f59e0b22;">
+        <p class="text-xs text-gray-600 text-center">We'll announce Premium details here<br>as soon as they're finalized.</p>
+      </div>
+    </div>
+  `;
+  goto('premium');
+  document.getElementById('prem-back').addEventListener('click', () => goto('profile'));
+}
+
+// ================================================================
+// BOOT
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderLogin();
+  renderRegister();
+  renderInterruptPage();
+
+  const u = getUser();
+  if (u) {
+    if (!maybeRestoreSession()) {
+      goto('home');
+      setTimeout(triggerChallengeBanner, 2500);
+    }
+  } else {
+    goto('login');
+  }
+});
+</script>
+</body>
+</html>
