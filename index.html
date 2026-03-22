@@ -656,7 +656,190 @@ const S = {
   friendsTimerId: null,
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
   groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy }
+  lang: localStorage.getItem('to_lang') || 'ja',
 };
+
+
+// ================================================================
+// I18N – instant language switching
+// ================================================================
+const TRANSLATIONS_EN = {
+  // Settings
+  '設定': 'Settings',
+  'アカウント': 'Account',
+  'アプリ設定': 'App Settings',
+  'ブロック対象アプリ': 'Blocked Apps',
+  '法律・サポート': 'Legal & Support',
+  '言語': 'Language',
+  '通知': 'Notifications',
+  'メールアドレス': 'Email',
+  'アカウントの公開設定': 'Account Privacy',
+  '公開': 'Public',
+  '非公開': 'Private',
+  '利用規約': 'Terms of Service',
+  'プライバシーポリシー': 'Privacy Policy',
+  'ログアウト': 'Log Out',
+  // Profile / Edit Profile
+  'プロフィール': 'Profile',
+  '編集': 'Edit',
+  'フォロー中': 'Following',
+  'フォロワー': 'Followers',
+  'フレンド': 'Friends',
+  'Friendsリクエスト': 'Friend Requests',
+  '実績': 'Achievements',
+  '記録': 'Records',
+  '今週の記録': 'This Week',
+  '今月の記録': 'This Month',
+  '合計デトックス時間': 'Total Detox Time',
+  '連続デトックス': 'Streak',
+  '達成したチャレンジ': 'Challenges Completed',
+  'プロフィールを編集': 'Edit Profile',
+  '表示名': 'Display Name',
+  '自己紹介': 'Bio',
+  'キャンセル': 'Cancel',
+  '保存': 'Save',
+  // Login / Register
+  'ログイン': 'Log In',
+  '新規登録': 'Sign Up',
+  'パスワード': 'Password',
+  'ログイン中...': 'Logging in...',
+  '登録中...': 'Registering...',
+  'すでにアカウントをお持ちの方': 'Already have an account?',
+  'アカウントをお持ちでない方': "Don't have an account?",
+  'Terms of Serviceに同意します': 'I agree to the Terms of Service',
+  // Home / Feed
+  'ホーム': 'Home',
+  'フォロー': 'Following',
+  '人気': 'Popular',
+  'デトックス中': 'Detoxing',
+  'の投稿': "'s post",
+  'いいね': 'Like',
+  'コメント': 'Comment',
+  'シェア': 'Share',
+  // Session
+  'セッション': 'Session',
+  'デトックス開始': 'Start Detox',
+  '開始': 'Start',
+  '終了': 'End',
+  '中断': 'Interrupt',
+  '休憩': 'Break',
+  '残り時間': 'Time Remaining',
+  '経過時間': 'Elapsed',
+  '目標時間': 'Goal',
+  '分間のデトックス': ' min detox',
+  'セッション完了': 'Session Complete',
+  'お疲れ様でした': 'Well done',
+  '投稿する': 'Post',
+  'スキップ': 'Skip',
+  '感想を投稿': 'Share your thoughts',
+  // Friends / Groups
+  'Friends': 'Friends',
+  'マイGroup': 'My Groups',
+  '新しいGroupを作成': 'Create New Group',
+  'Group名': 'Group Name',
+  'Groupの目的を一言で': 'Describe the group goal',
+  '招待したFriendsのみ参加可能': 'Only invited friends can join',
+  'Groupに参加できる上限': 'Maximum members',
+  '招待制': 'Invite Only',
+  '招待': 'Invite',
+  '招待する': 'Invite',
+  '作成': 'Create',
+  'Groupについて': 'About This Group',
+  'Groupストリーク': 'Group Streak',
+  'Groupセッション参加中！': 'Group session in progress!',
+  'メンバー': 'Members',
+  '開始する': 'Start',
+  // Messages / DM
+  'メッセージ': 'Messages',
+  '送信': 'Send',
+  'メッセージを入力': 'Type a message',
+  // Notifications
+  'お知らせ': 'Notifications',
+  'すべて': 'All',
+  '未読': 'Unread',
+  // Misc
+  'オンライン': 'Online',
+  'オフライン': 'Offline',
+  '日': 'Sun',
+  '月': 'Mon',
+  '火': 'Tue',
+  '水': 'Wed',
+  '木': 'Thu',
+  '金': 'Fri',
+  '土': 'Sat',
+  '時間': ' hr',
+  '分': ' min',
+  '秒': ' sec',
+  '日前': 'd ago',
+  '時間前': 'h ago',
+  '分前': 'm ago',
+  '今': 'Now',
+  '昨日': 'Yesterday',
+  '今日': 'Today',
+  // Premium
+  'プレミアム': 'Premium',
+  // Confirm dialogs
+  'Friends解除': 'Remove Friend',
+  'Log Outしますか？': 'Are you sure you want to log out?',
+};
+
+function applyLang() {
+  if (S.lang !== 'en') return;
+  // Walk all text nodes
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
+  let node;
+  while ((node = walker.nextNode())) {
+    let txt = node.textContent;
+    if (!txt.trim()) continue;
+    let changed = false;
+    for (const [ja, en] of Object.entries(TRANSLATIONS_EN)) {
+      if (txt.includes(ja)) {
+        txt = txt.split(ja).join(en);
+        changed = true;
+      }
+    }
+    if (changed) node.textContent = txt;
+  }
+  // Placeholders
+  document.querySelectorAll('[placeholder]').forEach(el => {
+    let p = el.getAttribute('placeholder');
+    for (const [ja, en] of Object.entries(TRANSLATIONS_EN)) {
+      if (p.includes(ja)) p = p.split(ja).join(en);
+    }
+    el.setAttribute('placeholder', p);
+  });
+}
+
+function rerenderCurrentPage() {
+  const fn = {
+    login:          renderLogin,
+    register:       renderRegister,
+    home:           () => { renderHome(); goto('home'); },
+    friends:        renderFriends,
+    messages:       renderMessages,
+    profile:        renderProfile,
+    notifications:  renderNotifications,
+    settings:       renderSettings,
+    session:        renderSessionPage,
+    'post-session': renderPostSession,
+    interrupt:      renderInterruptPage,
+    'group-detail': () => renderGroupDetail(S.viewingGroupId),
+    'user-profile': () => renderUserProfile(S.viewingUserId),
+    dm:             () => renderDM(S.dmFriendId),
+    'edit-profile': renderEditProfile,
+    premium:        renderPremium,
+    terms:          renderTerms,
+    privacy:        renderPrivacy,
+    'create-group': renderCreateGroup,
+    challenge:      () => {},
+  }[S.page];
+  if (fn) fn();
+  else applyLang();
+}
 
 // ================================================================
 // STORAGE HELPERS
@@ -697,6 +880,10 @@ function getStreak(history) {
 function fmtDuration(sec, alwaysHours = false) {
   sec = Math.max(0, Math.floor(sec));
   const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  if (S.lang === 'en') {
+    if (h > 0 || alwaysHours) return `${h}h${m > 0 ? ' ' + m + 'm' : ''}`;
+    return `${m}m`;
+  }
   if (h > 0 || alwaysHours) return `${h}時間${m > 0 ? m + '分' : ''}`;
   return `${m}分`;
 }
@@ -706,7 +893,8 @@ function fmtCountdown(sec) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 function fmtDate(ts) {
-  return new Date(ts).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
+  const locale = S.lang === 'en' ? 'en-US' : 'ja-JP';
+  return new Date(ts).toLocaleDateString(locale, { month:'short', day:'numeric' });
 }
 function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 
@@ -756,6 +944,8 @@ function goto(page) {
   if (page === 'messages')     renderMessages();
   if (page === 'profile')      renderProfile();
   if (page === 'notifications') renderNotifications();
+  // Apply language after render
+  if (S.lang === 'en') setTimeout(applyLang, 0);
 }
 
 // ================================================================
@@ -2225,7 +2415,9 @@ function buildWeeklyChart(chartId, labelsId, totalId, data) {
   const totalEl  = document.getElementById(totalId);
   if (!chartEl || !labelsEl) return;
 
-  const DAY_LABELS = ['日','月','火','水','木','金','土'];
+  const DAY_LABELS = S.lang === 'en'
+    ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+    : ['日','月','火','水','木','金','土'];
   const today  = new Date().getDay();
   const maxVal = Math.max(...data, 1);
   const total  = data.reduce((a,b) => a+b, 0);
@@ -2392,7 +2584,7 @@ function renderSettings() {
         <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
           <span class="text-white text-sm">言語</span>
           <button id="lang-toggle-btn" class="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#2C2C2E] border border-gray-700 px-3 py-1 rounded-full hover:bg-[#3A3A3C] transition">
-            🇯🇵 日本語
+            ${S.lang === 'en' ? '🇺🇸 English' : '🇯🇵 日本語'}
           </button>
         </div>
         <div class="flex justify-between items-center py-2.5">
@@ -2439,8 +2631,9 @@ function renderSettings() {
 
   document.getElementById('st-back').addEventListener('click', () => goto('profile'));
   document.getElementById('lang-toggle-btn').addEventListener('click', () => {
-    localStorage.setItem('to_lang', 'en');
-    window.location.href = 'index_en.html';
+    S.lang = S.lang === 'ja' ? 'en' : 'ja';
+    localStorage.setItem('to_lang', S.lang);
+    renderSettings();
   });
   document.getElementById('st-terms-btn').addEventListener('click', () => {
     S._prevPage = 'settings';
@@ -3103,7 +3296,6 @@ function renderPremium() {
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('to_lang') === 'en') { window.location.href = 'index_en.html'; return; }
   renderLogin();
   renderRegister();
   renderInterruptPage();
