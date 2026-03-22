@@ -655,7 +655,7 @@ const S = {
   pendingConfirm: null,
   friendsTimerId: null,
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
-  groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy }
+  groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy }
 };
 
 // ================================================================
@@ -1787,20 +1787,30 @@ function renderGroupDetail(groupId) {
 
     <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10 space-y-3">
 
-      ${inLobby ? `
+      ${inLobby ? (() => {
+        const meReady = gd.readyMembers.includes('me');
+        const initiator = gd.initiatedBy;
+        const initiatorName = initiator === 'me' ? (getUser()?.name||'あなた') : (friendById(initiator)?.name || initiator);
+        return `
       <!-- LOBBY: waiting for all to be ready -->
       <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
-        <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:${g.color}">準備中 — 全員が揃ったら自動でスタート</p>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider" style="color:${g.color}">準備中 — 全員が揃ったら自動でスタート</span>
+        </div>
+        <p class="text-xs text-gray-500 mb-3">${initiatorName}がデトックスを作成しました</p>
         <div class="space-y-0" id="gd-member-rows">
           ${memberReadyRows(gd.readyMembers)}
         </div>
         <div class="mt-3 flex items-center justify-between">
           <span class="text-xs text-gray-600">時間: <span class="text-white font-bold">${GD_DURATIONS.find(d=>d.sec===gd.duration)?.label||'1時間'}</span></span>
-          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${1+g.members.length}人 準備完了</span>
+          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${gd.allMembers.length}人 準備完了</span>
         </div>
       </div>
-      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">キャンセル</button>
-      ` : `
+      ${!meReady ? `
+      <button id="gd-join-lobby" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">参加する</button>
+      ` : ''}
+      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${meReady ? 'キャンセル（準備を取り消す）' : 'キャンセル'}</button>
+      `})() : `
       <!-- DEFAULT: setup -->
       <div class="card p-4">
         <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">デトックス時間</p>
@@ -1814,7 +1824,10 @@ function renderGroupDetail(groupId) {
       </div>
 
       <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">メンバー</p>
+          <span class="text-xs text-gray-600">全員がデトックスを作成できます</span>
+        </div>
         <div class="space-y-0">
           ${['me', ...g.members].map(id => {
             const isMe = id === 'me';
@@ -1825,9 +1838,12 @@ function renderGroupDetail(groupId) {
               ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
               : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
             return `
-              <div class="flex items-center gap-3 py-2">
-                <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
-                <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+              <div class="flex items-center justify-between py-2">
+                <div class="flex items-center gap-3">
+                  <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
+                  <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+                </div>
+                <span class="text-xs text-gray-700">作成可能</span>
               </div>`;
           }).join('')}
         </div>
@@ -1840,9 +1856,9 @@ function renderGroupDetail(groupId) {
       </div>
 
       <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
-        準備完了にする
+        デトックスを作成する
       </button>
-      <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>
+      <p class="text-center text-xs text-gray-700">あなたが作成したら、メンバーに通知されます</p>
       `}
     </div>
   `;
@@ -1854,11 +1870,25 @@ function renderGroupDetail(groupId) {
   document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
 
   if (inLobby) {
+    // 参加ボタン: 自分がまだ準備完了でない場合に表示
+    document.getElementById('gd-join-lobby')?.addEventListener('click', () => {
+      if (!S.groupDetox.readyMembers.includes('me')) {
+        S.groupDetox.readyMembers.push('me');
+        const rows = document.getElementById('gd-member-rows');
+        const cnt  = document.getElementById('gd-ready-count');
+        if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
+        if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
+        renderGroupDetail(groupId);
+        if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
+          S.groupDetox.startTime = Date.now();
+          setTimeout(() => startSession(S.groupDetox.duration, false), 600);
+        }
+      }
+    });
     document.getElementById('gd-cancel-lobby').addEventListener('click', () => {
       S.groupDetox = null;
       renderGroupDetail(groupId);
     });
-    // Simulate others joining (already handled by the simulation timers set when lobby started)
   } else {
     // Duration selector
     let gdSelectedDur = selectedDur;
@@ -1877,7 +1907,7 @@ function renderGroupDetail(groupId) {
     });
 
     document.getElementById('gd-ready-btn').addEventListener('click', () => {
-      // Enter lobby - mark "me" as ready
+      // Enter lobby - mark "me" as ready and as initiator
       S.groupDetox = {
         groupId,
         duration: gdSelectedDur,
@@ -1886,6 +1916,7 @@ function renderGroupDetail(groupId) {
         startTime: null,
         failed: false,
         failedBy: null,
+        initiatedBy: 'me',
       };
       renderGroupDetail(groupId);
       // Simulate other members getting ready one by one
