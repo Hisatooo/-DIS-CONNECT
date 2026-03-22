@@ -618,11 +618,11 @@ const MOCK_GROUPS = [
 ];
 
 const MOCK_FRIENDS = [
-  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
-  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
-  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
-  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
-  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true,  blockApps: ['YouTube', 'Instagram'] },
+  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false, blockApps: ['X', 'TikTok'] },
+  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true,  blockApps: ['YouTube', 'LINE'] },
+  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true,  blockApps: ['Facebook', 'Discord'] },
+  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true,  blockApps: ['Instagram', 'TikTok'] },
 ];
 
 const MOCK_POSTS = [
@@ -1487,7 +1487,10 @@ const ALL_APPS = [
   { label: 'Discord',   bg: '5865F2' },
   { label: 'Twitch',    bg: '9146FF' },
 ];
-const getBlockedApps = () => ALL_APPS.filter(a => S.selectedApps.has(a.label));
+const getBlockedApps = () => {
+  if (S.groupDetox?.blockedApps) return ALL_APPS.filter(a => S.groupDetox.blockedApps.includes(a.label));
+  return ALL_APPS.filter(a => S.selectedApps.has(a.label));
+};
 
 function openChallengePage() {
   const durMin = Math.round((S.challengeData?.duration || 3600) / 60);
@@ -2035,12 +2038,12 @@ function renderGroupsList() {
     list.appendChild(card);
   });
 
-  // Invite accept/decline handlers
+  // Invite accept → navigate to group detail (preview) so user sees info before joining
   list.querySelectorAll('.invite-accept-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const g = MOCK_GROUPS.find(x => x.id === btn.dataset.gid);
-      if (g) { delete g.pendingInvite; renderGroupsList(); }
+      if (g) renderGroupDetail(g.id);
     });
   });
   list.querySelectorAll('.invite-decline-btn').forEach(btn => {
@@ -2068,45 +2071,165 @@ function renderGroupDetail(groupId) {
   const page = document.getElementById('page-group-detail');
   const gd = S.groupDetox;
   const isMyGroup = gd && gd.groupId === groupId;
-  const inLobby = isMyGroup && !gd.startTime;
-  const inSession = isMyGroup && !!gd.startTime;
+  const inLobby  = isMyGroup && !gd.startTime;
+  const isPending = !!g.pendingInvite; // Feature 3: show preview before joining
 
-  // Preset durations for group detox
-  const GD_DURATIONS = [
-    { label: '30分', sec: 1800 },
-    { label: '1時間', sec: 3600 },
-    { label: '2時間', sec: 7200 },
-  ];
-  const selectedDur = (isMyGroup ? gd.duration : GD_DURATIONS[1].sec);
+  // Helper: format seconds as "Xh Ym"
+  function fmtDur(sec) {
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  }
 
-  // Member ready status html
+  // Member rows for lobby — includes each member's blocked apps (Feature 2)
   function memberReadyRows(readyList) {
     const u = getUser();
     const myName = u ? u.name : 'あなた';
-    const allIds = ['me', ...g.members];
-    return allIds.map(id => {
+    return ['me', ...g.members].map(id => {
       const isMe = id === 'me';
-      const f = isMe ? null : friendById(id);
+      const f    = isMe ? null : friendById(id);
       const name = isMe ? myName : (f ? f.name : id);
       const avatar = isMe
         ? `https://placehold.co/40x40/334155/FFF?text=${myName[0].toUpperCase()}`
         : (f ? f.avatar : `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
       const ready = readyList.includes(id);
+      const apps  = isMe ? (S.groupDetox?.blockedApps || []) : (f?.blockApps || []);
+      const appsHtml = apps.length
+        ? `<div class="flex flex-wrap gap-1 mt-0.5">${apps.map(a=>`<span class="text-xs px-1.5 py-0.5 rounded bg-[#2C2C2E] text-gray-500">${a}</span>`).join('')}</div>`
+        : '';
       return `
-        <div class="flex items-center justify-between py-2">
-          <div class="flex items-center gap-3">
-            <img src="${avatar}" class="w-9 h-9 rounded-full ${ready?'':'opacity-40'}" alt="${name}">
-            <div>
+        <div class="flex items-center justify-between py-2 gap-2">
+          <div class="flex items-center gap-3 flex-grow min-w-0">
+            <img src="${avatar}" class="w-9 h-9 rounded-full flex-shrink-0 ${ready?'':'opacity-40'}" alt="${name}">
+            <div class="min-w-0">
               <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+              ${appsHtml}
             </div>
           </div>
           ${ready
-            ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>準備完了</span>`
-            : `<span class="text-xs text-gray-600">待機中...</span>`
+            ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1 flex-shrink-0"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>準備完了</span>`
+            : `<span class="text-xs text-gray-600 flex-shrink-0">待機中...</span>`
           }
-        </div>
-      `;
+        </div>`;
     }).join('');
+  }
+
+  // ── Common header ──────────────────────────────────────────────
+  const headerInviteBtn = (!isPending && g.members.length < (g.maxMembers||5))
+    ? `<button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        招待
+       </button>`
+    : '';
+
+  // ── Member list helper (setup + preview) ──────────────────────
+  function memberListRows(ids) {
+    return ids.map(id => {
+      const isMe = id === 'me';
+      const f    = isMe ? null : friendById(id);
+      const u2   = getUser();
+      const name   = isMe ? (u2?u2.name:'あなた') : (f?f.name:id);
+      const avatar = isMe
+        ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
+        : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+      const apps = isMe ? null : (f?.blockApps || []);
+      return `
+        <div class="flex items-center gap-3 py-2">
+          <img src="${avatar}" class="w-9 h-9 rounded-full flex-shrink-0" alt="${name}">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+            ${apps !== null ? `<div class="flex flex-wrap gap-1 mt-0.5">${apps.map(a=>`<span class="text-xs px-1.5 py-0.5 rounded bg-[#2C2C2E] text-gray-500">${a}</span>`).join('')}</div>` : '<p class="text-xs text-gray-600">（ここで選択）</p>'}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Body content depends on state ────────────────────────────
+  let bodyHtml = '';
+
+  if (isPending) {
+    // ── STATE: PREVIEW (pending invitation) ──────────────────────
+    const fromUser = friendById(g.pendingInvite.from);
+    const fromName = fromUser ? fromUser.name : g.pendingInvite.from;
+    bodyHtml = `
+      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
+        <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:${g.color}">招待が届いています</p>
+        <p class="text-sm text-gray-400">${fromName}から招待されました</p>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
+        <p class="text-sm text-gray-400">${g.description}</p>
+        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー (${g.members.length}人)</p>
+        <div class="space-y-0">
+          ${memberListRows(g.members)}
+        </div>
+      </div>
+
+      <button id="gd-accept-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+        招待を承認する
+      </button>
+      <button id="gd-decline-btn" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">
+        断る
+      </button>`;
+
+  } else if (inLobby) {
+    // ── STATE: LOBBY ──────────────────────────────────────────────
+    const h = Math.floor(gd.duration/3600), m = Math.floor((gd.duration%3600)/60);
+    bodyHtml = `
+      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
+        <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:${g.color}">準備中 — 全員が揃ったら自動でスタート</p>
+        <div class="space-y-0" id="gd-member-rows">
+          ${memberReadyRows(gd.readyMembers)}
+        </div>
+        <div class="mt-3 flex items-center justify-between">
+          <span class="text-xs text-gray-600">時間: <span class="text-white font-bold">${fmtDur(gd.duration)}</span></span>
+          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${1+g.members.length}人 準備完了</span>
+        </div>
+      </div>
+      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">キャンセル</button>`;
+
+  } else {
+    // ── STATE: SETUP (time picker + app chips) ────────────────────
+    bodyHtml = `
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">デトックス時間</p>
+        <div class="flex justify-center items-center relative" style="height:12rem;">
+          <div class="absolute left-1/2 -translate-x-1/2 w-40 h-14 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-[#1C1C1E] via-transparent to-[#1C1C1E] pointer-events-none z-10"></div>
+          <div class="z-20 flex items-center space-x-1">
+            <div id="gd-picker-hours" class="picker-col"></div>
+            <span class="text-3xl font-black text-gray-600">:</span>
+            <div id="gd-picker-minutes" class="picker-col"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">ブロックするアプリ</p>
+        <div id="gd-app-chips" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
+        <div class="space-y-0">
+          ${memberListRows(['me', ...g.members])}
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
+        <p class="text-sm text-gray-400">${g.description}</p>
+        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
+      </div>
+
+      <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+        準備完了にする
+      </button>
+      <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>`;
   }
 
   page.innerHTML = `
@@ -2125,109 +2248,77 @@ function renderGroupDetail(groupId) {
           ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}日連続</span>` : ''}
         </div>
       </div>
-      ${g.members.length < (g.maxMembers||5) ? `
-      <button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        招待
-      </button>` : `<span class="text-xs text-gray-600 flex-shrink-0">満員</span>`}
+      ${headerInviteBtn}
     </div>
-
     <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10 space-y-3">
-
-      ${inLobby ? `
-      <!-- LOBBY: waiting for all to be ready -->
-      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
-        <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:${g.color}">準備中 — 全員が揃ったら自動でスタート</p>
-        <div class="space-y-0" id="gd-member-rows">
-          ${memberReadyRows(gd.readyMembers)}
-        </div>
-        <div class="mt-3 flex items-center justify-between">
-          <span class="text-xs text-gray-600">時間: <span class="text-white font-bold">${GD_DURATIONS.find(d=>d.sec===gd.duration)?.label||'1時間'}</span></span>
-          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${1+g.members.length}人 準備完了</span>
-        </div>
-      </div>
-      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">キャンセル</button>
-      ` : `
-      <!-- DEFAULT: setup -->
-      <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">デトックス時間</p>
-        <div class="flex gap-2" id="gd-dur-btns">
-          ${GD_DURATIONS.map(d => `
-            <button class="gd-dur flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${d.sec===selectedDur?'text-black border-transparent':'border-gray-800 text-gray-500'}"
-              style="${d.sec===selectedDur?`background:${g.color};`:'background:#1C1C1E;'}"
-              data-sec="${d.sec}">${d.label}</button>
-          `).join('')}
-        </div>
-      </div>
-
-      <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
-        <div class="space-y-0">
-          ${['me', ...g.members].map(id => {
-            const isMe = id === 'me';
-            const f = isMe ? null : friendById(id);
-            const u2 = getUser();
-            const name = isMe ? (u2?u2.name:'あなた') : (f?f.name:id);
-            const avatar = isMe
-              ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
-              : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
-            return `
-              <div class="flex items-center gap-3 py-2">
-                <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
-                <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
-              </div>`;
-          }).join('')}
-        </div>
-      </div>
-
-      <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
-        <p class="text-sm text-gray-400">${g.description}</p>
-        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
-      </div>
-
-      <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
-        準備完了にする
-      </button>
-      <p class="text-center text-xs text-gray-700">全員が準備完了になると自動でスタートします</p>
-      `}
+      ${bodyHtml}
     </div>
   `;
 
+  // ── Event wiring ──────────────────────────────────────────────
   document.getElementById('gd-back').addEventListener('click', () => {
     goto('friends');
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
   });
   document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
 
-  if (inLobby) {
+  if (isPending) {
+    // Feature 3: accept → re-render in setup mode; decline → remove
+    document.getElementById('gd-accept-btn').addEventListener('click', () => {
+      delete g.pendingInvite;
+      renderGroupDetail(groupId);
+    });
+    document.getElementById('gd-decline-btn').addEventListener('click', () => {
+      const idx = MOCK_GROUPS.findIndex(x => x.id === groupId);
+      if (idx !== -1) MOCK_GROUPS.splice(idx, 1);
+      goto('friends');
+      setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+    });
+
+  } else if (inLobby) {
     document.getElementById('gd-cancel-lobby').addEventListener('click', () => {
       S.groupDetox = null;
       renderGroupDetail(groupId);
     });
-    // Simulate others joining (already handled by the simulation timers set when lobby started)
+
   } else {
-    // Duration selector
-    let gdSelectedDur = selectedDur;
-    page.querySelectorAll('.gd-dur').forEach(btn => {
-      btn.addEventListener('click', () => {
-        gdSelectedDur = parseInt(btn.dataset.sec);
-        page.querySelectorAll('.gd-dur').forEach(b => {
-          const active = parseInt(b.dataset.sec) === gdSelectedDur;
-          b.style.background = active ? g.color : '#1C1C1E';
-          b.style.borderColor = active ? 'transparent' : '';
-          b.className = b.className.replace(/text-black|text-gray-500/g, '');
-          b.classList.add(active ? 'text-black' : 'text-gray-500');
-          b.style.borderColor = active ? 'transparent' : '#374151';
+    // Feature 1: time picker
+    createTimePicker('gd-picker-hours', 'gd-picker-minutes');
+
+    // Feature 2: app chip selector (starts from user's current selection)
+    const gdApps = new Set(S.selectedApps);
+    const chipsEl = document.getElementById('gd-app-chips');
+    function renderGdChips() {
+      chipsEl.innerHTML = ALL_APPS.map(a => {
+        const sel = gdApps.has(a.label);
+        return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel?'border-white/30 bg-white/10 text-white':'border-gray-800 text-gray-600'}" data-app="${a.label}">
+          <img src="https://placehold.co/14x14/${a.bg}/FFF?text=${a.label[0]}" class="w-3.5 h-3.5 rounded" alt="">
+          ${a.label}
+        </button>`;
+      }).join('');
+      chipsEl.querySelectorAll('.gd-app-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const app = btn.dataset.app;
+          if (gdApps.has(app)) gdApps.delete(app); else gdApps.add(app);
+          renderGdChips();
         });
       });
-    });
+    }
+    renderGdChips();
 
     document.getElementById('gd-ready-btn').addEventListener('click', () => {
-      // Enter lobby - mark "me" as ready
+      const h = getPickerValue('gd-picker-hours');
+      const m = getPickerValue('gd-picker-minutes');
+      const totalSec = h * 3600 + m * 60;
+      if (totalSec === 0) {
+        const card = document.getElementById('gd-picker-hours')?.closest('.card');
+        if (card) { card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 450); }
+        return;
+      }
       S.groupDetox = {
         groupId,
-        duration: gdSelectedDur,
+        duration: totalSec,
+        blockedApps: [...gdApps],   // Feature 2: store selected apps
         readyMembers: ['me'],
         allMembers: ['me', ...g.members],
         startTime: null,
@@ -2236,24 +2327,19 @@ function renderGroupDetail(groupId) {
       };
       renderGroupDetail(groupId);
       // Simulate other members getting ready one by one
-      const others = [...g.members];
-      others.forEach((id, i) => {
+      [...g.members].forEach((id, i) => {
         setTimeout(() => {
           if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
           S.groupDetox.readyMembers.push(id);
-          // Update UI if still on group-detail page
           const rows = document.getElementById('gd-member-rows');
           const cnt  = document.getElementById('gd-ready-count');
           if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
           if (cnt)  cnt.textContent = S.lang === 'en'
             ? `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length} ready`
             : `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
-          // All ready → start
           if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
             S.groupDetox.startTime = Date.now();
-            setTimeout(() => {
-              startSession(S.groupDetox.duration, false);
-            }, 600);
+            setTimeout(() => startSession(S.groupDetox.duration, false), 600);
           }
         }, (i + 1) * 1500);
       });
@@ -2983,32 +3069,36 @@ document.getElementById('manual-cancel-btn').addEventListener('click', () => {
   resetSlider('manual-slider','manual-thumb','manual-reveal');
 });
 
+function buildPickerEl(el, count, step) {
+  el.innerHTML = '';
+  const pad = document.createElement('div'); pad.className = 'picker-pad';
+  el.appendChild(pad.cloneNode());
+  for (let i = 0; i < count; i += step) {
+    const item = document.createElement('div');
+    item.className = 'picker-item';
+    item.textContent = String(i).padStart(2,'0');
+    el.appendChild(item);
+  }
+  el.appendChild(pad.cloneNode());
+}
+
+function createTimePicker(hoursId, minutesId) {
+  const hPicker = document.getElementById(hoursId);
+  const mPicker = document.getElementById(minutesId);
+  if (!hPicker || !mPicker) return;
+  buildPickerEl(hPicker, 6,  1);   // 0-5 hours
+  buildPickerEl(mPicker, 60, 5);   // 0,5,10...55 min
+  [hPicker, mPicker].forEach(p => {
+    p.addEventListener('scroll', () => highlightCenter(p));
+    setTimeout(() => highlightCenter(p), 50);
+  });
+}
+
 let pickerInited = false;
 function initTimePicker() {
   if (pickerInited) return;
   pickerInited = true;
-  const hPicker = document.getElementById('picker-hours');
-  const mPicker = document.getElementById('picker-minutes');
-
-  function buildPicker(el, count, step) {
-    const pad = document.createElement('div'); pad.className = 'picker-pad';
-    el.appendChild(pad.cloneNode());
-    for (let i = 0; i < count; i += step) {
-      const item = document.createElement('div');
-      item.className = 'picker-item';
-      item.textContent = String(i).padStart(2,'0');
-      el.appendChild(item);
-    }
-    el.appendChild(pad.cloneNode());
-  }
-  buildPicker(hPicker, 6,  1);  // 0-5 hours
-  buildPicker(mPicker, 60, 5);  // 0,5,10...55 min
-
-  [hPicker, mPicker].forEach(p => {
-    p.addEventListener('scroll', () => highlightCenter(p));
-    // scroll to 0 by default
-    setTimeout(() => highlightCenter(p), 50);
-  });
+  createTimePicker('picker-hours', 'picker-minutes');
 }
 
 function highlightCenter(picker) {
