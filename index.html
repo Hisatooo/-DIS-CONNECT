@@ -444,7 +444,7 @@
           </svg>
         </div>
         <div>
-          <p class="font-bold text-white text-sm">デトックスチャレンジ！</p>
+          <p class="font-bold text-white text-sm" id="challenge-title">デトックスチャレンジ！</p>
           <p id="banner-sub" class="text-xs text-gray-400">読み込み中...</p>
         </div>
       </div>
@@ -767,9 +767,9 @@ const TRANSLATIONS_EN = {
   '木': 'Thu',
   '金': 'Fri',
   '土': 'Sat',
-  '時間': ' hr',
-  '分': ' min',
-  '秒': ' sec',
+  '時間': 'h',
+  '分': 'm',
+  '秒': 's',
   '日前': 'd ago',
   '時間前': 'h ago',
   '分前': 'm ago',
@@ -781,6 +781,161 @@ const TRANSLATIONS_EN = {
   // Confirm dialogs
   'Friends解除': 'Remove Friend',
   'Log Outしますか？': 'Are you sure you want to log out?',
+  // Friends / Groups
+  'グループ': 'Groups',
+  'Friendsを検索': 'Search Friends',
+  'フレンドを検索': 'Search friends',
+  'グループを検索': 'Search Groups',
+  'マイグループ': 'My Groups',
+  '新規グループ': 'New Group',
+  '新しいグループを作成（招待制・最大5名）': 'Create New Group (Invite-only, max 5)',
+  'グループの目的を一言で': 'Describe the group goal',
+  'グループ名': 'Group Name',
+  'グループについて': 'About This Group',
+  'グループストリーク': 'Group Streak',
+  'グループセッション参加中！': 'Group session in progress!',
+  'グループデトックス中': 'Group detox in progress',
+  'グループに参加できる上限': 'Max members',
+  'グループの説明なし': 'No description',
+  '招待制': 'Invite-only',
+  '招待する': 'Invite',
+  '招待': 'Invite',
+  // Friends list
+  'をブロック中': ' blocked',
+  '経過': 'elapsed',
+  '参加する': 'Join',
+  '日のストリーク': '-day streak',
+  '日間': ' days',
+  '名': ' members',
+  // Session / Detox
+  'デトックスチャレンジ！': 'Detox Challenge!',
+  '今日のデトックス': "Today's detox",
+  'のデトックス': ' detox',
+  '分間': ' min',
+  'スタディグループ': 'Study Group',
+  'ショートセッション完了': 'Short session done',
+  'が中断したため、グループセッションが終了しました': ' quit, so the group session ended.',
+  // DM / Messages
+  'やあ！最近デトックスできてる？': 'Hey! Been keeping up with the detox?',
+  'ちょっとずつ！今日も頑張ろう': 'Little by little! Keep it up today',
+  'ちょっとずつ！Todayも頑張ろう': 'Little by little! Keep it up today',
+  // Notifications / Feed
+  'があなたの投稿にいいねしました': ' liked your post',
+  'がコメントしました': ' commented',
+  'がデトックスを開始しました': ' started a detox',
+  // Mock bios
+  'フロントエンド開発者': 'Frontend Developer',
+  '集中力向上中': 'Improving focus',
+  'UIデザイナー': 'UI Designer',
+  'ランニング好き': 'Running enthusiast',
+  // Mock posts
+  '読書2章分、英単語100個': 'Read 2 chapters, 100 vocab words',
+  '久しぶりに集中できた！': 'Finally focused after a long time!',
+  'プログラミング課題': 'Programming assignment',
+  'AI論文読み込み': 'Reading AI papers',
+  '2時間、スマホなし！': '2 hours, no phone!',
+  // Mock comments
+  'すごい！継続できてますね': 'Awesome! Keep it up!',
+  '私も頑張ります！': "I'll do my best too!",
+  'お疲れ様です！': 'Great work!',
+  'かっこいい！': 'Impressive!',
+  '2時間はすごい': '2 hours is amazing',
+  // Ad
+  '思考を整理するワークスペース。今日から使おう。': 'A workspace to organize your thoughts. Start today.',
+  '詳しく見る': 'Learn more',
+  // Post session
+  '今日のデトックスはどうでしたか？': "How was today's detox?",
+  // Streak / stats
+  '日間継続中': ' day streak',
+  '合計': 'Total',
+  '週間': ' weeks',
+  // Premium features
+  'グループ無制限作成': 'Unlimited Groups',
+  '複数グループを自由に作成・管理': 'Create and manage multiple groups freely',
+  'ストリークバッジ': 'Streak Badge',
+  '連続記録を特別なバッジでアピール': 'Show off your streak with a special badge',
+  '詳細アナリティクス': 'Detailed Analytics',
+  '月次・年次の統計データを表示': 'View monthly and yearly statistics',
+  'カスタムテーマ': 'Custom Theme',
+  'プロフィールカラーと背景をカスタマイズ': 'Customize profile color and background',
+  'スマートリマインダー': 'Smart Reminders',
+  'AIが最適なデトックス時間を提案': 'AI suggests the best detox times',
+  'リーダーボード': 'Leaderboard',
+  'フレンドとのランキング比較': 'Compare rankings with friends',
+  // Create group
+  '作成する': 'Create',
+  '絵文字を選択': 'Choose emoji',
+  '色を選択': 'Choose color',
+  // Misc UI
+  '未読のみ': 'Unread only',
+  '検索': 'Search',
+  'のフォロー': ' following',
+  '人のフォロワー': ' followers',
+  // Profile stats
+  '日連続': '-day streak',
+  '完了セッション': 'Sessions done',
+  '完了': 'Done',
+  '週末チャレンジ': 'Weekend Challenge',
+  '週末は2時間のデジタルデトックスにチャレンジ': '2-hour digital detox challenge on weekends',
+  // Session page
+  'ブロック中': 'Blocking',
+  '人が国内でデトックス中': 'people detoxing nationwide',
+  '人のフレンドがデトックス中': 'friends detoxing',
+  'メインルームへ': 'Main Room',
+  'デトックスを中断する': 'Interrupt Detox',
+  'デトックス完了！': 'Detox Complete!',
+  'セッション中断': 'Session Interrupted',
+  // Group detail
+  '日連続': '-day streak',
+  '人がデトックス中': ' detoxing',
+  '待機中': 'Waiting',
+  '準備完了にする': 'Mark Ready',
+  '全員が準備完了になると自動でスタートします': 'Session starts automatically when everyone is ready',
+  '準備完了': 'Ready',
+  '人 準備完了': ' ready',
+  // Post session
+  '達成したこと（任意）': 'Achievement (optional)',
+  '一言コメント（任意）': 'Comment (optional)',
+  '説明（任意）': 'Description (optional)',
+  '例: 読書3章、英単語100個...': 'e.g. Read 3 chapters, 100 vocab words...',
+  '画像を追加': 'Add image',
+  // Weekly chart
+  '今週': 'This week',
+  '週': 'week',
+  '連続': '-day streak',
+  // Manual start sheet
+  'デトックス開始': 'Start Detox',
+  '制限するアプリと時間をセット': 'Set apps to block and duration',
+  '制限するアプリ': 'Apps to block',
+  'スワイプして開始': 'Swipe to start',
+  '時間': 'hr',
+  // Notifications
+  'があなたの投稿にいいね': ' liked your post',
+  'コメントしました': 'commented',
+  // Session / interrupt
+  '中断しますか？': 'Interrupt the session?',
+  'セッションを終了しますか？': 'End the session?',
+  'セッション中断': 'Session interrupted',
+  'セッション完了': 'Session Complete',
+  'デトックス達成': 'Detox Achieved',
+  'お疲れ様でした！': 'Well done!',
+  '感想を共有する': 'Share your thoughts',
+  '今回のデトックス': 'This session',
+  '継続中': 'In progress',
+  'コメントを入力': 'Add a comment',
+  '返信': 'Reply',
+  '読み込み中...': 'Loading...',
+  '作成': 'Create',
+  // User profile
+  'フォロー': 'Follow',
+  'フォロー中': 'Following',
+  'フレンドリクエストを送る': 'Send Friend Request',
+  'フレンドリクエスト受信中': 'Friend Request Received',
+  'リクエストを送りました': 'Request Sent',
+  // Login / register prompts
+  'メールアドレスを入力': 'Enter email',
+  'パスワードを入力': 'Enter password',
+  '表示名を入力': 'Enter display name',
 };
 
 function applyLang() {
@@ -1108,7 +1263,7 @@ function triggerChallengeBanner() {
   const choices = [30,45,60,90,120,150];
   const dur = choices[Math.floor(Math.random() * choices.length)];
   S.challengeData = { duration: dur * 60 };
-  document.getElementById('banner-sub').textContent = `今日のデトックス: ${dur}分間`;
+  document.getElementById('banner-sub').textContent = S.lang === 'en' ? `Today's detox: ${dur}m` : `今日のデトックス: ${dur}分間`;
   document.getElementById('challenge-banner').classList.add('visible');
   setTimeout(() => document.getElementById('challenge-banner').classList.remove('visible'), 9000);
 }
@@ -2090,7 +2245,9 @@ function renderGroupDetail(groupId) {
           const rows = document.getElementById('gd-member-rows');
           const cnt  = document.getElementById('gd-ready-count');
           if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
-          if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
+          if (cnt)  cnt.textContent = S.lang === 'en'
+            ? `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length} ready`
+            : `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
           // All ready → start
           if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
             S.groupDetox.startTime = Date.now();
@@ -2426,7 +2583,9 @@ function buildWeeklyChart(chartId, labelsId, totalId, data) {
 
   chartEl.innerHTML  = '';
   labelsEl.innerHTML = '';
-  if (totalEl) totalEl.textContent = `今週 ${Math.floor(total/60)}h ${total%60}m`;
+  if (totalEl) totalEl.textContent = S.lang === 'en'
+    ? `This week ${Math.floor(total/60)}h ${total%60}m`
+    : `今週 ${Math.floor(total/60)}h ${total%60}m`;
 
   DAY_LABELS.forEach((day, i) => {
     const pct     = data[i] / maxVal * 100;
@@ -2770,7 +2929,6 @@ function renderNotifications() {
       `).join('')}
     </div>
   `;
-  goto('notifications');
   document.getElementById('notif-back').addEventListener('click', () => goto('home'));
 }
 
