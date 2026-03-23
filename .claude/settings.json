@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); cmd=$(echo \"$input\" | jq -r '.tool_input.command // \"\"'); if echo \"$cmd\" | grep -q 'git push'; then echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PostToolUse\", \"additionalContext\": \"IMPORTANT: git push が完了しました。必ずレスポンスにUI URLを記載してください: https://hisatooo.github.io/-DIS-CONNECT/index_ja.html\"}}'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
