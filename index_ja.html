@@ -418,7 +418,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      <h2 class="absolute left-1/2 -translate-x-1/2 font-bold text-white text-base">投稿</h2>
+      <h2 id="comment-panel-title" class="absolute left-1/2 -translate-x-1/2 font-bold text-white text-base">投稿</h2>
     </div>
     <div class="flex-grow overflow-y-auto no-scrollbar">
       <div id="comment-post-body" class="border-b border-gray-900 p-4"></div>
@@ -444,7 +444,7 @@
           </svg>
         </div>
         <div>
-          <p class="font-bold text-white text-sm">デトックスチャレンジ！</p>
+          <p id="banner-title" class="font-bold text-white text-sm">デトックスチャレンジ！</p>
           <p id="banner-sub" class="text-xs text-gray-400">読み込み中...</p>
         </div>
       </div>
@@ -458,19 +458,19 @@
   <div id="manual-sheet" class="sheet-overlay">
     <div class="sheet-body">
       <div class="sheet-handle"></div>
-      <h3 class="text-xl font-black text-white text-center mb-1">デトックス開始</h3>
-      <p class="text-gray-600 text-sm text-center mb-5">制限するアプリと時間をセット</p>
+      <h3 id="manual-sheet-title" class="text-xl font-black text-white text-center mb-1">デトックス開始</h3>
+      <p id="manual-sheet-sub" class="text-gray-600 text-sm text-center mb-5">制限するアプリと時間をセット</p>
 
       <!-- App Selection -->
       <div class="mb-5">
-        <p class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
+        <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
         <div id="app-chip-list" class="flex flex-wrap gap-2"></div>
       </div>
 
       <!-- Divider -->
       <div class="flex items-center gap-3 mb-4">
         <div class="flex-1 h-px bg-gray-800"></div>
-        <p class="text-xs text-gray-600 font-semibold">時間</p>
+        <p id="manual-time-label" class="text-xs text-gray-600 font-semibold">時間</p>
         <div class="flex-1 h-px bg-gray-800"></div>
       </div>
 
@@ -493,7 +493,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
         </div>
-        <span class="slider-label">スワイプして開始</span>
+        <span id="manual-slider-label" class="slider-label">スワイプして開始</span>
       </div>
 
       <button id="manual-cancel-btn" class="w-full text-gray-600 font-semibold py-3 mt-1 text-sm">キャンセル</button>
@@ -664,6 +664,22 @@ const S = {
 // ================================================================
 function t(ja, en) { return S.lang === 'en' ? en : ja; }
 
+function renderStaticLabels() {
+  const set = (id, text) => { const e = document.getElementById(id); if(e) e.textContent = text; };
+  const attr = (id, a, v) => { const e = document.getElementById(id); if(e) e.setAttribute(a, v); };
+  set('banner-title', t('デトックスチャレンジ！','Detox Challenge!'));
+  set('banner-join-btn', t('参加する','Join'));
+  set('manual-sheet-title', t('デトックス開始','Start Detox'));
+  set('manual-sheet-sub', t('制限するアプリと時間をセット','Set apps to block and duration'));
+  set('manual-apps-label', t('制限するアプリ','Apps to Block'));
+  set('manual-time-label', t('時間','Duration'));
+  set('manual-slider-label', t('スワイプして開始','Swipe to Start'));
+  set('manual-cancel-btn', t('キャンセル','Cancel'));
+  set('confirm-cancel-btn', t('キャンセル','Cancel'));
+  set('comment-panel-title', t('投稿','Post'));
+  attr('comment-input', 'placeholder', t('コメントを追加...','Add a comment...'));
+}
+
 // ================================================================
 // STORAGE HELPERS
 // ================================================================
@@ -703,6 +719,10 @@ function getStreak(history) {
 function fmtDuration(sec, alwaysHours = false) {
   sec = Math.max(0, Math.floor(sec));
   const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  if (S.lang === 'en') {
+    if (h > 0 || alwaysHours) return `${h}h${m > 0 ? ' ' + m + 'm' : ''}`;
+    return `${m}m`;
+  }
   if (h > 0 || alwaysHours) return `${h}時間${m > 0 ? m + '分' : ''}`;
   return `${m}分`;
 }
@@ -712,7 +732,8 @@ function fmtCountdown(sec) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 function fmtDate(ts) {
-  return new Date(ts).toLocaleDateString('ja-JP', { month:'short', day:'numeric' });
+  const locale = S.lang === 'en' ? 'en-US' : 'ja-JP';
+  return new Date(ts).toLocaleDateString(locale, { month:'short', day:'numeric' });
 }
 function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 
@@ -2498,6 +2519,7 @@ function renderSettings() {
   });
   document.getElementById('st-lang-btn').addEventListener('click', () => {
     S.lang = S.lang === 'ja' ? 'en' : 'ja';
+    renderStaticLabels();
     renderSettings();
   });
   document.getElementById('logout-btn').addEventListener('click', () => {
@@ -3304,12 +3326,14 @@ document.addEventListener('DOMContentLoaded', () => {
   renderLogin();
   renderRegister();
   renderInterruptPage();
+  renderStaticLabels();
 
   const u = getUser();
   if (u) {
     if (!maybeRestoreSession()) {
       goto('home');
       setTimeout(triggerChallengeBanner, 2500);
+      setTimeout(triggerScheduledNotifs, 6000);
     }
   } else {
     goto('login');
