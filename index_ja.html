@@ -403,10 +403,10 @@
     <div id="invite-overlay" class="absolute inset-0 bg-black/60"></div>
     <div id="invite-drawer" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#1C1C1E] rounded-t-3xl p-5" style="transform:translateX(-50%) translateY(100%);transition:transform 0.35s cubic-bezier(0.25,1,0.5,1);">
       <div class="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-5"></div>
-      <h2 class="text-lg font-black text-white mb-1" id="invite-sheet-title">フレンドを招待</h2>
+      <h2 class="text-lg font-black text-white mb-1" id="invite-sheet-title"></h2>
       <p class="text-xs text-gray-600 mb-4" id="invite-sheet-subtitle"></p>
       <div id="invite-friends-list" class="space-y-2 max-h-72 overflow-y-auto no-scrollbar"></div>
-      <button id="invite-close-btn" class="mt-4 w-full py-3 rounded-2xl bg-[#2C2C2E] text-gray-400 font-semibold text-sm">閉じる</button>
+      <button id="invite-close-btn" class="mt-4 w-full py-3 rounded-2xl bg-[#2C2C2E] text-gray-400 font-semibold text-sm">Close</button>
     </div>
   </div>
 
@@ -660,6 +660,11 @@ const S = {
 };
 
 // ================================================================
+// i18n HELPER
+// ================================================================
+function t(ja, en) { return S.lang === 'en' ? en : ja; }
+
+// ================================================================
 // STORAGE HELPERS
 // ================================================================
 const getUser    = () => JSON.parse(localStorage.getItem('to_user'))    || null;
@@ -786,16 +791,16 @@ function renderLogin() {
         </svg>
       </div>
       <h1 class="text-4xl font-black text-white">(DIS)CONNECT</h1>
-      <p class="text-gray-500 mt-2 text-sm">デジタルデトックスを、みんなで。</p>
+      <p class="text-gray-500 mt-2 text-sm">${t('デジタルデトックスを、みんなで。','Digital detox, together.')}</p>
     </div>
     <div class="space-y-3">
-      <input id="li-email" class="input-field" type="email" placeholder="メールアドレス / 電話番号">
-      <input id="li-pass"  class="input-field" type="password" placeholder="パスワード">
+      <input id="li-email" class="input-field" type="email" placeholder="${t('メールアドレス / 電話番号','Email / Phone')}">
+      <input id="li-pass"  class="input-field" type="password" placeholder="${t('パスワード','Password')}">
       <button id="li-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
-        ログイン
+        ${t('ログイン','Log In')}
       </button>
       <button id="li-reg-btn" class="w-full border border-gray-800 text-gray-300 font-semibold py-4 rounded-full text-base hover:bg-white/5 transition">
-        新規登録
+        ${t('新規登録','Sign Up')}
       </button>
     </div>
   `;
@@ -806,7 +811,7 @@ function renderLogin() {
 function handleLogin() {
   let u = getUser();
   if (!u) {
-    u = { name: 'ゆうき', handle: '@yuuki', bio: 'デジタルデトックス挑戦中',
+    u = { name: t('ゆうき','Yuuki'), handle: '@yuuki', bio: t('デジタルデトックス挑戦中','Digital detox challenger'),
           avatar: 'https://placehold.co/72x72/334155/FFF?text=U',
           email: 'user@example.com', isPublic: true };
     saveUser(u);
@@ -825,38 +830,38 @@ function renderRegister() {
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
       </svg>
     </button>
-    <h2 class="text-3xl font-black text-white mb-8">アカウント作成</h2>
+    <h2 class="text-3xl font-black text-white mb-8">${t('アカウント作成','Create Account')}</h2>
     <div class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーネーム</label>
-        <input id="reg-name" class="input-field" type="text" placeholder="表示名">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーネーム','Username')}</label>
+        <input id="reg-name" class="input-field" type="text" placeholder="${t('表示名','Display name')}">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーID (@)</label>
-        <input id="reg-handle" class="input-field" type="text" placeholder="例: tuneout_user">
-        <p class="text-xs text-gray-700 mt-1 ml-1">3〜30文字、英数字・_・. のみ</p>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーID (@)','User ID (@)')}</label>
+        <input id="reg-handle" class="input-field" type="text" placeholder="${t('例: tuneout_user','e.g. tuneout_user')}">
+        <p class="text-xs text-gray-700 mt-1 ml-1">${t('3〜30文字、英数字・_・. のみ','3–30 chars, letters, numbers, _ and . only')}</p>
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">メールアドレス</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('メールアドレス','Email')}</label>
         <input id="reg-email" class="input-field" type="email" placeholder="mail@example.com">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">生年月日</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('生年月日','Date of Birth')}</label>
         <input id="reg-birth" class="input-field" type="text" placeholder="YYYY/MM/DD">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">パスワード</label>
-        <input id="reg-pass" class="input-field" type="password" placeholder="8文字以上">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('パスワード','Password')}</label>
+        <input id="reg-pass" class="input-field" type="password" placeholder="${t('8文字以上','8+ characters')}">
       </div>
       <label class="flex items-start space-x-3 pt-1 cursor-pointer">
         <input id="reg-agree" type="checkbox" class="mt-1 flex-shrink-0 accent-white w-4 h-4">
         <span class="text-sm text-gray-400">
-          <span id="open-terms" class="text-white underline">利用規約</span>および
-          <span id="open-privacy" class="text-white underline">プライバシーポリシー</span>に同意します
+          <span id="open-terms" class="text-white underline">${t('利用規約','Terms of Service')}</span>${t('および','and')}
+          <span id="open-privacy" class="text-white underline">${t('プライバシーポリシー','Privacy Policy')}</span>${t('に同意します','')}
         </span>
       </label>
       <button id="reg-submit" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
-        登録する
+        ${t('登録する','Sign Up')}
       </button>
     </div>
   `;
@@ -878,8 +883,8 @@ function renderRegister() {
     const handle = document.getElementById('reg-handle').value.trim();
     const email  = document.getElementById('reg-email').value.trim();
     const agree  = document.getElementById('reg-agree').checked;
-    if (!name || !handle || !email) { alert('必須項目を入力してください'); return; }
-    if (!agree) { alert('利用規約に同意してください'); return; }
+    if (!name || !handle || !email) { alert(t('必須項目を入力してください','Please fill in all required fields')); return; }
+    if (!agree) { alert(t('利用規約に同意してください','Please agree to the Terms of Service')); return; }
     const u = {
       name, handle: `@${handle.replace('@','')}`,
       bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
@@ -1227,15 +1232,15 @@ function renderSessionPage() {
     <div class="w-full rounded-2xl px-4 py-3 flex items-center gap-3" style="background:${g.color}18;border:1px solid ${g.color}33">
       <span class="text-xl">${g.emoji}</span>
       <div class="flex-grow">
-        <p class="text-xs font-bold" style="color:${g.color}">${g.name} · グループデトックス中</p>
+        <p class="text-xs font-bold" style="color:${g.color}">${g.name} · ${t('グループデトックス中','Group Detox Active')}</p>
         <div class="flex gap-1 mt-1" id="gd-sess-avatars">
           ${gd.allMembers.map(id => {
             const isMe = id === 'me';
             const f = isMe ? null : friendById(id);
             const u2 = getUser();
-            const name = isMe ? (u2?u2.name:'あなた') : (f?f.name:id);
+            const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
             const avatar = isMe
-              ? `https://placehold.co/24x24/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
+              ? `https://placehold.co/24x24/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
               : (f?f.avatar.replace('48x48','24x24'):`https://placehold.co/24x24/555/FFF?text=${id[0].toUpperCase()}`);
             return `<img src="${avatar}" class="w-6 h-6 rounded-full border-2 border-black" title="${name}">`;
           }).join('')}
@@ -1258,13 +1263,13 @@ function renderSessionPage() {
       </svg>
       <div class="text-center">
         <div id="sess-timer" class="text-5xl font-black text-white tabular-nums">00:00:00</div>
-        <div class="text-gray-700 text-xs mt-1">残り時間</div>
+        <div class="text-gray-700 text-xs mt-1">${t('残り時間','Time Left')}</div>
       </div>
     </div>
 
     <div class="w-full space-y-3">
       <div class="card p-3">
-        <p class="text-xs text-gray-600 mb-2 font-semibold">ブロック中</p>
+        <p class="text-xs text-gray-600 mb-2 font-semibold">${t('ブロック中','Blocking')}</p>
         <div class="flex space-x-2">
           ${getBlockedApps().map(a=>`<img src="https://placehold.co/36x36/${a.bg}/FFF?text=${a.label[0]}" class="rounded-lg w-9 h-9" alt="${a.label}">`).join('')}
         </div>
@@ -1272,23 +1277,23 @@ function renderSessionPage() {
       <div class="grid grid-cols-2 gap-3">
         <div class="card p-3">
           <p class="text-2xl font-black text-white">1,247,831</p>
-          <p class="text-xs text-gray-600 mt-1">人が国内でデトックス中</p>
+          <p class="text-xs text-gray-600 mt-1">${t('人が国内でデトックス中','detoxing nationwide')}</p>
         </div>
         <div class="card p-3">
           <p class="text-2xl font-black text-white" id="sess-friend-cnt">
             ${MOCK_FRIENDS.filter(f=>f.isFriend&&f.sessionStart).length}
           </p>
-          <p class="text-xs text-gray-600 mt-1">人のフレンドがデトックス中</p>
+          <p class="text-xs text-gray-600 mt-1">${t('人のフレンドがデトックス中','friends detoxing')}</p>
         </div>
       </div>
     </div>
 
     <div class="w-full space-y-2">
       <button id="go-mainroom-btn" class="w-full border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm hover:bg-white/5 transition">
-        メインルームへ
+        ${t('メインルームへ','Main Room')}
       </button>
       <button id="interrupt-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">
-        デトックスを中断する
+        ${t('デトックスを中断する','Stop Detox')}
       </button>
     </div>
   `;
@@ -1355,7 +1360,7 @@ function endSession(completed) {
       if (g) g.streak = 0;
       const u = getUser();
       gd.failed = true;
-      gd.failedBy = u ? u.name : 'あなた';
+      gd.failedBy = u ? u.name : t('あなた','You');
       renderPostSession(duration, false, { groupFailed: true, group: g, failedBy: gd.failedBy });
     }
     S.groupDetox = null;
@@ -1375,8 +1380,8 @@ function renderInterruptPage() {
     ${g ? `
     <div class="w-full rounded-2xl px-4 py-3 mb-6 text-center" style="background:${g.color}18;border:1px solid ${g.color}44">
       <p class="text-base font-black mb-1" style="color:${g.color}">${g.emoji} ${g.name}</p>
-      <p class="text-sm text-white font-semibold">グループセッション参加中！</p>
-      <p class="text-xs text-gray-400 mt-1">中断すると<span class="text-red-400 font-bold">チーム全員が失敗</span>になります</p>
+      <p class="text-sm text-white font-semibold">${t('グループセッション参加中！','Group Session Active!')}</p>
+      <p class="text-xs text-gray-400 mt-1">${t('中断すると','Stopping will cause ')}<span class="text-red-400 font-bold">${t('チーム全員が失敗','the whole team to fail')}</span>${t('になります','')}</p>
     </div>
     ` : ''}
     <div class="w-16 h-16 rounded-full bg-red-900/25 flex items-center justify-center mb-6">
@@ -1384,9 +1389,9 @@ function renderInterruptPage() {
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
       </svg>
     </div>
-    <h2 class="text-2xl font-black text-white mb-2">本当に中断しますか？</h2>
-    <p class="text-gray-500 text-sm mb-1">中断すると<span class="text-white font-semibold">広告動画</span>が再生されます。</p>
-    <p class="text-gray-700 text-xs mb-10">（15〜30秒、スキップ可能）</p>
+    <h2 class="text-2xl font-black text-white mb-2">${t('本当に中断しますか？','Really stop detox?')}</h2>
+    <p class="text-gray-500 text-sm mb-1">${t('中断すると','Stopping will play an ')}<span class="text-white font-semibold">${t('広告動画','ad video')}</span>${t('が再生されます。','.')}</p>
+    <p class="text-gray-700 text-xs mb-10">${t('（15〜30秒、スキップ可能）','(15–30 sec, skippable)')}</p>
 
     <div class="w-full mb-4">
       <div class="slider-track h-16" id="int-slider" style="border-color:rgba(127,29,29,0.4);">
@@ -1396,16 +1401,16 @@ function renderInterruptPage() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
         </div>
-        <span class="slider-label">スワイプして中断</span>
+        <span class="slider-label">${t('スワイプして中断','Swipe to Stop')}</span>
       </div>
     </div>
-    <button id="int-back-btn" class="text-gray-600 font-semibold py-2 text-sm">戻る（デトックス継続）</button>
+    <button id="int-back-btn" class="text-gray-600 font-semibold py-2 text-sm">${t('戻る（デトックス継続）','Back (Continue Detox)')}</button>
   `;
 
   initSlider('int-slider', 'int-thumb', 'int-reveal', () => {
     // Show "ad" then end
     endSession(false);
-    setTimeout(() => alert('📺 広告動画を再生（シミュレーション）\n実際のアプリではスキップ可能な動画広告が入ります。'), 100);
+    setTimeout(() => alert(t('📺 広告動画を再生（シミュレーション）\n実際のアプリではスキップ可能な動画広告が入ります。','📺 Playing ad (simulation)\nIn the real app, a skippable video ad would play here.')), 100);
   });
   document.getElementById('int-back-btn').addEventListener('click', () => goto('session'));
 }
@@ -1423,20 +1428,20 @@ function renderPostSession(duration, completed, groupResult = null) {
     ${isGroupSuccess && grp ? `
     <div class="rounded-2xl px-4 py-4 mb-4 text-center" style="background:${grp.color}18;border:1px solid ${grp.color}44">
       <p class="text-2xl mb-1">${grp.emoji}</p>
-      <p class="text-base font-black text-white mb-1">チーム達成！</p>
-      <p class="text-xs text-gray-400 mb-2">${grp.name}の全員がデトックスを完走しました</p>
+      <p class="text-base font-black text-white mb-1">${t('チーム達成！','Team Success!')}</p>
+      <p class="text-xs text-gray-400 mb-2">${grp.name}${t('の全員がデトックスを完走しました',' — everyone completed the detox')}</p>
       <div class="flex items-center justify-center gap-2">
-        <span class="text-3xl font-black text-orange-400">🔥 ${grp.streak}日</span>
-        <span class="text-xs text-gray-500">グループストリーク</span>
+        <span class="text-3xl font-black text-orange-400">🔥 ${grp.streak}${t('日',' days')}</span>
+        <span class="text-xs text-gray-500">${t('グループストリーク','Group Streak')}</span>
       </div>
     </div>
     ` : ''}
     ${isGroupFailed && grp ? `
     <div class="rounded-2xl px-4 py-4 mb-4 text-center bg-red-900/15 border border-red-900/30">
       <p class="text-2xl mb-1">${grp.emoji}</p>
-      <p class="text-base font-black text-red-400 mb-1">チーム失敗...</p>
-      <p class="text-xs text-gray-500">${groupResult.failedBy}が中断したため、グループセッションが終了しました</p>
-      <p class="text-xs text-gray-700 mt-1">ストリークがリセットされました</p>
+      <p class="text-base font-black text-red-400 mb-1">${t('チーム失敗...','Team Failed...')}</p>
+      <p class="text-xs text-gray-500">${groupResult.failedBy}${t('が中断したため、グループセッションが終了しました',' stopped the session, ending the group detox')}</p>
+      <p class="text-xs text-gray-700 mt-1">${t('ストリークがリセットされました','Streak has been reset')}</p>
     </div>
     ` : ''}
     <div class="text-center mb-8">
@@ -1447,31 +1452,31 @@ function renderPostSession(duration, completed, groupResult = null) {
             : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
         </svg>
       </div>
-      <p class="text-gray-500 text-sm">${completed?'デトックス完了！':'セッション中断'}</p>
+      <p class="text-gray-500 text-sm">${completed?t('デトックス完了！','Detox Complete!'):t('セッション中断','Session Stopped')}</p>
       <h2 class="text-5xl font-black text-white mt-1">${dur}</h2>
     </div>
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">達成したこと（任意）</label>
-        <textarea id="ps-task" class="input-field resize-none rounded-xl h-20" placeholder="例: 読書3章、英単語100個..."></textarea>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('達成したこと（任意）','What you accomplished (optional)')}</label>
+        <textarea id="ps-task" class="input-field resize-none rounded-xl h-20" placeholder="${t('例: 読書3章、英単語100個...','e.g. Read 3 chapters, studied vocab...')}"></textarea>
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">一言コメント（任意）</label>
-        <input id="ps-comment" class="input-field" type="text" placeholder="今日のデトックスはどうでしたか？">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('一言コメント（任意）','Comment (optional)')}</label>
+        <input id="ps-comment" class="input-field" type="text" placeholder="${t('今日のデトックスはどうでしたか？','How was your detox today?')}">
       </div>
       <button id="ps-img-btn" class="card w-full p-4 flex items-center space-x-3 text-left hover:bg-[#2C2C2E] transition">
         <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
         </svg>
-        <span class="text-gray-400 text-sm">画像を追加</span>
+        <span class="text-gray-400 text-sm">${t('画像を追加','Add Photo')}</span>
       </button>
       <input type="file" id="ps-img-input" class="hidden" accept="image/*">
       <div id="ps-img-preview" class="hidden rounded-2xl overflow-hidden">
         <img id="ps-img-preview-src" class="w-full max-h-48 object-cover" alt="">
       </div>
-      <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">投稿する</button>
-      <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">スキップ</button>
+      <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">${t('投稿する','Post')}</button>
+      <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">${t('スキップ','Skip')}</button>
     </div>
   `;
 
@@ -1565,13 +1570,13 @@ function renderFriends() {
       <h1 class="text-3xl font-black text-white">Friends</h1>
     </div>
     <div class="flex-shrink-0 px-4 pb-3 flex gap-2">
-      <button id="tab-friends-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black">フレンド</button>
-      <button id="tab-groups-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400">グループ</button>
+      <button id="tab-friends-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black">${t('フレンド','Friends')}</button>
+      <button id="tab-groups-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400">${t('グループ','Groups')}</button>
     </div>
     <div id="friends-tab-content" class="flex-grow overflow-y-auto no-scrollbar pb-28">
       <div id="friends-panel">
         <div class="px-4 pb-3 relative">
-          <input id="friend-search" class="input-field rounded-full pl-10" placeholder="フレンドを検索">
+          <input id="friend-search" class="input-field rounded-full pl-10" placeholder="${t('フレンドを検索','Search friends')}">
           <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
@@ -1615,7 +1620,7 @@ function renderGroupsList() {
     const inviteSection = document.createElement('div');
     inviteSection.className = 'mb-4';
     inviteSection.innerHTML = `
-      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">招待が届いています</p>
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">${t('招待が届いています','Pending Invitations')}</p>
       ${pendingGroups.map(g => {
         const fromUser = friendById(g.pendingInvite.from);
         return `
@@ -1624,13 +1629,13 @@ function renderGroupsList() {
               <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" style="background:${g.color}22;border:1.5px solid ${g.color}55">${g.emoji}</div>
               <div class="flex-grow min-w-0">
                 <p class="font-bold text-white text-sm">${g.name}</p>
-                <p class="text-xs text-gray-500">${fromUser ? fromUser.name : g.pendingInvite.from}から招待が届きました</p>
+                <p class="text-xs text-gray-500">${t('','Invited by ')}${fromUser ? fromUser.name : g.pendingInvite.from}${t('から招待が届きました','')}</p>
               </div>
-              <span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style="background:${g.color}22;color:${g.color};">招待</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style="background:${g.color}22;color:${g.color};">${t('招待','Invite')}</span>
             </div>
             <div class="flex gap-2">
-              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-white invite-accept-btn" data-gid="${g.id}" style="background:${g.color};">参加する</button>
-              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-gray-400 bg-[#2C2C2E] invite-decline-btn" data-gid="${g.id}">断る</button>
+              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-white invite-accept-btn" data-gid="${g.id}" style="background:${g.color};">${t('参加する','Join')}</button>
+              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-gray-400 bg-[#2C2C2E] invite-decline-btn" data-gid="${g.id}">${t('断る','Decline')}</button>
             </div>
           </div>
         `;
@@ -1644,7 +1649,7 @@ function renderGroupsList() {
   if (myGroups.length) {
     const mySection = document.createElement('div');
     mySection.className = 'mb-3';
-    mySection.innerHTML = `<p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">マイグループ</p>`;
+    mySection.innerHTML = `<p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">${t('マイグループ','My Groups')}</p>`;
     list.appendChild(mySection);
   }
 
@@ -1666,12 +1671,12 @@ function renderGroupsList() {
               <p class="font-bold text-white text-base">${g.name}</p>
               <svg class="w-3.5 h-3.5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </div>
-            <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers}人</p>
+            <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers}${t('人','')}</p>
           </div>
         </div>
         ${g.isActive
-          ? `<div class="flex flex-col items-end"><span class="text-xs font-bold px-2 py-0.5 rounded-full mb-1" style="background:${g.color}33;color:${g.color}">実施中</span><span class="text-xs text-gray-500">${fmtCountdown(elapsed)}</span></div>`
-          : `<button class="text-xs font-bold px-3 py-1.5 rounded-full border" style="border-color:${g.color};color:${g.color}">開始</button>`
+          ? `<div class="flex flex-col items-end"><span class="text-xs font-bold px-2 py-0.5 rounded-full mb-1" style="background:${g.color}33;color:${g.color}">${t('実施中','Active')}</span><span class="text-xs text-gray-500">${fmtCountdown(elapsed)}</span></div>`
+          : `<button class="text-xs font-bold px-3 py-1.5 rounded-full border" style="border-color:${g.color};color:${g.color}">${t('開始','Start')}</button>`
         }
       </div>
       <p class="text-xs text-gray-600 mb-3">${g.description}</p>
@@ -1682,7 +1687,7 @@ function renderGroupsList() {
           const isOn = !!f.sessionStart;
           return `<div class="relative"><img src="${f.avatar}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
         }).join('')}
-        ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length}人がデトックス中</span>` : `<span class="text-xs text-gray-700 ml-1">待機中</span>`}
+        ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length}${t('人がデトックス中',' detoxing')}</span>` : `<span class="text-xs text-gray-700 ml-1">${t('待機中','Waiting')}</span>`}
       </div>
     `;
     card.addEventListener('click', () => renderGroupDetail(g.id));
@@ -1710,7 +1715,7 @@ function renderGroupsList() {
   addBtn.className = 'w-full card p-4 flex items-center justify-center gap-2 text-gray-600 font-semibold text-sm border-dashed border-gray-800 hover:bg-[#2C2C2E] transition';
   addBtn.innerHTML = `
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-    新しいグループを作成（招待制・最大5名）
+    ${t('新しいグループを作成（招待制・最大5名）','Create New Group (invite-only, max 5)')}
   `;
   addBtn.addEventListener('click', () => renderCreateGroup());
   list.appendChild(addBtn);
@@ -1727,16 +1732,16 @@ function renderGroupDetail(groupId) {
 
   // Preset durations for group detox
   const GD_DURATIONS = [
-    { label: '30分', sec: 1800 },
-    { label: '1時間', sec: 3600 },
-    { label: '2時間', sec: 7200 },
+    { label: t('30分','30 min'), sec: 1800 },
+    { label: t('1時間','1 hour'), sec: 3600 },
+    { label: t('2時間','2 hours'), sec: 7200 },
   ];
   const selectedDur = (isMyGroup ? gd.duration : GD_DURATIONS[1].sec);
 
   // Member ready status html
   function memberReadyRows(readyList) {
     const u = getUser();
-    const myName = u ? u.name : 'あなた';
+    const myName = u ? u.name : t('あなた','You');
     const allIds = ['me', ...g.members];
     return allIds.map(id => {
       const isMe = id === 'me';
@@ -1751,12 +1756,12 @@ function renderGroupDetail(groupId) {
           <div class="flex items-center gap-3">
             <img src="${avatar}" class="w-9 h-9 rounded-full ${ready?'':'opacity-40'}" alt="${name}">
             <div>
-              <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+              <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
             </div>
           </div>
           ${ready
-            ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>準備完了</span>`
-            : `<span class="text-xs text-gray-600">待機中...</span>`
+            ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('準備完了','Ready')}</span>`
+            : `<span class="text-xs text-gray-600">${t('待機中...','Waiting...')}</span>`
           }
         </div>
       `;
@@ -1772,18 +1777,18 @@ function renderGroupDetail(groupId) {
       <div class="flex-grow">
         <div class="flex items-center gap-2">
           <h1 class="text-xl font-black text-white">${g.name}</h1>
-          ${g.inviteOnly ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>招待制</span>` : ''}
+          ${g.inviteOnly ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>${t('招待制','Invite Only')}</span>` : ''}
         </div>
         <div class="flex items-center gap-2">
-          <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5}人</p>
-          ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}日連続</span>` : ''}
+          <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5}${t('人','')}</p>
+          ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}${t('日連続',' day streak')}</span>` : ''}
         </div>
       </div>
       ${g.members.length < (g.maxMembers||5) ? `
       <button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        招待
-      </button>` : `<span class="text-xs text-gray-600 flex-shrink-0">満員</span>`}
+        ${t('招待','Invite')}
+      </button>` : `<span class="text-xs text-gray-600 flex-shrink-0">${t('満員','Full')}</span>`}
     </div>
 
     <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10 space-y-3">
@@ -1791,30 +1796,30 @@ function renderGroupDetail(groupId) {
       ${inLobby ? (() => {
         const meReady = gd.readyMembers.includes('me');
         const initiator = gd.initiatedBy;
-        const initiatorName = initiator === 'me' ? (getUser()?.name||'あなた') : (friendById(initiator)?.name || initiator);
+        const initiatorName = initiator === 'me' ? (getUser()?.name||t('あなた','You')) : (friendById(initiator)?.name || initiator);
         return `
       <!-- LOBBY: waiting for all to be ready -->
       <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
         <div class="flex items-center gap-2 mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider" style="color:${g.color}">準備中 — 全員が揃ったら自動でスタート</span>
+          <span class="text-xs font-bold uppercase tracking-wider" style="color:${g.color}">${t('準備中 — 全員が揃ったら自動でスタート','Lobby — auto-starts when everyone is ready')}</span>
         </div>
-        <p class="text-xs text-gray-500 mb-3">${initiatorName}がデトックスを作成しました</p>
+        <p class="text-xs text-gray-500 mb-3">${initiatorName}${t('がデトックスを作成しました',' created the detox session')}</p>
         <div class="space-y-0" id="gd-member-rows">
           ${memberReadyRows(gd.readyMembers)}
         </div>
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-xs text-gray-600">時間: <span class="text-white font-bold">${GD_DURATIONS.find(d=>d.sec===gd.duration)?.label||'1時間'}</span></span>
-          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${gd.allMembers.length}人 準備完了</span>
+          <span class="text-xs text-gray-600">${t('時間:','Duration:')} <span class="text-white font-bold">${GD_DURATIONS.find(d=>d.sec===gd.duration)?.label||t('1時間','1 hour')}</span></span>
+          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${gd.allMembers.length}${t('人 準備完了',' ready')}</span>
         </div>
       </div>
       ${!meReady ? `
-      <button id="gd-join-lobby" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">参加する</button>
+      <button id="gd-join-lobby" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">${t('参加する','Join')}</button>
       ` : ''}
-      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${meReady ? 'キャンセル（準備を取り消す）' : 'キャンセル'}</button>
+      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${meReady ? t('キャンセル（準備を取り消す）','Cancel (undo ready)') : t('キャンセル','Cancel')}</button>
       `})() : `
       <!-- DEFAULT: setup -->
       <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">デトックス時間</p>
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">${t('デトックス時間','Detox Duration')}</p>
         <div class="flex gap-2" id="gd-dur-btns">
           ${GD_DURATIONS.map(d => `
             <button class="gd-dur flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${d.sec===selectedDur?'text-black border-transparent':'border-gray-800 text-gray-500'}"
@@ -1826,40 +1831,40 @@ function renderGroupDetail(groupId) {
 
       <div class="card p-4">
         <div class="flex items-center justify-between mb-2">
-          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">メンバー</p>
-          <span class="text-xs text-gray-600">全員がデトックスを作成できます</span>
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">${t('メンバー','Members')}</p>
+          <span class="text-xs text-gray-600">${t('全員がデトックスを作成できます','Anyone can start the detox')}</span>
         </div>
         <div class="space-y-0">
           ${['me', ...g.members].map(id => {
             const isMe = id === 'me';
             const f = isMe ? null : friendById(id);
             const u2 = getUser();
-            const name = isMe ? (u2?u2.name:'あなた') : (f?f.name:id);
+            const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
             const avatar = isMe
-              ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
+              ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
               : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
             return `
               <div class="flex items-center justify-between py-2">
                 <div class="flex items-center gap-3">
                   <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
-                  <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+                  <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
                 </div>
-                <span class="text-xs text-gray-700">作成可能</span>
+                <span class="text-xs text-gray-700">${t('作成可能','Can start')}</span>
               </div>`;
           }).join('')}
         </div>
       </div>
 
       <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">${t('グループについて','About')}</p>
         <p class="text-sm text-gray-400">${g.description}</p>
-        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
+        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 ${t('グループストリーク','Group Streak')} ${g.streak}${t('日',' days')}</p>` : ''}
       </div>
 
       <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
-        デトックスを作成する
+        ${t('デトックスを作成する','Start Detox Session')}
       </button>
-      <p class="text-center text-xs text-gray-700">あなたが作成したら、メンバーに通知されます</p>
+      <p class="text-center text-xs text-gray-700">${t('あなたが作成したら、メンバーに通知されます','Members will be notified when you start')}</p>
       `}
     </div>
   `;
@@ -1878,7 +1883,7 @@ function renderGroupDetail(groupId) {
         const rows = document.getElementById('gd-member-rows');
         const cnt  = document.getElementById('gd-ready-count');
         if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
-        if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
+        if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}${t('人 準備完了',' ready')}`;
         renderGroupDetail(groupId);
         if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
           S.groupDetox.startTime = Date.now();
@@ -1930,7 +1935,7 @@ function renderGroupDetail(groupId) {
           const rows = document.getElementById('gd-member-rows');
           const cnt  = document.getElementById('gd-ready-count');
           if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
-          if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}人 準備完了`;
+          if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}${t('人 準備完了',' ready')}`;
           // All ready → start
           if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
             S.groupDetox.startTime = Date.now();
@@ -1968,7 +1973,7 @@ function renderFriendsList(filter = '') {
   if (active.length && offline.length) {
     const sep = document.createElement('div');
     sep.className = 'text-center text-gray-800 text-xs font-bold uppercase tracking-widest py-2';
-    sep.textContent = 'オフライン';
+    sep.textContent = t('オフライン','Offline');
     list.appendChild(sep);
   }
 
@@ -1976,7 +1981,7 @@ function renderFriendsList(filter = '') {
   offline.forEach(f => list.appendChild(buildFriendCard(f, false)));
 
   if (friends.length === 0) {
-    list.innerHTML = '<p class="text-gray-700 text-sm text-center mt-8">フレンドが見つかりません</p>';
+    list.innerHTML = `<p class="text-gray-700 text-sm text-center mt-8">${t('フレンドが見つかりません','No friends found')}</p>`;
   }
 }
 
@@ -1987,7 +1992,7 @@ function buildFriendCard(f, isActive) {
 
   const elapsed = isActive ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
   const blockText = (isActive && f.isPublic && f.blockPublic)
-    ? '<p class="text-xs text-gray-500 mt-0.5">YouTube, Instagram をブロック中</p>'
+    ? `<p class="text-xs text-gray-500 mt-0.5">${t('YouTube, Instagram をブロック中','Blocking YouTube, Instagram')}</p>`
     : '';
 
   el.innerHTML = `
@@ -2005,7 +2010,7 @@ function buildFriendCard(f, isActive) {
     <div class="text-right flex-shrink-0 ml-2">
       ${isActive
         ? `<p class="font-bold text-white text-sm friend-elapsed" data-start="${f.sessionStart}">${fmtCountdown(elapsed)}</p>
-           <p class="text-xs text-gray-700">経過</p>`
+           <p class="text-xs text-gray-700">${t('経過','Elapsed')}</p>`
         : `<svg class="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
            </svg>`
@@ -2034,7 +2039,7 @@ function renderMessages(filter = '') {
       <h1 class="text-3xl font-black text-white">Messages</h1>
     </div>
     <div class="flex-shrink-0 px-4 pb-3 relative">
-      <input id="msg-search" class="input-field rounded-full pl-10" placeholder="フレンドを検索">
+      <input id="msg-search" class="input-field rounded-full pl-10" placeholder="${t('フレンドを検索','Search friends')}">
       <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
       </svg>
@@ -2056,7 +2061,7 @@ function renderMsgList(filter = '') {
   );
 
   if (friends.length === 0) {
-    list.innerHTML = '<p class="text-gray-700 text-sm text-center mt-8">フレンドが見つかりません</p>';
+    list.innerHTML = `<p class="text-gray-700 text-sm text-center mt-8">${t('フレンドが見つかりません','No friends found')}</p>`;
     return;
   }
 
@@ -2072,7 +2077,7 @@ function renderMsgList(filter = '') {
       </div>
       <div class="flex-grow min-w-0">
         <p class="font-bold text-white text-sm">${f.name}</p>
-        <p class="text-gray-600 text-sm truncate">${last ? last.text : '会話を開始しよう'}</p>
+        <p class="text-gray-600 text-sm truncate">${last ? last.text : t('会話を開始しよう','Start a conversation')}</p>
       </div>
       <p class="text-gray-800 text-xs flex-shrink-0">${last ? last.time : ''}</p>
     `;
@@ -2165,7 +2170,7 @@ function renderProfile() {
       <div class="flex items-center gap-2">
         <button id="premium-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold" style="background:linear-gradient(135deg,#f59e0b22,#f9731622);border:1px solid #f59e0b44;color:#f59e0b;">
           <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm2 3h10v2H7v-2z"/></svg>
-          プレミアム
+          ${t('プレミアム','Premium')}
         </button>
         <button id="settings-btn" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#1C1C1E] text-gray-500">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2180,7 +2185,7 @@ function renderProfile() {
     <div class="px-4 flex items-center space-x-4 mb-4">
       <img id="prof-avatar" src="${u.avatar||''}" class="w-18 h-18 rounded-full border-2 border-[#2C2C2E] cursor-pointer" style="width:72px;height:72px;" alt="">
       <div class="flex-grow min-w-0">
-        <h2 class="text-xl font-black text-white">${u.name||'ユーザー'}</h2>
+        <h2 class="text-xl font-black text-white">${u.name||t('ユーザー','User')}</h2>
         <p class="text-gray-600 text-sm">${u.handle||''}</p>
         ${u.bio ? `<p class="text-gray-400 text-sm mt-0.5 line-clamp-2">${u.bio}</p>` : ''}
       </div>
@@ -2188,7 +2193,7 @@ function renderProfile() {
 
     <div class="px-4 mb-5">
       <button id="edit-profile-btn" class="w-full border border-gray-800 text-white font-semibold py-2.5 rounded-full text-sm hover:bg-white/5 transition">
-        プロフィールを編集
+        ${t('プロフィールを編集','Edit Profile')}
       </button>
     </div>
 
@@ -2198,14 +2203,14 @@ function renderProfile() {
         <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:#f9731618;border:1.5px solid #f9731644;">🔥</div>
         <div>
           <p class="text-2xl font-black text-white leading-none">${streak}</p>
-          <p class="text-xs text-gray-600 mt-0.5">日連続</p>
+          <p class="text-xs text-gray-600 mt-0.5">${t('日連続','day streak')}</p>
         </div>
       </div>
       <div class="card p-4 flex items-center gap-3">
         <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:#ffffff0d;border:1.5px solid #ffffff18;">✅</div>
         <div>
           <p class="text-2xl font-black text-white leading-none">${totalSessions}</p>
-          <p class="text-xs text-gray-600 mt-0.5">完了セッション</p>
+          <p class="text-xs text-gray-600 mt-0.5">${t('完了セッション','Sessions Done')}</p>
         </div>
       </div>
     </div>
@@ -2224,7 +2229,7 @@ function renderProfile() {
 
     <!-- Session history -->
     <div class="px-4">
-      <h3 class="font-bold text-white text-sm mb-3">セッション履歴</h3>
+      <h3 class="font-bold text-white text-sm mb-3">${t('セッション履歴','Session History')}</h3>
       <div id="history-list" class="space-y-2 pb-4"></div>
     </div>
   `;
@@ -2257,14 +2262,14 @@ function buildWeeklyChart(chartId, labelsId, totalId, data) {
   const totalEl  = document.getElementById(totalId);
   if (!chartEl || !labelsEl) return;
 
-  const DAY_LABELS = ['日','月','火','水','木','金','土'];
+  const DAY_LABELS = S.lang === 'en' ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] : ['日','月','火','水','木','金','土'];
   const today  = new Date().getDay();
   const maxVal = Math.max(...data, 1);
   const total  = data.reduce((a,b) => a+b, 0);
 
   chartEl.innerHTML  = '';
   labelsEl.innerHTML = '';
-  if (totalEl) totalEl.textContent = `今週 ${Math.floor(total/60)}h ${total%60}m`;
+  if (totalEl) totalEl.textContent = `${t('今週','This week')} ${Math.floor(total/60)}h ${total%60}m`;
 
   DAY_LABELS.forEach((day, i) => {
     const pct     = data[i] / maxVal * 100;
@@ -2293,7 +2298,7 @@ function buildHistoryList(history) {
   if (!el) return;
   const sorted = [...history].reverse().slice(0, 10);
   if (sorted.length === 0) {
-    el.innerHTML = '<p class="text-gray-700 text-sm text-center mt-4">まだセッションがありません</p>';
+    el.innerHTML = `<p class="text-gray-700 text-sm text-center mt-4">${t('まだセッションがありません','No sessions yet')}</p>`;
     return;
   }
   sorted.forEach(h => {
@@ -2309,8 +2314,8 @@ function buildHistoryList(history) {
           <p class="text-gray-600 text-xs">${fmtDate(h.date)}</p>
         </div>
         ${h.completed
-          ? '<span class="text-xs text-gray-600 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">完了</span>'
-          : '<span class="text-xs text-gray-700 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">中断</span>'}
+          ? `<span class="text-xs text-gray-600 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">${t('完了','Done')}</span>`
+          : `<span class="text-xs text-gray-700 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">${t('中断','Stopped')}</span>`}
       </div>
     `);
   });
@@ -2324,9 +2329,9 @@ function renderEditProfile() {
   const page = document.getElementById('page-edit-profile');
   page.innerHTML = `
     <div class="flex justify-between items-center mb-6">
-      <button id="ep-cancel" class="text-gray-500 font-semibold py-1 px-1">キャンセル</button>
-      <h2 class="text-base font-bold text-white">プロフィール編集</h2>
-      <button id="ep-save" class="text-white font-bold py-1 px-1">保存</button>
+      <button id="ep-cancel" class="text-gray-500 font-semibold py-1 px-1">${t('キャンセル','Cancel')}</button>
+      <h2 class="text-base font-bold text-white">${t('プロフィール編集','Edit Profile')}</h2>
+      <button id="ep-save" class="text-white font-bold py-1 px-1">${t('保存','Save')}</button>
     </div>
 
     <div class="flex flex-col items-center mb-6">
@@ -2344,15 +2349,15 @@ function renderEditProfile() {
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーネーム</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーネーム','Username')}</label>
         <input id="ep-name"   class="input-field" type="text" value="${u.name||''}">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーID (@)</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーID (@)','User ID (@)')}</label>
         <input id="ep-handle" class="input-field" type="text" value="${(u.handle||'').replace('@','')}">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">自己紹介</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('自己紹介','Bio')}</label>
         <textarea id="ep-bio" class="input-field resize-none h-20 rounded-xl">${u.bio||''}</textarea>
       </div>
     </div>
@@ -2396,21 +2401,21 @@ function renderSettings() {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      <h2 class="text-xl font-bold text-white ml-2">設定</h2>
+      <h2 class="text-xl font-bold text-white ml-2">${t('設定','Settings')}</h2>
     </div>
 
     <div class="space-y-4">
       <!-- Account -->
       <div class="card p-4 space-y-0">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">アカウント</p>
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('アカウント','Account')}</p>
         <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
-          <span class="text-white text-sm">メールアドレス</span>
+          <span class="text-white text-sm">${t('メールアドレス','Email')}</span>
           <span class="text-gray-600 text-sm">${u.email||'—'}</span>
         </div>
         <div class="flex justify-between items-center py-2.5">
-          <span class="text-white text-sm">アカウントの公開設定</span>
+          <span class="text-white text-sm">${t('アカウントの公開設定','Account Privacy')}</span>
           <div class="flex items-center space-x-2">
-            <span id="privacy-lbl" class="text-gray-600 text-sm">${u.isPublic?'公開':'非公開'}</span>
+            <span id="privacy-lbl" class="text-gray-600 text-sm">${u.isPublic?t('公開','Public'):t('非公開','Private')}</span>
             <div id="privacy-toggle" class="toggle ${u.isPublic?'on':''}">
               <div class="toggle-knob"></div>
             </div>
@@ -2420,7 +2425,7 @@ function renderSettings() {
 
       <!-- App settings -->
       <div class="card p-4">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">アプリ設定</p>
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('アプリ設定','App Settings')}</p>
         <button id="st-lang-btn" class="w-full flex justify-between items-center py-2.5 border-b border-gray-900">
           <span class="text-white text-sm">${S.lang === 'ja' ? '言語' : 'Language'}</span>
           <div class="flex items-center gap-2">
@@ -2429,7 +2434,7 @@ function renderSettings() {
           </div>
         </button>
         <div class="flex justify-between items-center py-2.5">
-          <span class="text-white text-sm">通知</span>
+          <span class="text-white text-sm">${t('通知','Notifications')}</span>
           <div id="notif-toggle" class="toggle on">
             <div class="toggle-knob"></div>
           </div>
@@ -2438,7 +2443,7 @@ function renderSettings() {
 
       <!-- Blocked apps -->
       <div class="card p-4">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">ブロック対象アプリ</p>
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('ブロック対象アプリ','Blocked Apps')}</p>
         <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
           ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
           <button class="w-12 h-12 rounded-xl bg-[#2C2C2E] border border-gray-800 flex items-center justify-center flex-shrink-0 text-gray-600">
@@ -2463,7 +2468,7 @@ function renderSettings() {
       </div>
 
       <button id="logout-btn" class="w-full bg-red-900/25 text-red-400 font-bold py-4 rounded-2xl hover:bg-red-900/40 transition mt-2">
-        ログアウト
+        ${t('ログアウト','Log Out')}
       </button>
     </div>
   `;
@@ -2486,7 +2491,7 @@ function renderSettings() {
     u.isPublic = !u.isPublic;
     saveUser(u);
     document.getElementById('privacy-toggle').classList.toggle('on', u.isPublic);
-    document.getElementById('privacy-lbl').textContent = u.isPublic ? '公開' : '非公開';
+    document.getElementById('privacy-lbl').textContent = u.isPublic ? t('公開','Public') : t('非公開','Private');
   });
   document.getElementById('notif-toggle').addEventListener('click', e => {
     e.currentTarget.classList.toggle('on');
@@ -2496,7 +2501,7 @@ function renderSettings() {
     renderSettings();
   });
   document.getElementById('logout-btn').addEventListener('click', () => {
-    showConfirm('ログアウト', 'ログアウトしますか？', 'ログアウト', () => {
+    showConfirm(t('ログアウト','Log Out'), t('ログアウトしますか？','Are you sure you want to log out?'), t('ログアウト','Log Out'), () => {
       localStorage.removeItem('to_user');
       goto('login');
       renderLogin();
@@ -2532,9 +2537,9 @@ function openUserProfile(userId) {
 
       <div class="flex space-x-3 mb-6">
         <button id="up-msg-btn" class="flex-1 bg-white text-black font-bold py-3 rounded-full text-sm">
-          メッセージ
+          ${t('メッセージ','Message')}
         </button>
-        ${f.isFriend ? `<button id="up-remove-btn" class="flex-1 border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm">フレンド解除</button>` : ''}
+        ${f.isFriend ? `<button id="up-remove-btn" class="flex-1 border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm">${t('フレンド解除','Unfriend')}</button>` : ''}
       </div>
 
       <!-- Weekly record -->
@@ -2545,7 +2550,7 @@ function openUserProfile(userId) {
       </div>
 
       <!-- Their posts -->
-      <h3 class="font-bold text-white text-sm mb-3">投稿</h3>
+      <h3 class="font-bold text-white text-sm mb-3">${t('投稿','Posts')}</h3>
       <div class="space-y-2">
         ${MOCK_POSTS.filter(p=>p.userId===userId).map(p=>`
           <div class="card p-3 flex items-center space-x-3">
@@ -2571,7 +2576,7 @@ function openUserProfile(userId) {
   document.getElementById('up-back').addEventListener('click', () => history.length > 1 ? goto('home') : goto('home'));
   document.getElementById('up-msg-btn').addEventListener('click', () => openDM(f));
   document.getElementById('up-remove-btn')?.addEventListener('click', () => {
-    showConfirm('フレンド解除', `${f.name} をフレンドから解除しますか？`, '解除', () => {
+    showConfirm(t('フレンド解除','Unfriend'), t(`${f.name} をフレンドから解除しますか？`,`Unfriend ${f.name}?`), t('解除','Unfriend'), () => {
       f.isFriend = false;
       goto('home');
     });
@@ -2590,13 +2595,13 @@ function renderNotifications() {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      <h2 class="text-xl font-bold text-white ml-2">通知</h2>
+      <h2 class="text-xl font-bold text-white ml-2">${t('通知','Notifications')}</h2>
     </div>
     <div class="flex-grow overflow-y-auto no-scrollbar divide-y divide-gray-900">
       ${[
-        { icon:'❤️', color:'red', text:'<b>Alice</b> があなたの投稿にいいねしました', sub:'2時間前' },
-        { icon:'💬', color:'gray', text:'<b>Ben</b> がコメントしました: "いいね！"', sub:'5時間前' },
-        { icon:'⏱', color:'gray', text:'<b>Chloe</b> がデトックスを開始しました', sub:'昨日' },
+        { icon:'❤️', color:'red', text: t('<b>Alice</b> があなたの投稿にいいねしました','<b>Alice</b> liked your post'), sub: t('2時間前','2h ago') },
+        { icon:'💬', color:'gray', text: t('<b>Ben</b> がコメントしました: "いいね！"','<b>Ben</b> commented: "Nice!"'), sub: t('5時間前','5h ago') },
+        { icon:'⏱', color:'gray', text: t('<b>Chloe</b> がデトックスを開始しました','<b>Chloe</b> started a detox session'), sub: t('昨日','Yesterday') },
       ].map(n=>`
         <div class="flex items-start space-x-3 px-4 py-4">
           <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5 text-base">${n.icon}</div>
@@ -2766,14 +2771,15 @@ function renderInviteSheet(group) {
   const overlay = document.getElementById('invite-overlay');
 
   const remaining = (group.maxMembers || 5) - group.members.length;
-  document.getElementById('invite-sheet-title').textContent = `${group.name}に招待`;
-  document.getElementById('invite-sheet-subtitle').textContent = `あと${remaining}人招待できます（最大${group.maxMembers||5}名）`;
+  document.getElementById('invite-sheet-title').textContent = t(`${group.name}に招待`, `Invite to ${group.name}`);
+  document.getElementById('invite-close-btn').textContent = t('閉じる','Close');
+  document.getElementById('invite-sheet-subtitle').textContent = t(`あと${remaining}人招待できます（最大${group.maxMembers||5}名）`, `${remaining} more invite(s) available (max ${group.maxMembers||5})`);
 
   const friendsList = document.getElementById('invite-friends-list');
   const invitableFriends = MOCK_FRIENDS.filter(f => f.isFriend && !group.members.includes(f.id));
 
   if (invitableFriends.length === 0) {
-    friendsList.innerHTML = '<p class="text-gray-600 text-sm text-center py-4">招待できるフレンドがいません</p>';
+    friendsList.innerHTML = `<p class="text-gray-600 text-sm text-center py-4">${t('招待できるフレンドがいません','No friends available to invite')}</p>`;
   } else {
     friendsList.innerHTML = invitableFriends.map(f => `
       <div class="flex items-center justify-between py-2">
@@ -2785,12 +2791,12 @@ function renderInviteSheet(group) {
           </div>
         </div>
         <button class="text-xs font-bold px-3 py-1.5 rounded-full invite-send-btn" data-uid="${f.id}"
-          style="background:${group.color}22;color:${group.color};border:1px solid ${group.color}44;">招待する</button>
+          style="background:${group.color}22;color:${group.color};border:1px solid ${group.color}44;">${t('招待する','Invite')}</button>
       </div>
     `).join('');
     friendsList.querySelectorAll('.invite-send-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        btn.textContent = '招待済み';
+        btn.textContent = t('招待済み','Invited');
         btn.disabled = true;
         btn.style.opacity = '0.5';
       });
@@ -2824,9 +2830,9 @@ function renderCreateGroup() {
 
   page.innerHTML = `
     <div class="flex items-center justify-between mb-6 px-1">
-      <button id="cg-cancel" class="text-gray-500 font-semibold">キャンセル</button>
-      <h2 class="text-base font-bold text-white">新規グループ</h2>
-      <button id="cg-create" class="text-white font-bold">作成</button>
+      <button id="cg-cancel" class="text-gray-500 font-semibold">${t('キャンセル','Cancel')}</button>
+      <h2 class="text-base font-bold text-white">${t('新規グループ','New Group')}</h2>
+      <button id="cg-create" class="text-white font-bold">${t('作成','Create')}</button>
     </div>
 
     <!-- Emoji + Color picker -->
@@ -2842,29 +2848,29 @@ function renderCreateGroup() {
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">グループ名</label>
-        <input id="cg-name" class="input-field" type="text" placeholder="例: 朝活デトックス部" maxlength="20">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('グループ名','Group Name')}</label>
+        <input id="cg-name" class="input-field" type="text" placeholder="${t('例: 朝活デトックス部','e.g. Morning Detox Club')}" maxlength="20">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">説明（任意）</label>
-        <input id="cg-desc" class="input-field" type="text" placeholder="グループの目的を一言で">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('説明（任意）','Description (optional)')}</label>
+        <input id="cg-desc" class="input-field" type="text" placeholder="${t('グループの目的を一言で','Briefly describe the group')}">
       </div>
       <div class="card p-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           <div>
-            <p class="text-sm font-semibold text-white">招待制</p>
-            <p class="text-xs text-gray-600">招待したフレンドのみ参加可能</p>
+            <p class="text-sm font-semibold text-white">${t('招待制','Invite Only')}</p>
+            <p class="text-xs text-gray-600">${t('招待したフレンドのみ参加可能','Only invited friends can join')}</p>
           </div>
         </div>
         <div class="w-11 h-6 rounded-full bg-white flex items-center px-0.5 justify-end"><div class="w-5 h-5 rounded-full bg-black"></div></div>
       </div>
       <div class="card p-4 flex items-center justify-between">
         <div>
-          <p class="text-sm font-semibold text-white">最大メンバー数</p>
-          <p class="text-xs text-gray-600">グループに参加できる上限</p>
+          <p class="text-sm font-semibold text-white">${t('最大メンバー数','Max Members')}</p>
+          <p class="text-xs text-gray-600">${t('グループに参加できる上限','Maximum members allowed')}</p>
         </div>
-        <span class="text-white font-black text-lg">5名</span>
+        <span class="text-white font-black text-lg">${t('5名','5')}</span>
       </div>
     </div>
   `;
@@ -2877,7 +2883,7 @@ function renderCreateGroup() {
   document.getElementById('cg-create').addEventListener('click', () => {
     const name = document.getElementById('cg-name').value.trim();
     if (!name) { document.getElementById('cg-name').classList.add('shake'); setTimeout(() => document.getElementById('cg-name').classList.remove('shake'), 500); return; }
-    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, description: document.getElementById('cg-desc').value.trim() || 'グループの説明なし', activeSince: null, isActive: false };
+    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
     MOCK_GROUPS.push(newGroup);
     goto('friends');
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
@@ -3242,35 +3248,35 @@ function renderPrivacy() {
 function renderPremium() {
   const page = document.getElementById('page-premium');
   const FEATURES = [
-    { icon: '🔥', title: 'ストリークバッジ', desc: '連続記録を特別なバッジでアピール', locked: true },
-    { icon: '📊', title: '詳細アナリティクス', desc: '月次・年次の統計データを表示', locked: true },
-    { icon: '👥', title: 'グループ無制限作成', desc: '複数グループを自由に作成・管理', locked: true },
-    { icon: '🎨', title: 'カスタムテーマ', desc: 'プロフィールカラーと背景をカスタマイズ', locked: true },
-    { icon: '🔔', title: 'スマートリマインダー', desc: 'AIが最適なデトックス時間を提案', locked: true },
-    { icon: '🏆', title: 'リーダーボード', desc: 'フレンドとのランキング比較', locked: true },
+    { icon: '🔥', title: t('ストリークバッジ','Streak Badges'), desc: t('連続記録を特別なバッジでアピール','Show off your streaks with special badges'), locked: true },
+    { icon: '📊', title: t('詳細アナリティクス','Detailed Analytics'), desc: t('月次・年次の統計データを表示','View monthly and yearly stats'), locked: true },
+    { icon: '👥', title: t('グループ無制限作成','Unlimited Groups'), desc: t('複数グループを自由に作成・管理','Create and manage multiple groups freely'), locked: true },
+    { icon: '🎨', title: t('カスタムテーマ','Custom Themes'), desc: t('プロフィールカラーと背景をカスタマイズ','Customize profile colors and backgrounds'), locked: true },
+    { icon: '🔔', title: t('スマートリマインダー','Smart Reminders'), desc: t('AIが最適なデトックス時間を提案','AI suggests the best detox times for you'), locked: true },
+    { icon: '🏆', title: t('リーダーボード','Leaderboard'), desc: t('フレンドとのランキング比較','Compare rankings with friends'), locked: true },
   ];
   page.innerHTML = `
     <div class="flex items-center px-4 pt-6 pb-4 gap-3">
       <button id="prem-back" class="text-gray-400 p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h1 class="text-2xl font-black text-white">プレミアム</h1>
+      <h1 class="text-2xl font-black text-white">${t('プレミアム','Premium')}</h1>
     </div>
 
     <!-- Hero card -->
     <div class="mx-4 mb-6 rounded-3xl p-6 text-center relative overflow-hidden" style="background:linear-gradient(135deg,#f59e0b18,#f9731618);border:1px solid #f59e0b33;">
       <div class="text-5xl mb-3">👑</div>
       <h2 class="text-2xl font-black text-white mb-1">(DIS)CONNECT Premium</h2>
-      <p class="text-sm text-gray-400 mb-4">デトックス体験をさらにパワーアップ</p>
+      <p class="text-sm text-gray-400 mb-4">${t('デトックス体験をさらにパワーアップ','Supercharge your detox experience')}</p>
       <div class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold text-gray-600 bg-[#2C2C2E] border border-gray-800">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        近日公開予定
+        ${t('近日公開予定','Coming Soon')}
       </div>
     </div>
 
     <!-- Features list -->
     <div class="px-4 space-y-3 pb-10">
-      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">プレミアム機能（予定）</p>
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">${t('プレミアム機能（予定）','Planned Premium Features')}</p>
       ${FEATURES.map(f => `
         <div class="card p-4 flex items-center gap-4 opacity-70">
           <div class="w-12 h-12 rounded-2xl bg-[#2C2C2E] flex items-center justify-center text-2xl flex-shrink-0">${f.icon}</div>
@@ -3283,7 +3289,7 @@ function renderPremium() {
       `).join('')}
 
       <div class="card p-4 mt-4" style="border-color:#f59e0b22;">
-        <p class="text-xs text-gray-600 text-center">プレミアムの詳細が決まり次第、<br>こちらでお知らせします。</p>
+        <p class="text-xs text-gray-600 text-center">${t('プレミアムの詳細が決まり次第、<br>こちらでお知らせします。','Details will be announced here<br>once Premium is ready.')}</p>
       </div>
     </div>
   `;
