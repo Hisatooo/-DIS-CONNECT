@@ -2451,13 +2451,13 @@ function renderSettings() {
 
       <!-- Legal -->
       <div class="card p-4 space-y-0">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">法律・サポート</p>
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${S.lang === 'en' ? 'Legal & Support' : '法律・サポート'}</p>
         <button id="st-terms-btn" class="w-full flex justify-between items-center py-2.5 border-b border-gray-900">
-          <span class="text-white text-sm">利用規約</span>
+          <span class="text-white text-sm">${S.lang === 'en' ? 'Terms of Service' : '利用規約'}</span>
           <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
         <button id="st-privacy-btn" class="w-full flex justify-between items-center py-2.5">
-          <span class="text-white text-sm">プライバシーポリシー</span>
+          <span class="text-white text-sm">${S.lang === 'en' ? 'Privacy Policy' : 'プライバシーポリシー'}</span>
           <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
