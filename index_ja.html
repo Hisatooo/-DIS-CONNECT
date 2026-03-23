@@ -656,6 +656,7 @@ const S = {
   friendsTimerId: null,
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
   groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy }
+  lang: 'ja',            // 'ja' | 'en'
 };
 
 // ================================================================
@@ -2420,10 +2421,13 @@ function renderSettings() {
       <!-- App settings -->
       <div class="card p-4">
         <p class="text-xs text-gray-700 font-bold uppercase mb-3">アプリ設定</p>
-        <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
-          <span class="text-white text-sm">言語</span>
-          <span class="text-gray-600 text-sm">日本語</span>
-        </div>
+        <button id="st-lang-btn" class="w-full flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">${S.lang === 'ja' ? '言語' : 'Language'}</span>
+          <div class="flex items-center gap-2">
+            <span id="st-lang-label" class="text-gray-400 text-sm font-semibold">${S.lang === 'ja' ? '日本語' : 'English'}</span>
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </button>
         <div class="flex justify-between items-center py-2.5">
           <span class="text-white text-sm">通知</span>
           <div id="notif-toggle" class="toggle on">
@@ -2486,6 +2490,10 @@ function renderSettings() {
   });
   document.getElementById('notif-toggle').addEventListener('click', e => {
     e.currentTarget.classList.toggle('on');
+  });
+  document.getElementById('st-lang-btn').addEventListener('click', () => {
+    S.lang = S.lang === 'ja' ? 'en' : 'ja';
+    renderSettings();
   });
   document.getElementById('logout-btn').addEventListener('click', () => {
     showConfirm('ログアウト', 'ログアウトしますか？', 'ログアウト', () => {
@@ -2898,8 +2906,80 @@ function renderCreateGroup() {
 // TERMS OF SERVICE
 // ================================================================
 function renderTerms() {
+  const isEn = S.lang === 'en';
   const page = document.getElementById('page-terms');
-  page.innerHTML = `
+  page.innerHTML = isEn ? `
+    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
+      <button id="terms-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-black text-white">Terms of Service</h1>
+    </div>
+    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
+      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
+      <p class="text-sm text-gray-400 leading-relaxed">Welcome to (DIS)CONNECT (the "App"). By downloading, installing, or using the App, you agree to be bound by these Terms of Service with the Operator.</p>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 1 – Service Description</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The App is a tool that helps users practice digital detox by temporarily restricting access to selected applications and sharing progress with friends and communities. The App is developed and operated by an individual.</p>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">Article 2 – Eligibility</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">1. The App is available only to users aged 13 or older. Users under 18 are assumed to have obtained parental consent.</p>
+        <p class="text-sm text-gray-400 leading-relaxed">2. Certain features (e.g., the "Campus" feed) may require verification via a method specified by the Operator (e.g., a university email address).</p>
+      </div>
+
+      <div class="space-y-2">
+        <div class="card p-4 border border-yellow-500/30 bg-yellow-500/5">
+          <h2 class="text-base font-bold text-yellow-400 mb-2">Article 3 – Detox Feature & Disclaimer ⚠️ Important</h2>
+          <p class="text-xs text-gray-400 leading-relaxed mb-3">The core feature of the App blocks or restricts access to other apps and notifications during a Detox Session. By using this feature, you acknowledge the following:</p>
+          <div class="space-y-2">
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">1. Missed communications:</span> During a session, you may miss important calls, messages, notifications, or emergency alerts.</p>
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">2. No liability:</span> The Operator is NOT liable for any damages resulting from your inability to access your device or other apps during a session.</p>
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">3. Your responsibility:</span> It is your responsibility to ensure access to emergency communication means.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 4 – Account Management</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">You are responsible for managing your account credentials. If false information is provided during registration, the Operator reserves the right to suspend or delete the account.</p>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">Article 5 – User Content</h2>
+        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">License:</span> You retain copyright over content you post, but grant the Operator a non-exclusive right to display and distribute such content within the App.</p>
+        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">Prohibited content:</span> Posting illegal, obscene, defamatory, or harassing content is strictly prohibited.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 6 – Service Changes & Termination</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The Operator may modify, suspend, or discontinue the App at any time without prior notice. The Operator is not liable for any damages arising from such changes.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 7 – Limitation of Liability</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">Except in cases of intentional misconduct or gross negligence, the Operator is not liable for any damages incurred through use of the App. Any liability is limited to direct and ordinary damages.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 8 – Governing Law & Jurisdiction</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">These Terms are governed by the laws of Japan. All disputes relating to the App shall be subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 9 – Contact</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">For inquiries regarding these Terms, please contact us at:</p>
+        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-xs text-gray-600 text-center">Terms of Service / Effective Date: January 4, 2026</p>
+        <p class="text-xs text-gray-700 leading-relaxed mt-2">(DIS)CONNECT is a social digital detox application. By using the App, you acknowledge that you may miss calls, messages, and emergency alerts during a Detox Session. The Operator is NOT liable for any resulting damages. These Terms are governed by the laws of Japan.</p>
+      </div>
+    </div>
+  ` : `
     <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
       <button id="terms-back" class="text-gray-400 p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -2978,8 +3058,95 @@ function renderTerms() {
 // PRIVACY POLICY
 // ================================================================
 function renderPrivacy() {
+  const isEn = S.lang === 'en';
   const page = document.getElementById('page-privacy');
-  page.innerHTML = `
+  page.innerHTML = isEn ? `
+    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
+      <button id="privacy-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-black text-white">Privacy Policy</h1>
+    </div>
+    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
+      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
+      <p class="text-sm text-gray-400 leading-relaxed">The Operator of (DIS)CONNECT respects your privacy. This Policy explains how personal information is handled in this individually operated app.</p>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">1. Information We Collect</h2>
+        <div class="card p-4 space-y-3">
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Information you provide</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Account details (name, email, profile image, etc.), campus verification credentials, user-generated content (posts, messages)</p>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Automatically collected information</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Usage data (detox duration, status), device information (model, OS), push notification tokens</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <p class="text-sm font-semibold text-white mb-1">App usage detection</p>
+            <p class="text-xs text-gray-400 leading-relaxed">The App detects which apps you attempt to open during a session. However, we <span class="text-white">never collect or store the content of messages</span> from LINE, messaging apps, or similar services.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">2. How We Use Your Information</h2>
+        <div class="space-y-1">
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To provide, maintain, and improve the App</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To enable social features between users</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To verify student status</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To send important notices and event notifications</p></div>
+        </div>
+        <div class="card p-3 flex items-center gap-3 mt-2">
+          <span class="text-xl">🚫</span>
+          <p class="text-sm text-gray-300 font-semibold">We will <span class="text-white">never sell</span> your personal data to third parties</p>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">3. Information Sharing & Third-Party Services</h2>
+        <div class="card p-4 space-y-3">
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Between users</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Your profile and posts may be visible to other users based on app settings.</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-base">🔥</span>
+              <p class="text-sm font-semibold text-white">Google Firebase</p>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">The App uses Google Firebase for data storage, authentication, and analytics. Your data may be stored and processed on Firebase servers, including servers outside Japan.</p>
+            <p class="text-xs text-gray-600 mt-1">Google Privacy Policy: https://policies.google.com/privacy</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <p class="text-sm font-semibold text-white mb-1">Legal requirements</p>
+            <p class="text-xs text-gray-400">We may disclose information when required to do so by law.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">4. Data Security</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The Operator strives to implement appropriate security measures to prevent data breaches or loss. Please note that, as an individually operated service, we cannot guarantee the same level of security as a corporation.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">5. Data Deletion</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">You may delete your account and associated data at any time through the App settings.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">6. Contact</h2>
+        <p class="text-sm text-gray-400">For questions about this Privacy Policy, please contact us at:</p>
+        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-xs text-gray-600 text-center">Privacy Policy / Effective Date: January 4, 2026</p>
+        <p class="text-xs text-gray-700 leading-relaxed mt-2">We use Google Firebase to host data, manage authentication, and analyze app usage. We do NOT sell your personal data. You may request deletion of your account and data at any time through the App settings.</p>
+      </div>
+    </div>
+  ` : `
     <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
       <button id="privacy-back" class="text-gray-400 p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
