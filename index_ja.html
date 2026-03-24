@@ -342,6 +342,9 @@
   <!-- ===================== POST SESSION ===================== -->
   <div id="page-post-session" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-8 pb-nav"></div>
 
+  <!-- ===================== DETOX (TUNEOUT) ===================== -->
+  <div id="page-tuneout" class="page flex flex-col"></div>
+
   <!-- ===================== FRIENDS ===================== -->
   <div id="page-friends" class="page flex flex-col"></div>
   <div id="page-group-detail" class="page flex flex-col"></div>
@@ -619,6 +622,7 @@ const S = {
   groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy }
   globalDetoxTime: null, // { h, m } — today's all-user detox time (19-21:45, 15min slots)
   globalDetoxReserved: false,
+  detoxTab: 'now',       // 'now' | 'reserve'
   lang: 'ja',            // 'ja' | 'en'
 };
 
@@ -742,6 +746,7 @@ function goto(page) {
 
   // Page-specific render
   if (page === 'home')         renderHome();
+  if (page === 'tuneout')      renderTuneout();
   if (page === 'friends')      renderFriends();
   if (page === 'messages')     renderMessages();
   if (page === 'profile')      renderProfile();
@@ -756,7 +761,7 @@ document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     const page = btn.dataset.page;
     if (page === 'tuneout') {
       if (S.activeSession) goto('session');
-      else openManualSheet();
+      else goto('tuneout');
     } else {
       goto(page);
     }
@@ -917,7 +922,6 @@ function renderHome() {
       <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">Following</button>
       <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
     </div>
-    <div id="global-detox-card"></div>
     <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
   `;
   document.getElementById('notif-icon-btn').addEventListener('click', () => goto('notifications'));
@@ -928,7 +932,6 @@ function renderHome() {
     });
   });
   renderFeedList();
-  renderGlobalDetoxCard();
 }
 
 function renderFeedList() {
@@ -2528,6 +2531,106 @@ function renderAppChips() {
         btn.className = btn.className.replace('border-gray-800 text-gray-600', 'border-white/30 bg-white/10 text-white');
       }
     });
+  });
+}
+
+// ================================================================
+// TUNEOUT (DETOX) PAGE
+// ================================================================
+function renderTuneout() {
+  const page = document.getElementById('page-tuneout');
+  const detoxTabState = S.detoxTab || 'now';
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3">
+      <h1 class="text-2xl font-black text-white">${t('デトックス','Detox')}</h1>
+    </div>
+    <div class="flex-shrink-0 flex items-center bg-[#1C1C1E] rounded-full mx-4 mb-4 p-1.5 gap-1.5">
+      <button id="tab-detox-now-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition ${detoxTabState==='now'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">${t('今すぐ始める','Start Now')}</button>
+      <button id="tab-detox-reserve-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition ${detoxTabState==='reserve'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">${t('予約','Reservations')}</button>
+    </div>
+    <div id="detox-tab-content" class="flex-grow overflow-y-auto no-scrollbar pb-28 px-4"></div>
+  `;
+  document.getElementById('tab-detox-now-btn').addEventListener('click', () => {
+    S.detoxTab = 'now';
+    document.getElementById('tab-detox-now-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-detox-reserve-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    renderDetoxNow();
+  });
+  document.getElementById('tab-detox-reserve-btn').addEventListener('click', () => {
+    S.detoxTab = 'reserve';
+    document.getElementById('tab-detox-reserve-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-detox-now-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    renderDetoxReserve();
+  });
+  if (detoxTabState === 'reserve') renderDetoxReserve();
+  else renderDetoxNow();
+}
+
+function renderDetoxNow() {
+  const content = document.getElementById('detox-tab-content');
+  if (!content) return;
+  content.innerHTML = `
+    <div class="mt-2 space-y-4">
+      <div class="card p-5">
+        <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">${t('デトックスを始める','Start a Detox')}</p>
+        <p class="text-gray-400 text-sm mb-4">${t('アプリを制限して、集中した時間を作ろう。','Block apps and create focused time.')}</p>
+        <button id="detox-start-now-btn" class="w-full bg-white text-black font-bold py-4 rounded-2xl text-base active:bg-gray-200 transition">
+          ${t('今すぐ開始','Start Now')}
+        </button>
+      </div>
+      <div class="card p-5">
+        <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">${t('今週の実績','This Week')}</p>
+        <div class="flex justify-around text-center">
+          <div>
+            <p class="text-2xl font-black text-white">3</p>
+            <p class="text-xs text-gray-600 mt-0.5">${t('セッション','Sessions')}</p>
+          </div>
+          <div class="w-px bg-gray-800"></div>
+          <div>
+            <p class="text-2xl font-black text-white">5h 20m</p>
+            <p class="text-xs text-gray-600 mt-0.5">${t('合計時間','Total Time')}</p>
+          </div>
+          <div class="w-px bg-gray-800"></div>
+          <div>
+            <p class="text-2xl font-black text-white">🔥 3</p>
+            <p class="text-xs text-gray-600 mt-0.5">${t('連続日数','Day Streak')}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('detox-start-now-btn')?.addEventListener('click', openManualSheet);
+}
+
+function renderDetoxReserve() {
+  const content = document.getElementById('detox-tab-content');
+  if (!content) return;
+  const gdt = S.globalDetoxTime;
+  const timeStr = gdt ? `${String(gdt.h).padStart(2,'0')}:${String(gdt.m).padStart(2,'0')}` : '--:--';
+  const beforeNoon = new Date().getHours() < 12;
+  const reserved = S.globalDetoxReserved;
+  content.innerHTML = `
+    <div class="mt-2 space-y-4">
+      <div class="card p-5">
+        <p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:#a78bfa">${t('全ユーザーデトックス','All-User Detox')}</p>
+        <p class="text-2xl font-black text-white mb-1">${t('今日','Today')} ${timeStr}</p>
+        <p class="text-sm text-gray-500 mb-4">${beforeNoon ? t('正午まで予約受付中','Reservations open until noon') : t('本日の予約受付終了','Reservations closed for today')}</p>
+        ${beforeNoon && !reserved
+          ? `<button id="global-reserve-btn" class="w-full bg-white text-black font-bold py-3 rounded-2xl text-sm active:bg-gray-200 transition">${t('予約する','Reserve')}</button>`
+          : reserved
+            ? `<div class="flex items-center gap-2 text-green-400 font-bold text-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('予約済み','Reserved')}</div>`
+            : `<p class="text-gray-700 font-semibold text-sm">${t('受付終了','Closed')}</p>`
+        }
+      </div>
+      <div class="card p-5">
+        <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">${t('予約について','About Reservations')}</p>
+        <p class="text-gray-600 text-sm leading-relaxed">${t('全ユーザーデトックスは毎日19〜22時の間で行われます。正午までに予約してみんなで参加しよう！','The all-user detox happens daily between 19:00–22:00. Reserve by noon and detox together!')}</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('global-reserve-btn')?.addEventListener('click', () => {
+    S.globalDetoxReserved = true;
+    renderDetoxReserve();
   });
 }
 
