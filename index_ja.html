@@ -179,24 +179,6 @@
     }
     #comment-panel.open { transform: translateX(0); }
 
-    /* ===== CHALLENGE BANNER ===== */
-    #challenge-banner {
-      position: fixed;
-      top: 1rem; left: 1rem; right: 1rem;
-      max-width: 400px;
-      margin: 0 auto;
-      background: rgba(25,25,27,0.97);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 1.1rem;
-      padding: 0.9rem 1rem;
-      z-index: 9999;
-      transform: translateY(-160%);
-      transition: transform 0.5s cubic-bezier(0.19,1,0.22,1);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
-    }
-    #challenge-banner.visible { transform: translateY(0); }
 
     /* ===== BOTTOM SHEET MODAL ===== */
     .sheet-overlay {
@@ -350,7 +332,6 @@
   <div id="page-home" class="page flex flex-col"></div>
 
   <!-- ===================== CHALLENGE ===================== -->
-  <div id="page-challenge" class="page flex flex-col items-center justify-between px-6 py-10"></div>
 
   <!-- ===================== SESSION ACTIVE ===================== -->
   <div id="page-session" class="page flex flex-col items-center justify-between px-6 pt-10 pb-8"></div>
@@ -434,25 +415,6 @@
     </div>
   </div>
 
-  <!-- ===== CHALLENGE NOTIFICATION BANNER ===== -->
-  <div id="challenge-banner">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-          <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
-          </svg>
-        </div>
-        <div>
-          <p id="banner-title" class="font-bold text-white text-sm">デトックスチャレンジ！</p>
-          <p id="banner-sub" class="text-xs text-gray-400">読み込み中...</p>
-        </div>
-      </div>
-      <button id="banner-join-btn" class="ml-3 bg-white text-black px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">
-        参加する
-      </button>
-    </div>
-  </div>
 
 
   <!-- ===== MANUAL START SHEET ===== -->
@@ -649,8 +611,6 @@ const S = {
   page: 'login',
   feedTab: 'following',
   activeSession: null,   // { startTime, totalDuration, timerId, isChallenge }
-  challengeData: null,        // { duration }
-  challengeAcceptTimerId: null,
   viewingUserId: null,
   commentPostId: null,
   pendingConfirm: null,
@@ -841,7 +801,6 @@ function handleLogin() {
     saveUser(u);
   }
   goto('home');
-  setTimeout(triggerChallengeBanner, 2500);
 }
 
 // ================================================================
@@ -916,7 +875,6 @@ function renderRegister() {
     };
     saveUser(u);
     goto('home');
-    setTimeout(triggerChallengeBanner, 2500);
   });
 }
 
@@ -937,22 +895,6 @@ document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
 document.getElementById('confirm-ok-btn').addEventListener('click', () => {
   document.getElementById('confirm-overlay').classList.remove('open');
   if (S.pendingConfirm) { S.pendingConfirm(); S.pendingConfirm = null; }
-});
-
-// ================================================================
-// CHALLENGE BANNER
-// ================================================================
-function triggerChallengeBanner() {
-  const choices = [30,45,60,90,120,150];
-  const dur = choices[Math.floor(Math.random() * choices.length)];
-  S.challengeData = { duration: dur * 60 };
-  document.getElementById('banner-sub').textContent = `今日のデトックス: ${dur}分間`;
-  document.getElementById('challenge-banner').classList.add('visible');
-  setTimeout(() => document.getElementById('challenge-banner').classList.remove('visible'), 9000);
-}
-document.getElementById('banner-join-btn').addEventListener('click', () => {
-  document.getElementById('challenge-banner').classList.remove('visible');
-  if (S.challengeData) openChallengePage();
 });
 
 
@@ -1175,74 +1117,6 @@ const ALL_APPS = [
 ];
 const getBlockedApps = () => ALL_APPS.filter(a => S.selectedApps.has(a.label));
 
-function openChallengePage() {
-  const durMin = Math.round((S.challengeData?.duration || 3600) / 60);
-  document.getElementById('page-challenge').innerHTML = `
-    <div class="text-center">
-      <p class="text-xs text-gray-600 font-bold uppercase tracking-widest mb-3">今日のチャレンジ</p>
-      <h2 class="text-7xl font-black text-white leading-none">${durMin}</h2>
-      <p class="text-2xl text-gray-500 font-bold mt-1">分間</p>
-      <p class="text-gray-600 text-sm mt-2">のデジタルデトックス</p>
-    </div>
-
-    <div class="w-full text-center">
-      <p class="text-gray-600 text-xs mb-1">承諾まで</p>
-      <p id="ch-countdown" class="text-4xl font-black text-white tabular-nums">2:00</p>
-    </div>
-
-    <div class="card p-4 w-full">
-      <p class="text-xs text-gray-600 font-semibold mb-3">ブロック対象アプリ</p>
-      <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar">
-        ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
-      </div>
-    </div>
-
-    <div class="w-full">
-      <div class="slider-track h-16" id="ch-slider">
-        <div class="slider-reveal" id="ch-reveal"></div>
-        <div class="slider-thumb w-20 h-14" id="ch-thumb">
-          <svg class="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </div>
-        <span class="slider-label">スワイプしてデトックス開始</span>
-      </div>
-      <button id="ch-skip-btn" class="w-full text-gray-700 font-semibold py-3 mt-2 text-sm">今回はスキップ</button>
-    </div>
-  `;
-
-  goto('challenge');
-
-  // Accept countdown 2 min
-  let remaining = 120;
-  updateChallengeCountdown(remaining);
-  if (S.challengeAcceptTimerId) clearInterval(S.challengeAcceptTimerId);
-  S.challengeAcceptTimerId = setInterval(() => {
-    remaining--;
-    updateChallengeCountdown(remaining);
-    if (remaining <= 0) {
-      clearInterval(S.challengeAcceptTimerId);
-      goto('home');
-    }
-  }, 1000);
-
-  initSlider('ch-slider', 'ch-thumb', 'ch-reveal', () => {
-    clearInterval(S.challengeAcceptTimerId);
-    startSession(S.challengeData.duration, true);
-  });
-
-  document.getElementById('ch-skip-btn').addEventListener('click', () => {
-    clearInterval(S.challengeAcceptTimerId);
-    goto('home');
-  });
-}
-
-function updateChallengeCountdown(sec) {
-  const el = document.getElementById('ch-countdown');
-  if (!el) return;
-  const m = Math.floor(sec / 60), s = sec % 60;
-  el.textContent = `${m}:${String(s).padStart(2,'0')}`;
-}
 
 // ================================================================
 // SESSION ACTIVE
@@ -2703,7 +2577,6 @@ function openManualSheet() {
       return;
     }
     document.getElementById('manual-sheet').classList.remove('open');
-    S.challengeData = { duration: total };
     startSession(total, false);
   });
 }
@@ -3391,7 +3264,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (u) {
     if (!maybeRestoreSession()) {
       goto('home');
-      setTimeout(triggerChallengeBanner, 2500);
     }
   } else {
     goto('login');
