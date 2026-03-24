@@ -548,6 +548,7 @@ const MOCK_GROUPS = [
     members: ['alice', 'ben', 'chloe'],
     maxMembers: 5,
     inviteOnly: true,
+    owner: 'me',
     description: '毎朝7時〜一緒にスマホ断ち！',
     activeSince: Date.now() - 1200000,
     isActive: true,
@@ -559,6 +560,7 @@ const MOCK_GROUPS = [
     members: ['david', 'alice'],
     maxMembers: 5,
     inviteOnly: true,
+    owner: 'me',
     description: '週末は2時間のデジタルデトックスにチャレンジ',
     activeSince: null,
     isActive: false,
@@ -570,6 +572,7 @@ const MOCK_GROUPS = [
     members: ['chloe', 'david', 'ben', 'alice'],
     maxMembers: 5,
     inviteOnly: true,
+    owner: 'me',
     description: '試験前の集中タイムをみんなで',
     activeSince: null,
     isActive: false,
@@ -581,6 +584,7 @@ const MOCK_GROUPS = [
     members: ['alice', 'emma'],
     maxMembers: 5,
     inviteOnly: true,
+    owner: 'alice',
     description: '夜の瞑想セッションで一日をリセット',
     activeSince: null,
     isActive: false,
@@ -1709,6 +1713,7 @@ function renderGroupDetail(groupId) {
   const isMyGroup = gd && gd.groupId === groupId;
   const inLobby = isMyGroup && !gd.startTime;
   const isPending = !!g.pendingInvite;
+  const isOwner = g.owner === 'me';
 
   if (isPending) S.groupDetailTab = 'detox';
   const currentTab = S.groupDetailTab || 'detox';
@@ -1758,7 +1763,7 @@ function renderGroupDetail(groupId) {
           ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}${t('日連続',' day streak')}</span>` : ''}
         </div>
       </div>
-      ${(!isPending && g.members.length < (g.maxMembers||5)) ? `
+      ${(isOwner && !isPending && g.members.length < (g.maxMembers||5)) ? `
       <button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
         ${t('招待','Invite')}
@@ -1974,7 +1979,7 @@ function renderGroupDetail(groupId) {
       <div class="card p-4">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">${t('メンバー','Members')}</p>
-          <span class="text-xs text-gray-600">${t('全員がデトックスを作成できます','Anyone can start the detox')}</span>
+          <span class="text-xs text-gray-600">${isOwner ? t('オーナーがデトックスを作成できます','Owner can start detox') : t('メンバーとして参加中','Joined as member')}</span>
         </div>
         <div class="space-y-0">
           ${['me', ...g.members].map(id => {
@@ -1985,13 +1990,17 @@ function renderGroupDetail(groupId) {
             const avatar = isMe
               ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
               : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+            const isGroupOwner = g.owner === id || (isMe && g.owner === 'me');
+            const roleLabel = isGroupOwner
+              ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">${t('オーナー','Owner')}</span>`
+              : `<span class="text-xs text-gray-700">${t('メンバー','Member')}</span>`;
             return `
               <div class="flex items-center justify-between py-2">
                 <div class="flex items-center gap-3">
                   <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
                   <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
                 </div>
-                <span class="text-xs text-gray-700">${t('作成可能','Can start')}</span>
+                ${roleLabel}
               </div>`;
           }).join('')}
         </div>
@@ -2003,10 +2012,16 @@ function renderGroupDetail(groupId) {
         ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 ${t('グループストリーク','Group Streak')} ${g.streak}${t('日',' days')}</p>` : ''}
       </div>
 
+      ${isOwner ? `
       <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
         ${t('デトックスを作成する','Start Detox Session')}
       </button>
       <p class="text-center text-xs text-gray-700">${t('あなたが作成したら、メンバーに通知されます','Members will be notified when you start')}</p>
+      ` : `
+      <div class="w-full py-4 rounded-2xl text-center text-sm text-gray-600 border border-gray-800">
+        ${t('オーナーがデトックスを開始するまでお待ちください','Waiting for the owner to start a detox session')}
+      </div>
+      `}
       `}
     </div>
   `;
@@ -2064,7 +2079,7 @@ function renderGroupDetail(groupId) {
     initGroupDetoxPicker();
     renderGroupAppChips();
 
-    document.getElementById('gd-ready-btn').addEventListener('click', () => {
+    document.getElementById('gd-ready-btn')?.addEventListener('click', () => {
       const gdH = getPickerValue('gd-picker-hours');
       const gdM = getPickerValue('gd-picker-minutes');
       const gdSelectedDur = Math.max(300, gdH * 3600 + gdM * 60);
@@ -3392,7 +3407,7 @@ function renderCreateGroup() {
   document.getElementById('cg-create').addEventListener('click', () => {
     const name = document.getElementById('cg-name').value.trim();
     if (!name) { document.getElementById('cg-name').classList.add('shake'); setTimeout(() => document.getElementById('cg-name').classList.remove('shake'), 500); return; }
-    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
+    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, owner: 'me', description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
     MOCK_GROUPS.push(newGroup);
     goto('friends');
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
