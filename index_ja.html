@@ -1732,6 +1732,7 @@ function renderGroupDetail(groupId) {
     const u = getUser();
     const myName = u ? u.name : t('あなた','You');
     const allIds = ['me', ...g.members];
+    const declinedList = gd.declinedMembers || [];
     return allIds.map(id => {
       const isMe = id === 'me';
       const f = isMe ? null : friendById(id);
@@ -1740,18 +1741,19 @@ function renderGroupDetail(groupId) {
         ? `https://placehold.co/40x40/334155/FFF?text=${myName[0].toUpperCase()}`
         : (f ? f.avatar : `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
       const ready = readyList.includes(id);
+      const declined = declinedList.includes(id);
+      const statusLabel = ready
+        ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('参加','Joining')}</span>`
+        : declined
+          ? `<span class="text-xs text-gray-600">${t('不参加','Declined')}</span>`
+          : `<span class="text-xs text-gray-700">${t('未回答','Pending')}</span>`;
       return `
         <div class="flex items-center justify-between py-2">
           <div class="flex items-center gap-3">
-            <img src="${avatar}" class="w-9 h-9 rounded-full ${ready?'':'opacity-40'}" alt="${name}">
-            <div>
-              <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
-            </div>
+            <img src="${avatar}" class="w-9 h-9 rounded-full ${(ready||(!declined))?'':'opacity-40'}" alt="${name}">
+            <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
           </div>
-          ${ready
-            ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('準備完了','Ready')}</span>`
-            : `<span class="text-xs text-gray-600">${t('待機中...','Waiting...')}</span>`
-          }
+          ${statusLabel}
         </div>
       `;
     }).join('');
@@ -1994,14 +1996,20 @@ function renderGroupDetail(groupId) {
         </div>` : ''}
 
       </div>
-      ${!meReady ? `
-      <button id="gd-join-lobby" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">${t('参加する','Join')}</button>
-      ` : ''}
       ${gd.initiatedBy === 'me'
         ? `<button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${t('デトックスをキャンセル','Cancel Detox Session')}</button>`
-        : meReady
-          ? `<button id="gd-leave-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${t('準備を取り消す','Undo Ready')}</button>`
-          : ''
+        : (() => {
+            const declined = (gd.declinedMembers || []).includes('me');
+            if (meReady) {
+              return `<div class="w-full py-3 rounded-2xl text-center text-sm font-semibold text-green-400 border border-green-500/30">${t('✓ 参加予定','✓ Joining')}</div>`;
+            } else if (declined) {
+              return `<div class="w-full py-3 rounded-2xl text-center text-sm font-semibold text-gray-600 border border-gray-800">${t('不参加','Not joining')}</div>`;
+            } else {
+              return `
+                <button id="gd-join-lobby" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">${t('参加する','Join')}</button>
+                <button id="gd-decline-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${t('参加しない','Decline')}</button>`;
+            }
+          })()
       }
       `})() : `
       <!-- DEFAULT: setup -->
@@ -2129,31 +2137,30 @@ function renderGroupDetail(groupId) {
       setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
     });
   } else if (inLobby) {
-    document.getElementById('gd-join-lobby')?.addEventListener('click', () => {
-      if (!S.groupDetox.readyMembers.includes('me')) {
-        S.groupDetox.readyMembers.push('me');
-        const rows = document.getElementById('gd-member-rows');
-        const cnt  = document.getElementById('gd-ready-count');
-        if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
-        if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}${t('人 準備完了',' ready')}`;
-        renderGroupDetail(groupId);
-        if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
-          S.groupDetox.startTime = Date.now();
-          setTimeout(() => startSession(S.groupDetox.duration, false), 600);
-        }
-      }
-    });
-    // 作成者のみグループデトックス全体をキャンセル可能
     if (gd.initiatedBy === 'me') {
+      // 作成者のみセッション全体をキャンセル可能
       document.getElementById('gd-cancel-lobby')?.addEventListener('click', () => {
         S.groupDetox = null;
         renderGroupDetail(groupId);
       });
     } else {
-      // 非作成者は自分の準備状態のみ取り消し可能
-      document.getElementById('gd-leave-lobby')?.addEventListener('click', () => {
-        S.groupDetox.readyMembers = S.groupDetox.readyMembers.filter(id => id !== 'me');
-        renderGroupDetail(groupId);
+      // 非作成者：参加するか参加しないかを一度だけ選択
+      document.getElementById('gd-join-lobby')?.addEventListener('click', () => {
+        if (!S.groupDetox.readyMembers.includes('me')) {
+          S.groupDetox.readyMembers.push('me');
+          renderGroupDetail(groupId);
+          if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
+            S.groupDetox.startTime = Date.now();
+            setTimeout(() => startSession(S.groupDetox.duration, false), 600);
+          }
+        }
+      });
+      document.getElementById('gd-decline-lobby')?.addEventListener('click', () => {
+        if (!S.groupDetox.declinedMembers) S.groupDetox.declinedMembers = [];
+        if (!S.groupDetox.declinedMembers.includes('me')) {
+          S.groupDetox.declinedMembers.push('me');
+          renderGroupDetail(groupId);
+        }
       });
     }
   } else {
