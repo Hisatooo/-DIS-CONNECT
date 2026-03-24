@@ -462,9 +462,6 @@
       <h3 id="manual-sheet-title" class="text-xl font-black text-white text-center mb-1">デトックス開始</h3>
       <p id="manual-sheet-sub" class="text-gray-600 text-sm text-center mb-5">制限するアプリと時間をセット</p>
 
-      <!-- All-User Detox Event -->
-      <div id="global-detox-card" class="mb-5 rounded-2xl p-4 border border-gray-800 bg-[#1C1C1E]"></div>
-
       <!-- App Selection -->
       <div class="mb-5">
         <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
@@ -978,6 +975,7 @@ function renderHome() {
       <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">Following</button>
       <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
     </div>
+    <div id="global-detox-card"></div>
     <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
   `;
   document.getElementById('notif-icon-btn').addEventListener('click', () => goto('notifications'));
@@ -988,6 +986,7 @@ function renderHome() {
     });
   });
   renderFeedList();
+  renderGlobalDetoxCard();
 }
 
 function renderFeedList() {
@@ -2665,6 +2664,7 @@ function renderGlobalDetoxCard() {
   const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   const beforeNoon = new Date().getHours() < 12;
   const reserved = S.globalDetoxReserved;
+  card.className = 'flex-shrink-0 mx-4 mt-3 mb-1 rounded-2xl p-4 border border-gray-800 bg-[#1C1C1E]';
   card.innerHTML = `
     <div class="flex items-center justify-between">
       <div>
@@ -2690,7 +2690,6 @@ function renderGlobalDetoxCard() {
 
 function openManualSheet() {
   document.getElementById('manual-sheet').classList.add('open');
-  renderGlobalDetoxCard();
   renderAppChips();
   initTimePicker();
   initSlider('manual-slider','manual-thumb','manual-reveal', () => {
