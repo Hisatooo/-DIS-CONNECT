@@ -607,6 +607,27 @@ const MOCK_COMMENTS = {
   4: [{ userId: 'chloe', text: 'かっこいい！' }, { userId: 'ben', text: '2時間はすごい' }],
 };
 
+const MOCK_GROUP_CHATS = {
+  g1: [
+    { from: 'alice', text: 'おはようございます！今日も一緒に頑張りましょう🌅', time: '35分前' },
+    { from: 'ben',   text: 'おはよう！今日は気合い入ってます', time: '30分前' },
+    { from: 'me',    text: 'おはようございます！よろしくお願いします', time: '25分前' },
+    { from: 'chloe', text: 'みんなおはよう〜', time: '20分前' },
+    { type: 'detox_invite', from: 'alice', duration: 3600, time: '10分前' },
+  ],
+  g2: [
+    { from: 'david', text: '週末チャレンジの時間決めましょうか', time: '2時間前' },
+    { from: 'alice', text: '土曜の朝9時はどうですか？', time: '1時間前' },
+    { from: 'me',    text: '土曜は大丈夫です！', time: '45分前' },
+  ],
+  g3: [
+    { from: 'chloe', text: '試験前の集中タイム、一緒に頑張りましょう📚', time: '昨日' },
+    { from: 'ben',   text: '参加します！', time: '昨日' },
+    { from: 'david', text: '自分も！', time: '昨日' },
+    { from: 'me',    text: 'よろしくお願いします', time: '昨日' },
+  ],
+};
+
 // ================================================================
 // STATE
 // ================================================================
@@ -623,6 +644,7 @@ const S = {
   globalDetoxTime: null, // { h, m } — today's all-user detox time (19-21:45, 15min slots)
   globalDetoxReserved: false,
   detoxTab: 'now',       // 'now' | 'reserve'
+  groupDetailTab: 'detox', // 'detox' | 'chat'
   lang: 'ja',            // 'ja' | 'en'
 };
 
@@ -659,6 +681,44 @@ const getDM      = id => JSON.parse(localStorage.getItem(`to_dm_${id}`)) || [
   { from: 'me',text: 'ちょっとずつ！今日も頑張ろう',     time: '昨日' },
 ];
 const saveDM     = (id, msgs) => localStorage.setItem(`to_dm_${id}`, JSON.stringify(msgs));
+const getGroupChat  = (gid) => JSON.parse(localStorage.getItem(`to_group_chat_${gid}`)) || (MOCK_GROUP_CHATS[gid] ? [...MOCK_GROUP_CHATS[gid]] : []);
+const saveGroupChat = (gid, msgs) => localStorage.setItem(`to_group_chat_${gid}`, JSON.stringify(msgs));
+const isPremium = () => localStorage.getItem('to_premium') === 'true';
+function getGroupDetoxCount() {
+  const today = new Date().toDateString();
+  const data = JSON.parse(localStorage.getItem('to_group_detox_count') || '{}');
+  return data[today] || 0;
+}
+function addGroupDetoxCount() {
+  const today = new Date().toDateString();
+  const data = JSON.parse(localStorage.getItem('to_group_detox_count') || '{}');
+  data[today] = (data[today] || 0) + 1;
+  localStorage.setItem('to_group_detox_count', JSON.stringify(data));
+}
+function showGroupLimitPrompt() {
+  showConfirm(
+    t('グループ上限に達しました','Group Limit Reached'),
+    t('参加できるグループは3つまでです。プレミアムにアップグレードすると無制限に参加できます。','You can join up to 3 groups. Upgrade to Premium for unlimited groups.'),
+    t('プレミアムへ','Go Premium'),
+    () => goto('premium')
+  );
+  requestAnimationFrame(() => {
+    const btn = document.getElementById('confirm-ok-btn');
+    if (btn) btn.style.cssText = 'background:linear-gradient(135deg,#f59e0b,#f97316);color:#000;';
+  });
+}
+function showDetoxLimitPrompt() {
+  showConfirm(
+    t('本日の上限に達しました','Daily Limit Reached'),
+    t('グループデトックスは1日3回まで参加できます。プレミアムにアップグレードすると無制限に参加できます。','You can join group detox sessions up to 3 times per day. Upgrade to Premium for unlimited sessions.'),
+    t('プレミアムへ','Go Premium'),
+    () => goto('premium')
+  );
+  requestAnimationFrame(() => {
+    const btn = document.getElementById('confirm-ok-btn');
+    if (btn) btn.style.cssText = 'background:linear-gradient(135deg,#f59e0b,#f97316);color:#000;';
+  });
+}
 
 // ================================================================
 // UTILS
@@ -1632,10 +1692,11 @@ function renderGroupDetail(groupId) {
   const gd = S.groupDetox;
   const isMyGroup = gd && gd.groupId === groupId;
   const inLobby = isMyGroup && !gd.startTime;
-  const inSession = isMyGroup && !!gd.startTime;
+  const isPending = !!g.pendingInvite;
 
+  if (isPending) S.groupDetailTab = 'detox';
+  const currentTab = S.groupDetailTab || 'detox';
 
-  // Member ready status html
   function memberReadyRows(readyList) {
     const u = getUser();
     const myName = u ? u.name : t('あなた','You');
@@ -1665,7 +1726,7 @@ function renderGroupDetail(groupId) {
     }).join('');
   }
 
-  page.innerHTML = `
+  const headerHtml = `
     <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3 gap-3">
       <button id="gd-back" class="text-gray-400 p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -1674,28 +1735,176 @@ function renderGroupDetail(groupId) {
       <div class="flex-grow">
         <div class="flex items-center gap-2">
           <h1 class="text-xl font-black text-white">${g.name}</h1>
-          ${g.inviteOnly ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>${t('招待制','Invite Only')}</span>` : ''}
+          ${(g.inviteOnly && !isPending) ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>${t('招待制','Invite Only')}</span>` : ''}
         </div>
         <div class="flex items-center gap-2">
           <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5}${t('人','')}</p>
           ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}${t('日連続',' day streak')}</span>` : ''}
         </div>
       </div>
-      ${g.members.length < (g.maxMembers||5) ? `
+      ${(!isPending && g.members.length < (g.maxMembers||5)) ? `
       <button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
         ${t('招待','Invite')}
-      </button>` : `<span class="text-xs text-gray-600 flex-shrink-0">${t('満員','Full')}</span>`}
-    </div>
+      </button>` : ''}
+    </div>`;
 
+  const tabBarHtml = !isPending ? `
+    <div class="flex-shrink-0 flex px-4 pb-2 gap-2">
+      <button id="gd-tab-detox" class="flex-1 py-2 rounded-full text-sm font-bold transition ${currentTab==='detox'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">${t('デトックス','Detox')}</button>
+      <button id="gd-tab-chat"  class="flex-1 py-2 rounded-full text-sm font-bold transition ${currentTab==='chat' ?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">${t('チャット','Chat')}</button>
+    </div>` : '';
+
+  // ── CHAT TAB ─────────────────────────────────────────────────
+  if (!isPending && currentTab === 'chat') {
+    const msgs = getGroupChat(groupId);
+    const chatMsgsHtml = msgs.map(msg => {
+      if (msg.type === 'detox_invite') {
+        const fromF  = friendById(msg.from);
+        const durStr = fmtDuration(msg.duration, true);
+        const alreadyUsed = !isPremium() && getGroupDetoxCount() >= 3;
+        return `
+          <div class="flex justify-start mb-3">
+            <div class="max-w-xs w-full">
+              <div class="flex items-center gap-2 mb-1.5">
+                <img src="${fromF?.avatar || `https://placehold.co/24x24/555/FFF?text=${msg.from[0].toUpperCase()}`}" class="w-6 h-6 rounded-full" alt="">
+                <span class="text-xs text-gray-500">${fromF?.name || msg.from}</span>
+                <span class="text-xs text-gray-700">${msg.time}</span>
+              </div>
+              <div class="rounded-2xl rounded-bl-sm p-3" style="background:${g.color}18;border:1px solid ${g.color}44;">
+                <p class="text-xs font-bold mb-0.5" style="color:${g.color}">${t('グループデトックス招待','Group Detox Invite')}</p>
+                <p class="text-sm text-white font-semibold">${durStr}${t('のデトックス',' detox')}</p>
+                ${alreadyUsed
+                  ? `<p class="text-xs text-gray-600 mt-1">${t('今日の上限（3回）に達しました','Daily limit (3 sessions) reached')}</p>`
+                  : `<p class="text-xs text-gray-500 mt-0.5 mb-2">${t('一緒に参加しますか？','Join together?')}</p>
+                     <button class="gd-chat-invite-btn w-full py-2 rounded-xl font-bold text-sm text-black" style="background:${g.color}" data-duration="${msg.duration}">${t('参加する','Join')}</button>`
+                }
+              </div>
+            </div>
+          </div>`;
+      } else {
+        const isMe  = msg.from === 'me';
+        const fromF2 = isMe ? null : friendById(msg.from);
+        const name2  = isMe ? (getUser()?.name || t('あなた','You')) : (fromF2?.name || msg.from);
+        return `
+          <div class="flex ${isMe?'justify-end':'justify-start'} mb-2">
+            ${!isMe ? `<img src="${fromF2?.avatar || `https://placehold.co/32x32/555/FFF?text=${msg.from[0].toUpperCase()}`}" class="w-8 h-8 rounded-full mr-2 flex-shrink-0 self-end" alt="">` : ''}
+            <div class="max-w-[72%]">
+              ${!isMe ? `<p class="text-xs text-gray-600 mb-0.5 ml-1">${name2}</p>` : ''}
+              <div class="px-3.5 py-2.5 rounded-2xl text-sm ${isMe?'bg-white text-black rounded-br-sm':'bg-[#2C2C2E] text-white rounded-bl-sm'}">${msg.text}</div>
+              <p class="text-xs text-gray-800 mt-0.5 ${isMe?'text-right':'text-left'} mx-1">${msg.time}</p>
+            </div>
+          </div>`;
+      }
+    }).join('');
+
+    page.innerHTML = `
+      ${headerHtml}
+      ${tabBarHtml}
+      <div class="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-gray-900/60">
+        <span class="text-xs text-gray-600">${t('グループチャット','Group Chat')}</span>
+        <button id="gd-leave-btn" class="flex items-center gap-1.5 text-xs font-semibold text-red-500 px-3 py-1.5 rounded-full border border-red-500/30">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          ${t('グループから退出','Leave Group')}
+        </button>
+      </div>
+      <div id="gd-chat-scroll" class="flex-grow overflow-y-auto no-scrollbar px-4 py-2">
+        ${chatMsgsHtml || `<p class="text-center text-gray-700 text-sm mt-8">${t('まだメッセージはありません','No messages yet')}</p>`}
+      </div>
+      <div class="flex-shrink-0 flex items-center gap-2 px-4 pt-3 pb-6 border-t border-gray-900">
+        <input id="gd-chat-input" class="input-field rounded-full py-2.5 flex-grow text-sm" placeholder="${t('メッセージ...','Message...')}" type="text">
+        <button id="gd-chat-send" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:${g.color}">
+          <svg class="w-4 h-4 text-black" style="transform:rotate(45deg)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    goto('group-detail');
+
+    document.getElementById('gd-back').addEventListener('click', () => {
+      S.groupDetailTab = 'detox';
+      goto('friends');
+      setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+    });
+    document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
+    document.getElementById('gd-tab-detox').addEventListener('click', () => { S.groupDetailTab = 'detox'; renderGroupDetail(groupId); });
+    document.getElementById('gd-tab-chat').addEventListener('click',  () => { S.groupDetailTab = 'chat';  renderGroupDetail(groupId); });
+
+    const scrollEl = document.getElementById('gd-chat-scroll');
+    if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+
+    function sendGroupMsg() {
+      const input = document.getElementById('gd-chat-input');
+      const text  = input.value.trim();
+      if (!text) return;
+      const msgs2 = getGroupChat(groupId);
+      msgs2.push({ from: 'me', text, time: t('今','now') });
+      saveGroupChat(groupId, msgs2);
+      input.value = '';
+      S.groupDetailTab = 'chat';
+      renderGroupDetail(groupId);
+    }
+    document.getElementById('gd-chat-send').addEventListener('click', sendGroupMsg);
+    document.getElementById('gd-chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendGroupMsg(); });
+
+    document.querySelectorAll('.gd-chat-invite-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
+        S.groupDetailTab = 'detox';
+        renderGroupDetail(groupId);
+      });
+    });
+
+    document.getElementById('gd-leave-btn')?.addEventListener('click', () => {
+      showConfirm(
+        t('グループから退出','Leave Group'),
+        `「${g.name}」${t('から退出しますか？退出後は再度招待が必要です。','— are you sure? You\'ll need to be re-invited to rejoin.')}`,
+        t('退出する','Leave'),
+        () => {
+          const idx = MOCK_GROUPS.findIndex(x => x.id === groupId);
+          if (idx !== -1) MOCK_GROUPS.splice(idx, 1);
+          S.groupDetailTab = 'detox';
+          goto('friends');
+          setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+        }
+      );
+    });
+
+    return;
+  }
+
+  // ── DETOX TAB / LOBBY / PENDING ───────────────────────────────
+  page.innerHTML = `
+    ${headerHtml}
+    ${tabBarHtml}
     <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10 space-y-3">
 
-      ${inLobby ? (() => {
+      ${isPending ? (() => {
+        const fromUser = friendById(g.pendingInvite.from);
+        const fromName = fromUser ? fromUser.name : g.pendingInvite.from;
+        return `
+      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
+        <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:${g.color}">${t('招待が届いています','Invitation received')}</p>
+        <p class="text-sm text-gray-400">${fromName}${t('から招待されました',' invited you')}</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">${t('グループについて','About')}</p>
+        <p class="text-sm text-gray-400">${g.description}</p>
+        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 ${t('グループストリーク','Group Streak')} ${g.streak}${t('日',' days')}</p>` : ''}
+      </div>
+      <button id="gd-accept-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+        ${t('招待を承認する','Accept Invite')}
+      </button>
+      <button id="gd-decline-btn" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">
+        ${t('断る','Decline')}
+      </button>`;
+      })() : inLobby ? (() => {
         const meReady = gd.readyMembers.includes('me');
         const initiator = gd.initiatedBy;
         const initiatorName = initiator === 'me' ? (getUser()?.name||t('あなた','You')) : (friendById(initiator)?.name || initiator);
         return `
-      <!-- LOBBY: waiting for all to be ready -->
       <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
         <div class="flex items-center gap-2 mb-3">
           <span class="text-xs font-bold uppercase tracking-wider" style="color:${g.color}">${t('準備中 — 全員が揃ったら自動でスタート','Lobby — auto-starts when everyone is ready')}</span>
@@ -1769,13 +1978,27 @@ function renderGroupDetail(groupId) {
   `;
 
   document.getElementById('gd-back').addEventListener('click', () => {
+    S.groupDetailTab = 'detox';
     goto('friends');
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
   });
   document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
+  document.getElementById('gd-tab-detox')?.addEventListener('click', () => { S.groupDetailTab = 'detox'; renderGroupDetail(groupId); });
+  document.getElementById('gd-tab-chat')?.addEventListener('click',  () => { S.groupDetailTab = 'chat';  renderGroupDetail(groupId); });
 
-  if (inLobby) {
-    // 参加ボタン: 自分がまだ準備完了でない場合に表示
+  if (isPending) {
+    document.getElementById('gd-accept-btn')?.addEventListener('click', () => {
+      g.pendingInvite = null;
+      S.groupDetailTab = 'detox';
+      renderGroupDetail(groupId);
+    });
+    document.getElementById('gd-decline-btn')?.addEventListener('click', () => {
+      const idx = MOCK_GROUPS.findIndex(x => x.id === groupId);
+      if (idx !== -1) MOCK_GROUPS.splice(idx, 1);
+      goto('friends');
+      setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+    });
+  } else if (inLobby) {
     document.getElementById('gd-join-lobby')?.addEventListener('click', () => {
       if (!S.groupDetox.readyMembers.includes('me')) {
         S.groupDetox.readyMembers.push('me');
@@ -1795,14 +2018,12 @@ function renderGroupDetail(groupId) {
       renderGroupDetail(groupId);
     });
   } else {
-    // Group detox dial picker init
     initGroupDetoxPicker();
 
     document.getElementById('gd-ready-btn').addEventListener('click', () => {
       const gdH = getPickerValue('gd-picker-hours');
       const gdM = getPickerValue('gd-picker-minutes');
-      const gdSelectedDur = Math.max(300, gdH * 3600 + gdM * 60); // min 5 min
-      // Enter lobby - mark "me" as ready and as initiator
+      const gdSelectedDur = Math.max(300, gdH * 3600 + gdM * 60);
       S.groupDetox = {
         groupId,
         duration: gdSelectedDur,
@@ -1814,18 +2035,15 @@ function renderGroupDetail(groupId) {
         initiatedBy: 'me',
       };
       renderGroupDetail(groupId);
-      // Simulate other members getting ready one by one
       const others = [...g.members];
       others.forEach((id, i) => {
         setTimeout(() => {
           if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
           S.groupDetox.readyMembers.push(id);
-          // Update UI if still on group-detail page
           const rows = document.getElementById('gd-member-rows');
           const cnt  = document.getElementById('gd-ready-count');
           if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
           if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}${t('人 準備完了',' ready')}`;
-          // All ready → start
           if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
             S.groupDetox.startTime = Date.now();
             setTimeout(() => {
