@@ -1806,7 +1806,7 @@ function renderGroupDetail(groupId) {
         const durStr = fmtDuration(msg.duration, true);
         const alreadyUsed = !isPremium() && getGroupDetoxCount() >= 3;
         return `
-          <div class="flex justify-start mb-3">
+          <div class="flex justify-start mb-3" data-from="${msg.from}">
             <div class="max-w-xs w-full">
               <div class="flex items-center gap-2 mb-1.5">
                 <img src="${fromF?.avatar || `https://placehold.co/24x24/555/FFF?text=${msg.from[0].toUpperCase()}`}" class="w-6 h-6 rounded-full" alt="">
@@ -1895,6 +1895,20 @@ function renderGroupDetail(groupId) {
     document.querySelectorAll('.gd-chat-invite-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
+        const duration = parseInt(btn.dataset.duration, 10) || 3600;
+        const fromId = btn.closest('[data-from]')?.dataset.from || g.members[0] || 'alice';
+        // 招待者が作成したロビーに参加（自分は作成者ではない）
+        S.groupDetox = {
+          groupId,
+          duration,
+          readyMembers: [fromId],
+          allMembers: ['me', ...g.members],
+          startTime: null,
+          failed: false,
+          failedBy: null,
+          initiatedBy: fromId,
+          apps: [],
+        };
         S.groupDetailTab = 'detox';
         renderGroupDetail(groupId);
       });
