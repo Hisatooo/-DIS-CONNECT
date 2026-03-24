@@ -646,7 +646,8 @@ const S = {
   pendingConfirm: null,
   friendsTimerId: null,
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
-  groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy }
+  groupSelectedApps: new Set(['YouTube', 'Instagram', 'X']),
+  groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy, apps:[] }
   globalDetoxTime: null, // { h, m } — today's all-user detox time (19-21:45, 15min slots)
   globalDetoxReserved: false,
   detoxTab: 'now',       // 'now' | 'reserve'
@@ -1932,6 +1933,14 @@ function renderGroupDetail(groupId) {
           <span class="text-xs text-gray-600">${t('時間:','Duration:')} <span class="text-white font-bold">${fmtDuration(gd.duration, true)}</span></span>
           <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${gd.allMembers.length}${t('人 準備完了',' ready')}</span>
         </div>
+        ${gd.apps && gd.apps.length ? `
+        <div class="mt-2 pt-2 border-t border-white/5">
+          <p class="text-xs text-gray-700 mb-1.5">${t('ブロック対象','Blocked')}</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${gd.apps.map(label => { const a = ALL_APPS.find(x=>x.label===label); return a ? `<span class="flex items-center gap-1 px-2 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-gray-400"><span class="w-3.5 h-3.5 rounded flex-shrink-0" style="background:#${a.bg}"></span>${a.label}</span>` : ''; }).join('')}
+          </div>
+        </div>` : ''}
+
       </div>
       ${!meReady ? `
       <button id="gd-join-lobby" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">${t('参加する','Join')}</button>
@@ -1955,6 +1964,11 @@ function renderGroupDetail(groupId) {
             <div id="gd-picker-minutes" class="picker-col"></div>
           </div>
         </div>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">${t('ブロックするアプリ','Apps to Block')}</p>
+        <div id="gd-app-chip-list" class="flex flex-wrap gap-2"></div>
       </div>
 
       <div class="card p-4">
@@ -2048,6 +2062,7 @@ function renderGroupDetail(groupId) {
     }
   } else {
     initGroupDetoxPicker();
+    renderGroupAppChips();
 
     document.getElementById('gd-ready-btn').addEventListener('click', () => {
       const gdH = getPickerValue('gd-picker-hours');
@@ -2062,6 +2077,7 @@ function renderGroupDetail(groupId) {
         failed: false,
         failedBy: null,
         initiatedBy: 'me',
+        apps: [...S.groupSelectedApps],
       };
       renderGroupDetail(groupId);
       const others = [...g.members];
@@ -2368,12 +2384,21 @@ function renderProfile() {
       <h3 class="font-bold text-white text-sm mb-3">${t('セッション履歴','Session History')}</h3>
       <div id="history-list" class="space-y-2 pb-4"></div>
     </div>
+
+    <!-- Legal links -->
+    <div class="px-4 pb-8 pt-2 flex items-center justify-center gap-4">
+      <button id="prof-terms-btn" class="text-xs text-gray-700 underline hover:text-gray-500 transition">${t('利用規約','Terms of Service')}</button>
+      <span class="text-gray-800 text-xs">·</span>
+      <button id="prof-privacy-btn" class="text-xs text-gray-700 underline hover:text-gray-500 transition">${t('プライバシーポリシー','Privacy Policy')}</button>
+    </div>
   `;
 
   document.getElementById('settings-btn').addEventListener('click', () => renderSettings());
   document.getElementById('edit-profile-btn').addEventListener('click', () => renderEditProfile());
   document.getElementById('prof-avatar').addEventListener('click', () => renderEditProfile());
   document.getElementById('premium-btn').addEventListener('click', () => renderPremium());
+  document.getElementById('prof-terms-btn').addEventListener('click', () => { S._prevPage = 'profile'; renderTerms(); goto('terms'); });
+  document.getElementById('prof-privacy-btn').addEventListener('click', () => { S._prevPage = 'profile'; renderPrivacy(); goto('privacy'); });
 
   buildWeeklyChart('weekly-chart', 'weekly-labels', 'weekly-total-label', getWeekData(history));
   buildHistoryList(history);
@@ -2924,6 +2949,30 @@ function renderAppChips() {
         btn.className = btn.className.replace('border-white/30 bg-white/10 text-white', 'border-gray-800 text-gray-600');
       } else {
         S.selectedApps.add(app);
+        btn.className = btn.className.replace('border-gray-800 text-gray-600', 'border-white/30 bg-white/10 text-white');
+      }
+    });
+  });
+}
+
+function renderGroupAppChips() {
+  const container = document.getElementById('gd-app-chip-list');
+  if (!container) return;
+  container.innerHTML = ALL_APPS.map(a => {
+    const sel = S.groupSelectedApps.has(a.label);
+    return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
+      <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
+      ${a.label}
+    </button>`;
+  }).join('');
+  container.querySelectorAll('.gd-app-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const app = btn.dataset.app;
+      if (S.groupSelectedApps.has(app)) {
+        S.groupSelectedApps.delete(app);
+        btn.className = btn.className.replace('border-white/30 bg-white/10 text-white', 'border-gray-800 text-gray-600');
+      } else {
+        S.groupSelectedApps.add(app);
         btn.className = btn.className.replace('border-gray-800 text-gray-600', 'border-white/30 bg-white/10 text-white');
       }
     });
@@ -3517,7 +3566,7 @@ function renderTerms() {
       </div>
     </div>
   `;
-  document.getElementById('terms-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); goto(p); });
+  document.getElementById('terms-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); else if (p === 'profile') renderProfile(); goto(p); });
 }
 
 // ================================================================
@@ -3699,7 +3748,7 @@ function renderPrivacy() {
       </div>
     </div>
   `;
-  document.getElementById('privacy-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); goto(p); });
+  document.getElementById('privacy-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); else if (p === 'profile') renderProfile(); goto(p); });
 }
 
 // ================================================================
