@@ -656,7 +656,7 @@ const S = {
     likes: true,             // いいね
     comments: true,          // コメント
     groupInvite: true,       // グループ招待
-    friendFilter: {},        // { [friendId]: bool } – true=通知する（未設定も通知する）
+    friendFilter: {},        // { [friendId]: { start: bool, end: bool } } – 未設定は両方通知
   },
 };
 
@@ -2543,16 +2543,29 @@ function renderNotifSettings() {
 
   function friendRows() {
     return friends.map((f, i) => {
-      const on = p.friendFilter[f.id] !== false;
-      const border = i < friends.length - 1 ? 'border-b border-gray-900' : '';
+      const ff = p.friendFilter[f.id] || {};
+      const onStart = ff.start !== false;
+      const onEnd   = ff.end   !== false;
+      const border  = i < friends.length - 1 ? 'border-b border-gray-900' : '';
       return `
         <div class="flex justify-between items-center py-3 ${border}">
-          <div class="flex items-center gap-2.5">
+          <div class="flex items-center gap-2.5 min-w-0">
             <img src="${f.avatar}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
-            <span class="text-white text-sm">${f.name}</span>
+            <span class="text-white text-sm truncate">${f.name}</span>
           </div>
-          <div id="nspref-friend-${f.id}" class="toggle ${on ? 'on' : ''}">
-            <div class="toggle-knob"></div>
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="flex flex-col items-center gap-1">
+              <span class="text-xs text-gray-600">${t('開始','Start')}</span>
+              <div id="nspref-friend-${f.id}-start" class="toggle ${onStart ? 'on' : ''}">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <span class="text-xs text-gray-600">${t('終了','End')}</span>
+              <div id="nspref-friend-${f.id}-end" class="toggle ${onEnd ? 'on' : ''}">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
           </div>
         </div>`;
     }).join('');
@@ -2625,12 +2638,14 @@ function renderNotifSettings() {
     });
   });
 
-  // フレンド別トグル
+  // フレンド別トグル（開始/終了）
   friends.forEach(f => {
-    document.getElementById(`nspref-friend-${f.id}`)?.addEventListener('click', function() {
-      const cur = p.friendFilter[f.id] !== false;
-      p.friendFilter[f.id] = !cur;
-      this.classList.toggle('on', !cur);
+    ['start', 'end'].forEach(type => {
+      document.getElementById(`nspref-friend-${f.id}-${type}`)?.addEventListener('click', function() {
+        if (!p.friendFilter[f.id]) p.friendFilter[f.id] = { start: true, end: true };
+        p.friendFilter[f.id][type] = !p.friendFilter[f.id][type];
+        this.classList.toggle('on', p.friendFilter[f.id][type]);
+      });
     });
   });
 }
@@ -2860,7 +2875,9 @@ function renderNotifications() {
         const filtered = p.enabled ? all.filter(n => {
           if (!p[n.type]) return false;
           if (n.friendId && (n.type === 'friendDetoxStart' || n.type === 'friendDetoxEnd')) {
-            return p.friendFilter[n.friendId] !== false;
+            const ff = p.friendFilter[n.friendId];
+            const sub = n.type === 'friendDetoxStart' ? 'start' : 'end';
+            return !ff || ff[sub] !== false;
           }
           return true;
         }) : [];
@@ -2991,11 +3008,14 @@ function renderDetoxReserve() {
         <p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:#a78bfa">${t('全ユーザーデトックス','All-User Detox')}</p>
         <p class="text-2xl font-black text-white mb-1">${t('今日','Today')} ${timeStr}</p>
         <p class="text-sm text-gray-500 mb-4">${beforeNoon ? t('正午まで予約受付中','Reservations open until noon') : t('本日の予約受付終了','Reservations closed for today')}</p>
-        ${beforeNoon && !reserved
-          ? `<button id="global-reserve-btn" class="w-full bg-white text-black font-bold py-3 rounded-2xl text-sm active:bg-gray-200 transition">${t('予約する','Reserve')}</button>`
-          : reserved
-            ? `<div class="flex items-center gap-2 text-green-400 font-bold text-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('予約済み','Reserved')}</div>`
-            : `<p class="text-gray-700 font-semibold text-sm">${t('受付終了','Closed')}</p>`
+        ${!reserved
+          ? (beforeNoon
+            ? `<button id="global-reserve-btn" class="w-full bg-white text-black font-bold py-3 rounded-2xl text-sm active:bg-gray-200 transition">${t('予約する','Reserve')}</button>`
+            : `<p class="text-gray-700 font-semibold text-sm">${t('受付終了','Closed')}</p>`)
+          : `<div class="flex items-center justify-between">
+               <div class="flex items-center gap-2 text-green-400 font-bold text-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('予約済み','Reserved')}</div>
+               <button id="global-cancel-reserve-btn" class="text-xs text-red-400 font-semibold underline">${t('キャンセル','Cancel')}</button>
+             </div>`
         }
       </div>
       <div class="card p-5">
@@ -3006,6 +3026,10 @@ function renderDetoxReserve() {
   `;
   document.getElementById('global-reserve-btn')?.addEventListener('click', () => {
     S.globalDetoxReserved = true;
+    renderDetoxReserve();
+  });
+  document.getElementById('global-cancel-reserve-btn')?.addEventListener('click', () => {
+    S.globalDetoxReserved = false;
     renderDetoxReserve();
   });
 }
@@ -3027,16 +3051,23 @@ function renderGlobalDetoxCard() {
           ? t('正午まで予約受付中','Reservations open until noon')
           : t('本日の予約受付終了','Reservations closed')}</p>
       </div>
-      ${beforeNoon && !reserved
-        ? `<button id="global-reserve-btn" class="ml-3 bg-white text-black px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap">${t('予約する','Reserve')}</button>`
-        : reserved
-          ? `<span class="ml-3 text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('予約済み','Reserved')}</span>`
-          : `<span class="ml-3 text-xs text-gray-700 font-semibold">${t('受付終了','Closed')}</span>`
+      ${!reserved
+        ? (beforeNoon
+          ? `<button id="global-reserve-btn" class="ml-3 bg-white text-black px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap">${t('予約する','Reserve')}</button>`
+          : `<span class="ml-3 text-xs text-gray-700 font-semibold">${t('受付終了','Closed')}</span>`)
+        : `<div class="ml-3 flex flex-col items-end gap-1">
+             <span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('予約済み','Reserved')}</span>
+             <button id="global-cancel-reserve-btn" class="text-xs text-red-400 font-semibold underline">${t('キャンセル','Cancel')}</button>
+           </div>`
       }
     </div>
   `;
   document.getElementById('global-reserve-btn')?.addEventListener('click', () => {
     S.globalDetoxReserved = true;
+    renderGlobalDetoxCard();
+  });
+  document.getElementById('global-cancel-reserve-btn')?.addEventListener('click', () => {
+    S.globalDetoxReserved = false;
     renderGlobalDetoxCard();
   });
 }

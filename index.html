@@ -688,7 +688,7 @@ const S = {
     likes: true,
     comments: true,
     groupInvite: true,
-    friendFilter: {},    // { [friendId]: bool } – true=通知する（未設定も通知する）
+    friendFilter: {},    // { [friendId]: { start: bool, end: bool } } – 未設定は両方通知
   },
 };
 
@@ -3383,16 +3383,29 @@ function renderNotifSettings() {
 
   function friendRows() {
     return friends.map((f, i) => {
-      const on = p.friendFilter[f.id] !== false; // 未設定はtrue
-      const border = i < friends.length - 1 ? 'border-b border-gray-900' : '';
+      const ff = p.friendFilter[f.id] || {};
+      const onStart = ff.start !== false;
+      const onEnd   = ff.end   !== false;
+      const border  = i < friends.length - 1 ? 'border-b border-gray-900' : '';
       return `
         <div class="flex justify-between items-center py-3 ${border}">
-          <div class="flex items-center gap-2.5">
+          <div class="flex items-center gap-2.5 min-w-0">
             <img src="${f.avatar}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
-            <span class="text-white text-sm">${f.name}</span>
+            <span class="text-white text-sm truncate">${f.name}</span>
           </div>
-          <div id="nspref-friend-${f.id}" class="toggle ${on ? 'on' : ''}">
-            <div class="toggle-knob"></div>
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="flex flex-col items-center gap-1">
+              <span class="text-xs text-gray-600">開始</span>
+              <div id="nspref-friend-${f.id}-start" class="toggle ${onStart ? 'on' : ''}">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <span class="text-xs text-gray-600">終了</span>
+              <div id="nspref-friend-${f.id}-end" class="toggle ${onEnd ? 'on' : ''}">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
           </div>
         </div>`;
     }).join('');
@@ -3461,12 +3474,14 @@ function renderNotifSettings() {
     });
   });
 
-  // フレンド別トグル
+  // フレンド別トグル（開始/終了）
   friends.forEach(f => {
-    document.getElementById(`nspref-friend-${f.id}`)?.addEventListener('click', function() {
-      const cur = p.friendFilter[f.id] !== false;
-      p.friendFilter[f.id] = !cur;
-      this.classList.toggle('on', !cur);
+    ['start', 'end'].forEach(type => {
+      document.getElementById(`nspref-friend-${f.id}-${type}`)?.addEventListener('click', function() {
+        if (!p.friendFilter[f.id]) p.friendFilter[f.id] = { start: true, end: true };
+        p.friendFilter[f.id][type] = !p.friendFilter[f.id][type];
+        this.classList.toggle('on', p.friendFilter[f.id][type]);
+      });
     });
   });
 }
@@ -3574,7 +3589,9 @@ function renderNotifications() {
           if (!p[n.type]) return false;
           // デトックス通知はフレンドフィルターも確認
           if (n.friendId && (n.type === 'friendDetoxStart' || n.type === 'friendDetoxEnd')) {
-            return p.friendFilter[n.friendId] !== false;
+            const ff = p.friendFilter[n.friendId];
+            const sub = n.type === 'friendDetoxStart' ? 'start' : 'end';
+            return !ff || ff[sub] !== false;
           }
           return true;
         }) : [];
