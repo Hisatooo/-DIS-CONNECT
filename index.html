@@ -514,7 +514,8 @@
         <path d="M6 2v6l4.002 4.002L6 16v6h12v-6l-4.002-4.002L18 8V2H6z"/>
       </svg>
     </button>
-    <button class="nav-btn p-3 text-gray-500" data-page="messages">
+    <button class="nav-btn p-3 text-gray-500 relative" data-page="messages">
+      <div class="notif-dot hidden" id="nav-msg-dot"></div>
       <svg class="icon-outline w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
       </svg>
@@ -656,6 +657,8 @@ const S = {
   globalDetoxReserved: false,
   detoxTab: 'now',       // 'now' | 'reserve'
   groupDetailTab: 'detox', // 'detox' | 'chat'
+  unreadNotif: true,     // 未読通知あり
+  unreadMsg: true,       // 未読メッセージあり
   lang: 'ja',            // 'ja' | 'en'
   notifPrefs: {          // 通知種別設定
     enabled: true,
@@ -790,6 +793,13 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
                 'notifications','notif-settings','challenge','session','interrupt','post-session',
                 'premium','create-group','terms','privacy'];
+
+function updateUnreadDots() {
+  const bellDot = document.getElementById('notif-dot-btn');
+  if (bellDot) bellDot.classList.toggle('hidden', !S.unreadNotif);
+  const msgDot = document.getElementById('nav-msg-dot');
+  if (msgDot) msgDot.classList.toggle('hidden', !S.unreadMsg);
+}
 
 function goto(page) {
   // Stop friend timers when leaving friends page
@@ -992,7 +1002,7 @@ function renderHome() {
     <div class="flex-shrink-0 flex items-center justify-between px-4 pt-6 pb-3">
       <h1 class="text-2xl font-black text-white">(DIS)CONNECT</h1>
       <button id="notif-icon-btn" class="relative w-10 h-10 flex items-center justify-center rounded-full bg-[#1C1C1E]">
-        <div class="notif-dot" id="notif-dot-btn"></div>
+        <div class="notif-dot ${S.unreadNotif ? '' : 'hidden'}" id="notif-dot-btn"></div>
         <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
         </svg>
@@ -2271,6 +2281,8 @@ function updateFriendTimers() {
 // MESSAGES PAGE
 // ================================================================
 function renderMessages(filter = '') {
+  S.unreadMsg = false;
+  updateUnreadDots();
   const page = document.getElementById('page-messages');
   page.innerHTML = `
     <div class="flex-shrink-0 px-4 pt-6 pb-3">
@@ -3010,6 +3022,8 @@ function renderNotifications() {
       })()}
     </div>
   `;
+  S.unreadNotif = false;
+  updateUnreadDots();
   goto('notifications');
   document.getElementById('notif-back').addEventListener('click', () => goto('home'));
 }
@@ -3907,6 +3921,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderRegister();
   renderInterruptPage();
   renderStaticLabels();
+  updateUnreadDots();
 
   const u = getUser();
   if (u) {
