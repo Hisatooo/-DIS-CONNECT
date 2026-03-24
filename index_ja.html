@@ -197,6 +197,23 @@
       box-shadow: 0 12px 32px rgba(0,0,0,0.7);
     }
     #challenge-banner.visible { transform: translateY(0); }
+    #scheduled-banner {
+      position: fixed;
+      top: 1rem; left: 1rem; right: 1rem;
+      max-width: 400px;
+      margin: 0 auto;
+      background: rgba(25,25,27,0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 1.1rem;
+      padding: 0.9rem 1rem;
+      z-index: 9999;
+      transform: translateY(-160%);
+      transition: transform 0.5s cubic-bezier(0.19,1,0.22,1);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+    }
+    #scheduled-banner.visible { transform: translateY(0); }
 
     /* ===== BOTTOM SHEET MODAL ===== */
     .sheet-overlay {
@@ -454,6 +471,29 @@
     </div>
   </div>
 
+  <!-- ===== SCHEDULED SESSION BANNER ===== -->
+  <div id="scheduled-banner">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+            <circle cx="12" cy="15" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <p id="scheduled-banner-title" class="font-bold text-white text-sm">予定のデトックス</p>
+          <p id="scheduled-banner-sub" class="text-xs text-gray-400">まもなく開始します</p>
+        </div>
+      </div>
+      <button id="scheduled-banner-start-btn" class="ml-3 bg-white text-black px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">
+        開始
+      </button>
+    </div>
+  </div>
+
   <!-- ===== MANUAL START SHEET ===== -->
   <div id="manual-sheet" class="sheet-overlay">
     <div class="sheet-body">
@@ -648,7 +688,8 @@ const S = {
   page: 'login',
   feedTab: 'following',
   activeSession: null,   // { startTime, totalDuration, timerId, isChallenge }
-  challengeData: null,   // { duration }
+  challengeData: null,        // { duration }
+  scheduledSessionData: null, // { duration } — from scheduled detox reminder
   challengeAcceptTimerId: null,
   viewingUserId: null,
   commentPostId: null,
@@ -678,6 +719,8 @@ function renderStaticLabels() {
   set('confirm-cancel-btn', t('キャンセル','Cancel'));
   set('comment-panel-title', t('投稿','Post'));
   attr('comment-input', 'placeholder', t('コメントを追加...','Add a comment...'));
+  set('scheduled-banner-title', t('予定のデトックス','Scheduled Detox'));
+  set('scheduled-banner-start-btn', t('開始','Start'));
 }
 
 // ================================================================
@@ -950,6 +993,37 @@ function triggerChallengeBanner() {
 document.getElementById('banner-join-btn').addEventListener('click', () => {
   document.getElementById('challenge-banner').classList.remove('visible');
   if (S.challengeData) openChallengePage();
+});
+
+// ================================================================
+// SCHEDULED SESSION NOTIFICATION
+// ================================================================
+function triggerScheduledNotifs() {
+  // Mock a scheduled session: random duration from common presets
+  const choices = [30, 60, 90, 120];
+  const dur = choices[Math.floor(Math.random() * choices.length)];
+  S.scheduledSessionData = { duration: dur * 60 };
+
+  const titleEl = document.getElementById('scheduled-banner-title');
+  const subEl   = document.getElementById('scheduled-banner-sub');
+  const startBtn = document.getElementById('scheduled-banner-start-btn');
+
+  if (titleEl) titleEl.textContent = t('予定のデトックス', 'Scheduled Detox');
+  if (subEl)   subEl.textContent   = t(`${dur}分セッション・今すぐ開始`, `${dur}min session · Starting now`);
+  if (startBtn) startBtn.textContent = t('開始', 'Start');
+
+  const banner = document.getElementById('scheduled-banner');
+  if (!banner) return;
+  banner.classList.add('visible');
+  // Auto-dismiss after 10 seconds if not tapped
+  setTimeout(() => banner.classList.remove('visible'), 10000);
+}
+document.getElementById('scheduled-banner-start-btn').addEventListener('click', () => {
+  document.getElementById('scheduled-banner').classList.remove('visible');
+  if (S.scheduledSessionData) {
+    S.challengeData = S.scheduledSessionData;
+    startSession(S.scheduledSessionData.duration, false);
+  }
 });
 
 // ================================================================
