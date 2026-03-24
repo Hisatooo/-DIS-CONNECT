@@ -370,6 +370,9 @@
   <!-- ===================== NOTIFICATIONS ===================== -->
   <div id="page-notifications" class="page flex flex-col"></div>
 
+  <!-- ===================== NOTIFICATION SETTINGS ===================== -->
+  <div id="page-notif-settings" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
   <!-- ===================== PREMIUM ===================== -->
   <div id="page-premium" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
 
@@ -646,6 +649,14 @@ const S = {
   detoxTab: 'now',       // 'now' | 'reserve'
   groupDetailTab: 'detox', // 'detox' | 'chat'
   lang: 'ja',            // 'ja' | 'en'
+  notifPrefs: {          // 通知種別設定
+    enabled: true,
+    friendDetoxStart: true,  // フレンドのデトックス開始
+    friendDetoxEnd: true,    // フレンドのデトックス終了
+    likes: true,             // いいね
+    comments: true,          // コメント
+    groupInvite: true,       // グループ招待
+  },
 };
 
 // ================================================================
@@ -768,7 +779,7 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // NAVIGATION
 // ================================================================
 const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
-                'notifications','challenge','session','interrupt','post-session',
+                'notifications','notif-settings','challenge','session','interrupt','post-session',
                 'premium','create-group','terms','privacy'];
 
 function goto(page) {
@@ -1921,7 +1932,12 @@ function renderGroupDetail(groupId) {
       ${!meReady ? `
       <button id="gd-join-lobby" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">${t('参加する','Join')}</button>
       ` : ''}
-      <button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${meReady ? t('キャンセル（準備を取り消す）','Cancel (undo ready)') : t('キャンセル','Cancel')}</button>
+      ${gd.initiatedBy === 'me'
+        ? `<button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${t('デトックスをキャンセル','Cancel Detox Session')}</button>`
+        : meReady
+          ? `<button id="gd-leave-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${t('準備を取り消す','Undo Ready')}</button>`
+          : ''
+      }
       `})() : `
       <!-- DEFAULT: setup -->
       <div class="card p-4">
@@ -2013,10 +2029,19 @@ function renderGroupDetail(groupId) {
         }
       }
     });
-    document.getElementById('gd-cancel-lobby').addEventListener('click', () => {
-      S.groupDetox = null;
-      renderGroupDetail(groupId);
-    });
+    // 作成者のみグループデトックス全体をキャンセル可能
+    if (gd.initiatedBy === 'me') {
+      document.getElementById('gd-cancel-lobby')?.addEventListener('click', () => {
+        S.groupDetox = null;
+        renderGroupDetail(groupId);
+      });
+    } else {
+      // 非作成者は自分の準備状態のみ取り消し可能
+      document.getElementById('gd-leave-lobby')?.addEventListener('click', () => {
+        S.groupDetox.readyMembers = S.groupDetox.readyMembers.filter(id => id !== 'me');
+        renderGroupDetail(groupId);
+      });
+    }
   } else {
     initGroupDetoxPicker();
 
@@ -2496,6 +2521,86 @@ function renderEditProfile() {
 }
 
 // ================================================================
+// NOTIFICATION SETTINGS PAGE
+// ================================================================
+function renderNotifSettings() {
+  const p = S.notifPrefs;
+  const page = document.getElementById('page-notif-settings');
+
+  function row(id, label, key, border = true) {
+    return `
+      <div class="flex justify-between items-center py-3 ${border ? 'border-b border-gray-900' : ''}">
+        <span class="text-white text-sm">${label}</span>
+        <div id="nspref-${id}" class="toggle ${p[key] ? 'on' : ''}">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>`;
+  }
+
+  page.innerHTML = `
+    <div class="flex items-center mb-6">
+      <button id="ns-back" class="p-2 -ml-2 text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="text-xl font-bold text-white ml-2">${t('通知設定','Notification Settings')}</h2>
+    </div>
+    <div class="space-y-4">
+      <!-- Master toggle -->
+      <div class="card p-4">
+        <div class="flex justify-between items-center py-1">
+          <div>
+            <p class="text-white text-sm font-semibold">${t('通知を受け取る','Enable Notifications')}</p>
+            <p class="text-xs text-gray-600 mt-0.5">${t('すべての通知のオン/オフ','Master switch for all notifications')}</p>
+          </div>
+          <div id="nspref-enabled" class="toggle ${p.enabled ? 'on' : ''}">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Friend detox notifications -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('フレンドのデトックス','Friend Detox')}</p>
+        ${row('friendDetoxStart', t('デトックス開始通知','Friend Starts Detox'), 'friendDetoxStart', true)}
+        ${row('friendDetoxEnd',   t('デトックス終了通知','Friend Ends Detox'),   'friendDetoxEnd',   false)}
+      </div>
+
+      <!-- Social notifications -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('ソーシャル','Social')}</p>
+        ${row('likes',       t('いいね','Likes'),           'likes',       true)}
+        ${row('comments',    t('コメント','Comments'),       'comments',    true)}
+        ${row('groupInvite', t('グループ招待','Group Invite'), 'groupInvite', false)}
+      </div>
+    </div>
+  `;
+
+  goto('notif-settings');
+
+  document.getElementById('ns-back').addEventListener('click', () => {
+    renderSettings();
+  });
+
+  // Toggle handlers
+  [
+    ['enabled', 'enabled'],
+    ['friendDetoxStart', 'friendDetoxStart'],
+    ['friendDetoxEnd',   'friendDetoxEnd'],
+    ['likes',            'likes'],
+    ['comments',         'comments'],
+    ['groupInvite',      'groupInvite'],
+  ].forEach(([id, key]) => {
+    document.getElementById(`nspref-${id}`).addEventListener('click', function() {
+      S.notifPrefs[key] = !S.notifPrefs[key];
+      this.classList.toggle('on', S.notifPrefs[key]);
+      // Sync master toggle label in settings if needed
+    });
+  });
+}
+
+// ================================================================
 // SETTINGS PAGE
 // ================================================================
 function renderSettings() {
@@ -2540,12 +2645,13 @@ function renderSettings() {
             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </div>
         </button>
-        <div class="flex justify-between items-center py-2.5">
-          <span class="text-white text-sm">${t('通知','Notifications')}</span>
-          <div id="notif-toggle" class="toggle on">
-            <div class="toggle-knob"></div>
+        <button id="st-notif-btn" class="w-full flex justify-between items-center py-2.5 border-t border-gray-900">
+          <span class="text-white text-sm">${t('通知設定','Notification Settings')}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-600 text-sm">${S.notifPrefs.enabled ? t('オン','On') : t('オフ','Off')}</span>
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </div>
-        </div>
+        </button>
       </div>
 
       <!-- Blocked apps -->
@@ -2600,8 +2706,8 @@ function renderSettings() {
     document.getElementById('privacy-toggle').classList.toggle('on', u.isPublic);
     document.getElementById('privacy-lbl').textContent = u.isPublic ? t('公開','Public') : t('非公開','Private');
   });
-  document.getElementById('notif-toggle').addEventListener('click', e => {
-    e.currentTarget.classList.toggle('on');
+  document.getElementById('st-notif-btn').addEventListener('click', () => {
+    renderNotifSettings();
   });
   document.getElementById('st-lang-btn').addEventListener('click', () => {
     S.lang = S.lang === 'ja' ? 'en' : 'ja';
@@ -2706,19 +2812,30 @@ function renderNotifications() {
       <h2 class="text-xl font-bold text-white ml-2">${t('通知','Notifications')}</h2>
     </div>
     <div class="flex-grow overflow-y-auto no-scrollbar divide-y divide-gray-900">
-      ${[
-        { icon:'❤️', color:'red', text: t('<b>Alice</b> があなたの投稿にいいねしました','<b>Alice</b> liked your post'), sub: t('2時間前','2h ago') },
-        { icon:'💬', color:'gray', text: t('<b>Ben</b> がコメントしました: "いいね！"','<b>Ben</b> commented: "Nice!"'), sub: t('5時間前','5h ago') },
-        { icon:'⏱', color:'gray', text: t('<b>Chloe</b> がデトックスを開始しました','<b>Chloe</b> started a detox session'), sub: t('昨日','Yesterday') },
-      ].map(n=>`
-        <div class="flex items-start space-x-3 px-4 py-4">
-          <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5 text-base">${n.icon}</div>
-          <div>
-            <p class="text-sm text-white">${n.text}</p>
-            <p class="text-xs text-gray-700 mt-0.5">${n.sub}</p>
+      ${(() => {
+        const all = [
+          { icon:'⏱', type:'friendDetoxStart', text: t('<b>Chloe</b> がデトックスを開始しました','<b>Chloe</b> started a detox session'), sub: t('1時間前','1h ago') },
+          { icon:'❤️', type:'likes', text: t('<b>Alice</b> があなたの投稿にいいねしました','<b>Alice</b> liked your post'), sub: t('2時間前','2h ago') },
+          { icon:'✅', type:'friendDetoxEnd', text: t('<b>Ben</b> がデトックスを終了しました（60分）','<b>Ben</b> completed a detox session (60 min)'), sub: t('3時間前','3h ago') },
+          { icon:'💬', type:'comments', text: t('<b>Ben</b> がコメントしました: "いいね！"','<b>Ben</b> commented: "Nice!"'), sub: t('5時間前','5h ago') },
+          { icon:'⏱', type:'friendDetoxStart', text: t('<b>David</b> がデトックスを開始しました','<b>David</b> started a detox session'), sub: t('昨日','Yesterday') },
+          { icon:'✅', type:'friendDetoxEnd', text: t('<b>Chloe</b> がデトックスを終了しました（30分）','<b>Chloe</b> completed a detox session (30 min)'), sub: t('昨日','Yesterday') },
+        ];
+        const p = S.notifPrefs;
+        const filtered = p.enabled ? all.filter(n => p[n.type] !== false) : [];
+        if (filtered.length === 0) {
+          return `<p class="text-center text-gray-700 text-sm mt-12">${t('通知はありません','No notifications')}</p>`;
+        }
+        return filtered.map(n=>`
+          <div class="flex items-start space-x-3 px-4 py-4">
+            <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5 text-base">${n.icon}</div>
+            <div>
+              <p class="text-sm text-white">${n.text}</p>
+              <p class="text-xs text-gray-700 mt-0.5">${n.sub}</p>
+            </div>
           </div>
-        </div>
-      `).join('')}
+        `).join('');
+      })()}
     </div>
   `;
   goto('notifications');
