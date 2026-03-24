@@ -501,6 +501,9 @@
       <h3 id="manual-sheet-title" class="text-xl font-black text-white text-center mb-1">デトックス開始</h3>
       <p id="manual-sheet-sub" class="text-gray-600 text-sm text-center mb-5">制限するアプリと時間をセット</p>
 
+      <!-- All-User Detox Event -->
+      <div id="global-detox-card" class="mb-5 rounded-2xl p-4 border border-gray-800 bg-[#1C1C1E]"></div>
+
       <!-- App Selection -->
       <div class="mb-5">
         <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
@@ -697,6 +700,8 @@ const S = {
   friendsTimerId: null,
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
   groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy }
+  globalDetoxTime: null, // { h, m } — today's all-user detox time (19-21:45, 15min slots)
+  globalDetoxReserved: false,
   lang: 'ja',            // 'ja' | 'en'
 };
 
@@ -1825,13 +1830,6 @@ function renderGroupDetail(groupId) {
   const inLobby = isMyGroup && !gd.startTime;
   const inSession = isMyGroup && !!gd.startTime;
 
-  // Preset durations for group detox
-  const GD_DURATIONS = [
-    { label: t('30分','30 min'), sec: 1800 },
-    { label: t('1時間','1 hour'), sec: 3600 },
-    { label: t('2時間','2 hours'), sec: 7200 },
-  ];
-  const selectedDur = (isMyGroup ? gd.duration : GD_DURATIONS[1].sec);
 
   // Member ready status html
   function memberReadyRows(readyList) {
@@ -1903,7 +1901,7 @@ function renderGroupDetail(groupId) {
           ${memberReadyRows(gd.readyMembers)}
         </div>
         <div class="mt-3 flex items-center justify-between">
-          <span class="text-xs text-gray-600">${t('時間:','Duration:')} <span class="text-white font-bold">${GD_DURATIONS.find(d=>d.sec===gd.duration)?.label||t('1時間','1 hour')}</span></span>
+          <span class="text-xs text-gray-600">${t('時間:','Duration:')} <span class="text-white font-bold">${fmtDuration(gd.duration, true)}</span></span>
           <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${gd.allMembers.length}${t('人 準備完了',' ready')}</span>
         </div>
       </div>
@@ -1915,12 +1913,14 @@ function renderGroupDetail(groupId) {
       <!-- DEFAULT: setup -->
       <div class="card p-4">
         <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">${t('デトックス時間','Detox Duration')}</p>
-        <div class="flex gap-2" id="gd-dur-btns">
-          ${GD_DURATIONS.map(d => `
-            <button class="gd-dur flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${d.sec===selectedDur?'text-black border-transparent':'border-gray-800 text-gray-500'}"
-              style="${d.sec===selectedDur?`background:${g.color};`:'background:#1C1C1E;'}"
-              data-sec="${d.sec}">${d.label}</button>
-          `).join('')}
+        <div class="flex justify-center items-center relative" style="height:15rem;">
+          <div class="absolute left-1/2 -translate-x-1/2 w-44 h-16 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-[#1C1C1E] via-transparent to-[#1C1C1E] pointer-events-none z-10"></div>
+          <div class="z-20 flex items-center space-x-1">
+            <div id="gd-picker-hours" class="picker-col"></div>
+            <span class="text-3xl font-black text-gray-600">:</span>
+            <div id="gd-picker-minutes" class="picker-col"></div>
+          </div>
         </div>
       </div>
 
@@ -1991,23 +1991,13 @@ function renderGroupDetail(groupId) {
       renderGroupDetail(groupId);
     });
   } else {
-    // Duration selector
-    let gdSelectedDur = selectedDur;
-    page.querySelectorAll('.gd-dur').forEach(btn => {
-      btn.addEventListener('click', () => {
-        gdSelectedDur = parseInt(btn.dataset.sec);
-        page.querySelectorAll('.gd-dur').forEach(b => {
-          const active = parseInt(b.dataset.sec) === gdSelectedDur;
-          b.style.background = active ? g.color : '#1C1C1E';
-          b.style.borderColor = active ? 'transparent' : '';
-          b.className = b.className.replace(/text-black|text-gray-500/g, '');
-          b.classList.add(active ? 'text-black' : 'text-gray-500');
-          b.style.borderColor = active ? 'transparent' : '#374151';
-        });
-      });
-    });
+    // Group detox dial picker init
+    initGroupDetoxPicker();
 
     document.getElementById('gd-ready-btn').addEventListener('click', () => {
+      const gdH = getPickerValue('gd-picker-hours');
+      const gdM = getPickerValue('gd-picker-minutes');
+      const gdSelectedDur = Math.max(300, gdH * 3600 + gdM * 60); // min 5 min
       // Enter lobby - mark "me" as ready and as initiator
       S.groupDetox = {
         groupId,
@@ -2740,8 +2730,39 @@ function renderAppChips() {
   });
 }
 
+function renderGlobalDetoxCard() {
+  const card = document.getElementById('global-detox-card');
+  if (!card || !S.globalDetoxTime) return;
+  const { h, m } = S.globalDetoxTime;
+  const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const beforeNoon = new Date().getHours() < 12;
+  const reserved = S.globalDetoxReserved;
+  card.innerHTML = `
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:#a78bfa">${t('全ユーザーデトックス','All-User Detox')}</p>
+        <p class="text-xl font-black text-white">${t('今日','Today')} ${timeStr}</p>
+        <p class="text-xs text-gray-600 mt-0.5">${beforeNoon
+          ? t('正午まで予約受付中','Reservations open until noon')
+          : t('本日の予約受付終了','Reservations closed')}</p>
+      </div>
+      ${beforeNoon && !reserved
+        ? `<button id="global-reserve-btn" class="ml-3 bg-white text-black px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap">${t('予約する','Reserve')}</button>`
+        : reserved
+          ? `<span class="ml-3 text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('予約済み','Reserved')}</span>`
+          : `<span class="ml-3 text-xs text-gray-700 font-semibold">${t('受付終了','Closed')}</span>`
+      }
+    </div>
+  `;
+  document.getElementById('global-reserve-btn')?.addEventListener('click', () => {
+    S.globalDetoxReserved = true;
+    renderGlobalDetoxCard();
+  });
+}
+
 function openManualSheet() {
   document.getElementById('manual-sheet').classList.add('open');
+  renderGlobalDetoxCard();
   renderAppChips();
   initTimePicker();
   initSlider('manual-slider','manual-thumb','manual-reveal', () => {
@@ -2765,6 +2786,36 @@ document.getElementById('manual-cancel-btn').addEventListener('click', () => {
 });
 
 let pickerInited = false;
+function initGroupDetoxPicker() {
+  const hPicker = document.getElementById('gd-picker-hours');
+  const mPicker = document.getElementById('gd-picker-minutes');
+  if (!hPicker || !mPicker || hPicker.children.length > 0) return;
+
+  function buildCol(el, count, step) {
+    const pad = document.createElement('div'); pad.className = 'picker-pad';
+    el.appendChild(pad.cloneNode());
+    for (let i = 0; i < count; i += step) {
+      const item = document.createElement('div');
+      item.className = 'picker-item';
+      item.textContent = String(i).padStart(2,'0');
+      el.appendChild(item);
+    }
+    el.appendChild(pad.cloneNode());
+  }
+  buildCol(hPicker, 6, 1);   // 0-5 hours
+  buildCol(mPicker, 60, 5);  // 0,5,10...55 min
+
+  // Scroll to default: 1 hour 0 min
+  [hPicker, mPicker].forEach(p => {
+    p.addEventListener('scroll', () => highlightCenter(p));
+    setTimeout(() => {
+      const items = p.querySelectorAll('.picker-item');
+      if (p === hPicker && items[1]) p.scrollTop = items[1].offsetTop - p.clientHeight / 2 + items[1].offsetHeight / 2;
+      highlightCenter(p);
+    }, 50);
+  });
+}
+
 function initTimePicker() {
   if (pickerInited) return;
   pickerInited = true;
@@ -3397,6 +3448,13 @@ function renderPremium() {
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Generate today's all-user detox time: random 15-min slot between 19:00–21:45
+  (() => {
+    const slots = [];
+    for (let h = 19; h <= 21; h++) for (let m = 0; m < 60; m += 15) slots.push({ h, m });
+    S.globalDetoxTime = slots[Math.floor(Math.random() * slots.length)];
+  })();
+
   renderLogin();
   renderRegister();
   renderInterruptPage();
