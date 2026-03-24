@@ -182,24 +182,6 @@
     }
     #comment-panel.open { transform: translateX(0); }
 
-    /* ===== CHALLENGE BANNER ===== */
-    #challenge-banner {
-      position: fixed;
-      top: 1rem; left: 1rem; right: 1rem;
-      max-width: 400px;
-      margin: 0 auto;
-      background: rgba(25,25,27,0.97);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 1.1rem;
-      padding: 0.9rem 1rem;
-      z-index: 9999;
-      transform: translateY(-160%);
-      transition: transform 0.5s cubic-bezier(0.19,1,0.22,1);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
-    }
-    #challenge-banner.visible { transform: translateY(0); }
 
     /* ===== BOTTOM SHEET MODAL ===== */
     .sheet-overlay {
@@ -353,7 +335,6 @@
   <div id="page-home" class="page flex flex-col"></div>
 
   <!-- ===================== CHALLENGE ===================== -->
-  <div id="page-challenge" class="page flex flex-col items-center justify-between px-6 py-10"></div>
 
   <!-- ===================== SESSION ACTIVE ===================== -->
   <div id="page-session" class="page flex flex-col items-center justify-between px-6 pt-10 pb-8"></div>
@@ -363,6 +344,9 @@
 
   <!-- ===================== POST SESSION ===================== -->
   <div id="page-post-session" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-8 pb-nav"></div>
+
+  <!-- ===================== DETOX (TUNEOUT) ===================== -->
+  <div id="page-tuneout" class="page flex flex-col"></div>
 
   <!-- ===================== FRIENDS ===================== -->
   <div id="page-friends" class="page flex flex-col"></div>
@@ -389,6 +373,9 @@
   <!-- ===================== NOTIFICATIONS ===================== -->
   <div id="page-notifications" class="page flex flex-col"></div>
 
+  <!-- ===================== NOTIFICATION SETTINGS ===================== -->
+  <div id="page-notif-settings" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
   <!-- ===================== PREMIUM ===================== -->
   <div id="page-premium" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
 
@@ -406,10 +393,10 @@
     <div id="invite-overlay" class="absolute inset-0 bg-black/60"></div>
     <div id="invite-drawer" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#1C1C1E] rounded-t-3xl p-5" style="transform:translateX(-50%) translateY(100%);transition:transform 0.35s cubic-bezier(0.25,1,0.5,1);">
       <div class="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-5"></div>
-      <h2 class="text-lg font-black text-white mb-1" id="invite-sheet-title">フレンドを招待</h2>
+      <h2 class="text-lg font-black text-white mb-1" id="invite-sheet-title"></h2>
       <p class="text-xs text-gray-600 mb-4" id="invite-sheet-subtitle"></p>
       <div id="invite-friends-list" class="space-y-2 max-h-72 overflow-y-auto no-scrollbar"></div>
-      <button id="invite-close-btn" class="mt-4 w-full py-3 rounded-2xl bg-[#2C2C2E] text-gray-400 font-semibold text-sm">閉じる</button>
+      <button id="invite-close-btn" class="mt-4 w-full py-3 rounded-2xl bg-[#2C2C2E] text-gray-400 font-semibold text-sm">Close</button>
     </div>
   </div>
 
@@ -421,7 +408,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      <h2 class="absolute left-1/2 -translate-x-1/2 font-bold text-white text-base">投稿</h2>
+      <h2 id="comment-panel-title" class="absolute left-1/2 -translate-x-1/2 font-bold text-white text-base">投稿</h2>
     </div>
     <div class="flex-grow overflow-y-auto no-scrollbar">
       <div id="comment-post-body" class="border-b border-gray-900 p-4"></div>
@@ -437,43 +424,25 @@
     </div>
   </div>
 
-  <!-- ===== CHALLENGE NOTIFICATION BANNER ===== -->
-  <div id="challenge-banner">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-          <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
-          </svg>
-        </div>
-        <div>
-          <p class="font-bold text-white text-sm" id="challenge-title">デトックスチャレンジ！</p>
-          <p id="banner-sub" class="text-xs text-gray-400">読み込み中...</p>
-        </div>
-      </div>
-      <button id="banner-join-btn" class="ml-3 bg-white text-black px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">
-        参加する
-      </button>
-    </div>
-  </div>
+
 
   <!-- ===== MANUAL START SHEET ===== -->
   <div id="manual-sheet" class="sheet-overlay">
     <div class="sheet-body">
       <div class="sheet-handle"></div>
-      <h3 class="text-xl font-black text-white text-center mb-1">デトックス開始</h3>
-      <p class="text-gray-600 text-sm text-center mb-5">制限するアプリと時間をセット</p>
+      <h3 id="manual-sheet-title" class="text-xl font-black text-white text-center mb-1">デトックス開始</h3>
+      <p id="manual-sheet-sub" class="text-gray-600 text-sm text-center mb-5">制限するアプリと時間をセット</p>
 
       <!-- App Selection -->
       <div class="mb-5">
-        <p class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
+        <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
         <div id="app-chip-list" class="flex flex-wrap gap-2"></div>
       </div>
 
       <!-- Divider -->
       <div class="flex items-center gap-3 mb-4">
         <div class="flex-1 h-px bg-gray-800"></div>
-        <p class="text-xs text-gray-600 font-semibold">時間</p>
+        <p id="manual-time-label" class="text-xs text-gray-600 font-semibold">時間</p>
         <div class="flex-1 h-px bg-gray-800"></div>
       </div>
 
@@ -496,7 +465,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
         </div>
-        <span class="slider-label">スワイプして開始</span>
+        <span id="manual-slider-label" class="slider-label">スワイプして開始</span>
       </div>
 
       <button id="manual-cancel-btn" class="w-full text-gray-600 font-semibold py-3 mt-1 text-sm">キャンセル</button>
@@ -537,7 +506,7 @@
       </svg>
     </button>
     <!-- CENTER: (DIS)CONNECT -->
-    <button class="nav-btn p-3 text-gray-500" id="disconnect-nav-btn" data-page="disconnect">
+    <button class="nav-btn p-3 text-gray-500" id="tuneout-nav-btn" data-page="tuneout">
       <svg class="icon-outline w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
       </svg>
@@ -583,7 +552,6 @@ const MOCK_GROUPS = [
     activeSince: Date.now() - 1200000,
     isActive: true,
     streak: 5,
-    pendingDetox: { creatorId: 'alice', duration: 3600, apps: ['YouTube', 'Instagram', 'X'] },
   },
   {
     id: 'g2', name: '週末チャレンジ', emoji: '🏔️',
@@ -622,11 +590,11 @@ const MOCK_GROUPS = [
 ];
 
 const MOCK_FRIENDS = [
-  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true,  blockApps: ['YouTube', 'Instagram'] },
-  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false, blockApps: ['X', 'TikTok'] },
-  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true,  blockApps: ['YouTube', 'LINE'] },
-  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true,  blockApps: ['Facebook', 'Discord'] },
-  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true,  blockApps: ['Instagram', 'TikTok'] },
+  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
+  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
+  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
 ];
 
 const MOCK_POSTS = [
@@ -645,7 +613,6 @@ const MOCK_COMMENTS = {
   4: [{ userId: 'chloe', text: 'かっこいい！' }, { userId: 'ben', text: '2時間はすごい' }],
 };
 
-// Group chat mock messages (keyed by group id)
 const MOCK_GROUP_CHATS = {
   g1: [
     { from: 'alice', text: 'おはようございます！今日も一緒に頑張りましょう🌅', time: '35分前' },
@@ -674,375 +641,47 @@ const S = {
   page: 'login',
   feedTab: 'following',
   activeSession: null,   // { startTime, totalDuration, timerId, isChallenge }
-  challengeData: null,   // { duration }
-  challengeAcceptTimerId: null,
   viewingUserId: null,
   commentPostId: null,
   pendingConfirm: null,
   friendsTimerId: null,
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
   groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy }
+  globalDetoxTime: null, // { h, m } — today's all-user detox time (19-21:45, 15min slots)
+  globalDetoxReserved: false,
+  detoxTab: 'now',       // 'now' | 'reserve'
   groupDetailTab: 'detox', // 'detox' | 'chat'
-  lang: localStorage.getItem('to_lang') || 'ja',
+  lang: 'ja',            // 'ja' | 'en'
   notifPrefs: {          // 通知種別設定
     enabled: true,
-    friendDetoxStart: true,
-    friendDetoxEnd: true,
-    likes: true,
-    comments: true,
-    groupInvite: true,
-    friendFilter: {},    // { [friendId]: { start: bool, end: bool } } – 未設定は両方通知
+    friendDetoxStart: true,  // フレンドのデトックス開始
+    friendDetoxEnd: true,    // フレンドのデトックス終了
+    likes: true,             // いいね
+    comments: true,          // コメント
+    groupInvite: true,       // グループ招待
+    friendFilter: {},        // { [friendId]: { start: bool, end: bool } } – 未設定は両方通知
   },
 };
 
-
 // ================================================================
-// I18N – instant language switching
+// i18n HELPER
 // ================================================================
-const TRANSLATIONS_EN = {
-  // Settings
-  '設定': 'Settings',
-  'アカウント': 'Account',
-  'アプリ設定': 'App Settings',
-  'ブロック対象アプリ': 'Blocked Apps',
-  '法律・サポート': 'Legal & Support',
-  '言語': 'Language',
-  '通知': 'Notifications',
-  'メールアドレス': 'Email Address',
-  'アカウントの公開設定': 'Account Privacy',
-  '公開': 'Public',
-  '非公開': 'Private',
-  '利用規約': 'Terms of Service',
-  'プライバシーポリシー': 'Privacy Policy',
-  'ログアウト': 'Log Out',
-  // Profile / Edit Profile
-  'プロフィール': 'Profile',
-  '編集': 'Edit',
-  'フォロー中': 'Following',
-  'フォロワー': 'Followers',
-  'フレンド': 'Friends',
-  'Friendsリクエスト': 'Friend Requests',
-  '実績': 'Achievements',
-  '記録': 'Records',
-  '今週の記録': 'This Week',
-  '今月の記録': 'This Month',
-  '合計デトックス時間': 'Total Detox Time',
-  '連続デトックス': 'Streak',
-  '達成したチャレンジ': 'Challenges Completed',
-  'プロフィールを編集': 'Edit Profile',
-  '表示名': 'Display Name',
-  '自己紹介': 'Bio',
-  'キャンセル': 'Cancel',
-  '保存': 'Save',
-  // Login / Register
-  'ログイン': 'Log In',
-  '新規登録': 'Sign Up',
-  'パスワード': 'Password',
-  'ログイン中...': 'Logging in...',
-  '登録中...': 'Registering...',
-  'すでにアカウントをお持ちの方': 'Already have an account?',
-  'アカウントをお持ちでない方': "Don't have an account?",
-  'Terms of Serviceに同意します': 'I agree to the Terms of Service',
-  // Home / Feed
-  'ホーム': 'Home',
-  'フォロー': 'Following',
-  '人気': 'Popular',
-  'デトックス中': 'Detoxing',
-  'の投稿': "'s post",
-  'いいね': 'Like',
-  'コメント': 'Comment',
-  'シェア': 'Share',
-  // Session
-  'セッション': 'Session',
-  'デトックス開始': 'Start Detox',
-  '開始': 'Start',
-  '終了': 'End',
-  '中断': 'Interrupt',
-  '休憩': 'Break',
-  '残り時間': 'Time Remaining',
-  '経過時間': 'Elapsed',
-  '目標時間': 'Goal',
-  '分間のデトックス': ' min detox',
-  'セッション完了': 'Session Complete',
-  'お疲れ様でした': 'Well done',
-  '投稿する': 'Post',
-  'スキップ': 'Skip',
-  '感想を投稿': 'Share your thoughts',
-  // Friends / Groups
-  'Friends': 'Friends',
-  'マイGroup': 'My Groups',
-  '新しいGroupを作成': 'Create New Group',
-  'Group名': 'Group Name',
-  'Groupの目的を一言で': 'Describe the group goal',
-  '招待したFriendsのみ参加可能': 'Only invited friends can join',
-  'Groupに参加できる上限': 'Maximum members',
-  '招待制': 'Invite Only',
-  '招待': 'Invite',
-  '招待する': 'Invite',
-  '作成': 'Create',
-  'Groupについて': 'About This Group',
-  'Groupストリーク': 'Group Streak',
-  'Groupセッション参加中！': 'Group session in progress!',
-  'メンバー': 'Members',
-  '開始する': 'Start',
-  // Messages / DM
-  'メッセージ': 'Messages',
-  '送信': 'Send',
-  'メッセージを入力': 'Type a message',
-  // Notifications
-  'お知らせ': 'Notifications',
-  'すべて': 'All',
-  '未読': 'Unread',
-  // Misc
-  'オンライン': 'Online',
-  'オフライン': 'Offline',
-  '日': 'Sun',
-  '月': 'Mon',
-  '火': 'Tue',
-  '水': 'Wed',
-  '木': 'Thu',
-  '金': 'Fri',
-  '土': 'Sat',
-  '時間': 'h',
-  '分': 'm',
-  '秒': 's',
-  '日前': 'd ago',
-  '時間前': 'h ago',
-  '分前': 'm ago',
-  '今': 'Now',
-  '昨日': 'Yesterday',
-  '今日': 'Today',
-  // Premium
-  'プレミアム': 'Premium',
-  // Confirm dialogs
-  'Friends解除': 'Remove Friend',
-  'Log Outしますか？': 'Are you sure you want to log out?',
-  // Friends / Groups
-  'グループ': 'Groups',
-  'Friendsを検索': 'Search Friends',
-  'フレンドを検索': 'Search friends',
-  'グループを検索': 'Search Groups',
-  'マイグループ': 'My Groups',
-  '新規グループ': 'New Group',
-  '新しいグループを作成（招待制・最大5名）': 'Create New Group (Invite-only, max 5)',
-  'グループの目的を一言で': 'Describe the group goal',
-  'グループ名': 'Group Name',
-  'グループについて': 'About This Group',
-  'グループストリーク': 'Group Streak',
-  'グループセッション参加中！': 'Group session in progress!',
-  'グループデトックス中': 'Group detox in progress',
-  'グループに参加できる上限': 'Max members',
-  'グループの説明なし': 'No description',
-  '招待制': 'Invite-only',
-  '招待する': 'Invite',
-  '招待': 'Invite',
-  // Friends list
-  'をブロック中': ' blocked',
-  '経過': 'elapsed',
-  '参加する': 'Join',
-  '日のストリーク': '-day streak',
-  '日間': ' days',
-  '名': ' members',
-  // Session / Detox
-  'デトックスチャレンジ！': 'Detox Challenge!',
-  '今日のデトックス': "Today's detox",
-  'のデトックス': ' detox',
-  '分間': ' min',
-  'スタディグループ': 'Study Group',
-  'ショートセッション完了': 'Short session done',
-  'が中断したため、グループセッションが終了しました': ' quit, so the group session ended.',
-  // DM / Messages
-  'やあ！最近デトックスできてる？': 'Hey! Been keeping up with the detox?',
-  'ちょっとずつ！今日も頑張ろう': 'Little by little! Keep it up today',
-  'ちょっとずつ！Todayも頑張ろう': 'Little by little! Keep it up today',
-  // Notifications / Feed
-  'があなたの投稿にいいねしました': ' liked your post',
-  'がコメントしました': ' commented',
-  'がデトックスを開始しました': ' started a detox',
-  // Mock bios
-  'フロントエンド開発者': 'Frontend Developer',
-  '集中力向上中': 'Improving focus',
-  'UIデザイナー': 'UI Designer',
-  'ランニング好き': 'Running enthusiast',
-  // Mock posts
-  '読書2章分、英単語100個': 'Read 2 chapters, 100 vocab words',
-  '久しぶりに集中できた！': 'Finally focused after a long time!',
-  'プログラミング課題': 'Programming assignment',
-  'AI論文読み込み': 'Reading AI papers',
-  '2時間、スマホなし！': '2 hours, no phone!',
-  // Mock comments
-  'すごい！継続できてますね': 'Awesome! Keep it up!',
-  '私も頑張ります！': "I'll do my best too!",
-  'お疲れ様です！': 'Great work!',
-  'かっこいい！': 'Impressive!',
-  '2時間はすごい': '2 hours is amazing',
-  // Ad
-  '思考を整理するワークスペース。今日から使おう。': 'A workspace to organize your thoughts. Start today.',
-  '詳しく見る': 'Learn more',
-  // Post session
-  '今日のデトックスはどうでしたか？': "How was today's detox?",
-  // Streak / stats
-  '日間継続中': ' day streak',
-  '合計': 'Total',
-  '週間': ' weeks',
-  // Premium features
-  'グループ無制限作成': 'Unlimited Groups',
-  '複数グループを自由に作成・管理': 'Create and manage multiple groups freely',
-  'ストリークバッジ': 'Streak Badge',
-  '連続記録を特別なバッジでアピール': 'Show off your streak with a special badge',
-  '詳細アナリティクス': 'Detailed Analytics',
-  '月次・年次の統計データを表示': 'View monthly and yearly statistics',
-  'カスタムテーマ': 'Custom Theme',
-  'プロフィールカラーと背景をカスタマイズ': 'Customize profile color and background',
-  'スマートリマインダー': 'Smart Reminders',
-  'AIが最適なデトックス時間を提案': 'AI suggests the best detox times',
-  'リーダーボード': 'Leaderboard',
-  'フレンドとのランキング比較': 'Compare rankings with friends',
-  // Create group
-  '作成する': 'Create',
-  '絵文字を選択': 'Choose emoji',
-  '色を選択': 'Choose color',
-  // Misc UI
-  '未読のみ': 'Unread only',
-  '検索': 'Search',
-  'のフォロー': ' following',
-  '人のフォロワー': ' followers',
-  // Profile stats
-  '日連続': '-day streak',
-  '完了セッション': 'Sessions done',
-  '完了': 'Done',
-  '週末チャレンジ': 'Weekend Challenge',
-  '週末は2時間のデジタルデトックスにチャレンジ': '2-hour digital detox challenge on weekends',
-  // Session page
-  'ブロック中': 'Blocking',
-  '人が国内でデトックス中': 'people detoxing nationwide',
-  '人のフレンドがデトックス中': 'friends detoxing',
-  'メインルームへ': 'Main Room',
-  'デトックスを中断する': 'Interrupt Detox',
-  'デトックス完了！': 'Detox Complete!',
-  'セッション中断': 'Session Interrupted',
-  // Group detail
-  '日連続': '-day streak',
-  '人がデトックス中': ' detoxing',
-  '待機中': 'Waiting',
-  '準備完了にする': 'Mark Ready',
-  'グループデトックスを作成': 'Create Group Detox',
-  '参加する': 'Join',
-  'メンバーが参加すると自動でスタートします': 'Session starts automatically when members join',
-  '参加するとデトックスが開始されます': 'Detox starts when you join',
-  '全員が準備完了になると自動でスタートします': 'Session starts automatically when everyone is ready',
-  '作成者が設定': 'Set by creator',
-  'ホストが設定': 'Set by creator',
-  '各自選択': 'Each member chooses',
-  'メンバー全員がこの時間でデトックスします': 'All members detox for this duration',
-  '作成者設定時間': 'Creator duration',
-  'ホスト設定時間': 'Creator duration',
-  '（全員共通）': '(shared)',
-  '準備完了': 'Ready',
-  '人 準備完了': ' ready',
-  // Post session
-  '達成したこと（任意）': 'Achievement (optional)',
-  '一言コメント（任意）': 'Comment (optional)',
-  '説明（任意）': 'Description (optional)',
-  '例: 読書3章、英単語100個...': 'e.g. Read 3 chapters, 100 vocab words...',
-  '画像を追加': 'Add image',
-  // Weekly chart
-  '今週': 'This week',
-  '週': 'week',
-  '連続': '-day streak',
-  // Manual start sheet
-  'デトックス開始': 'Start Detox',
-  '制限するアプリと時間をセット': 'Set apps to block and duration',
-  '制限するアプリ': 'Apps to block',
-  'スワイプして開始': 'Swipe to start',
-  '時間': 'hr',
-  // Notifications
-  'があなたの投稿にいいね': ' liked your post',
-  'コメントしました': 'commented',
-  // Session / interrupt
-  '中断しますか？': 'Interrupt the session?',
-  'セッションを終了しますか？': 'End the session?',
-  'セッション中断': 'Session interrupted',
-  'セッション完了': 'Session Complete',
-  'デトックス達成': 'Detox Achieved',
-  'お疲れ様でした！': 'Well done!',
-  '感想を共有する': 'Share your thoughts',
-  '今回のデトックス': 'This session',
-  '継続中': 'In progress',
-  'コメントを入力': 'Add a comment',
-  '返信': 'Reply',
-  '読み込み中...': 'Loading...',
-  '作成': 'Create',
-  // User profile
-  'フォロー': 'Follow',
-  'フォロー中': 'Following',
-  'フレンドリクエストを送る': 'Send Friend Request',
-  'フレンドリクエスト受信中': 'Friend Request Received',
-  'リクエストを送りました': 'Request Sent',
-  // Login / register prompts
-  'メールアドレスを入力': 'Enter email',
-  'パスワードを入力': 'Enter password',
-  '表示名を入力': 'Enter display name',
-};
+function t(ja, en) { return S.lang === 'en' ? en : ja; }
 
-function applyLang() {
-  if (S.lang !== 'en') return;
-  // Sort entries longest-key-first so compound words match before substrings
-  const entries = Object.entries(TRANSLATIONS_EN).sort((a, b) => b[0].length - a[0].length);
-  // Walk all text nodes
-  const walker = document.createTreeWalker(
-    document.body,
-    NodeFilter.SHOW_TEXT,
-    null
-  );
-  let node;
-  while ((node = walker.nextNode())) {
-    let txt = node.textContent;
-    if (!txt.trim()) continue;
-    let changed = false;
-    for (const [ja, en] of entries) {
-      if (txt.includes(ja)) {
-        txt = txt.split(ja).join(en);
-        changed = true;
-      }
-    }
-    if (changed) node.textContent = txt;
-  }
-  // Placeholders
-  document.querySelectorAll('[placeholder]').forEach(el => {
-    let p = el.getAttribute('placeholder');
-    for (const [ja, en] of entries) {
-      if (p.includes(ja)) p = p.split(ja).join(en);
-    }
-    el.setAttribute('placeholder', p);
-  });
-}
-
-function rerenderCurrentPage() {
-  const fn = {
-    login:          renderLogin,
-    register:       renderRegister,
-    home:           () => { renderHome(); goto('home'); },
-    friends:        renderFriends,
-    messages:       renderMessages,
-    profile:        renderProfile,
-    notifications:  renderNotifications,
-    settings:       renderSettings,
-    session:        renderSessionPage,
-    'post-session': renderPostSession,
-    interrupt:      renderInterruptPage,
-    'group-detail': () => renderGroupDetail(S.viewingGroupId),
-    'user-profile': () => renderUserProfile(S.viewingUserId),
-    dm:             () => renderDM(S.dmFriendId),
-    'edit-profile': renderEditProfile,
-    premium:        renderPremium,
-    terms:          renderTerms,
-    privacy:        renderPrivacy,
-    'create-group': renderCreateGroup,
-    challenge:      () => {},
-  }[S.page];
-  if (fn) fn();
-  else applyLang();
+function renderStaticLabels() {
+  const set = (id, text) => { const e = document.getElementById(id); if(e) e.textContent = text; };
+  const attr = (id, a, v) => { const e = document.getElementById(id); if(e) e.setAttribute(a, v); };
+  set('banner-title', t('デトックスチャレンジ！','Detox Challenge!'));
+  set('banner-join-btn', t('参加する','Join'));
+  set('manual-sheet-title', t('デトックス開始','Start Detox'));
+  set('manual-sheet-sub', t('制限するアプリと時間をセット','Set apps to block and duration'));
+  set('manual-apps-label', t('制限するアプリ','Apps to Block'));
+  set('manual-time-label', t('時間','Duration'));
+  set('manual-slider-label', t('スワイプして開始','Swipe to Start'));
+  set('manual-cancel-btn', t('キャンセル','Cancel'));
+  set('confirm-cancel-btn', t('キャンセル','Cancel'));
+  set('comment-panel-title', t('投稿','Post'));
+  attr('comment-input', 'placeholder', t('コメントを追加...','Add a comment...'));
 }
 
 // ================================================================
@@ -1057,15 +696,9 @@ const getDM      = id => JSON.parse(localStorage.getItem(`to_dm_${id}`)) || [
   { from: 'me',text: 'ちょっとずつ！今日も頑張ろう',     time: '昨日' },
 ];
 const saveDM     = (id, msgs) => localStorage.setItem(`to_dm_${id}`, JSON.stringify(msgs));
-
-// Group chat storage
 const getGroupChat  = (gid) => JSON.parse(localStorage.getItem(`to_group_chat_${gid}`)) || (MOCK_GROUP_CHATS[gid] ? [...MOCK_GROUP_CHATS[gid]] : []);
 const saveGroupChat = (gid, msgs) => localStorage.setItem(`to_group_chat_${gid}`, JSON.stringify(msgs));
-
-// Premium check
 const isPremium = () => localStorage.getItem('to_premium') === 'true';
-
-// Group detox daily count (max 3/day for free users)
 function getGroupDetoxCount() {
   const today = new Date().toDateString();
   const data = JSON.parse(localStorage.getItem('to_group_detox_count') || '{}');
@@ -1077,13 +710,11 @@ function addGroupDetoxCount() {
   data[today] = (data[today] || 0) + 1;
   localStorage.setItem('to_group_detox_count', JSON.stringify(data));
 }
-
-// Show premium upgrade prompts
 function showGroupLimitPrompt() {
   showConfirm(
-    'グループ上限に達しました',
-    '参加できるグループは3つまでです。プレミアムにアップグレードすると無制限に参加できます。',
-    'プレミアムへ',
+    t('グループ上限に達しました','Group Limit Reached'),
+    t('参加できるグループは3つまでです。プレミアムにアップグレードすると無制限に参加できます。','You can join up to 3 groups. Upgrade to Premium for unlimited groups.'),
+    t('プレミアムへ','Go Premium'),
     () => goto('premium')
   );
   requestAnimationFrame(() => {
@@ -1093,9 +724,9 @@ function showGroupLimitPrompt() {
 }
 function showDetoxLimitPrompt() {
   showConfirm(
-    '本日の上限に達しました',
-    'グループデトックスは1日3回まで参加できます。プレミアムにアップグレードすると無制限に参加できます。',
-    'プレミアムへ',
+    t('本日の上限に達しました','Daily Limit Reached'),
+    t('グループデトックスは1日3回まで参加できます。プレミアムにアップグレードすると無制限に参加できます。','You can join group detox sessions up to 3 times per day. Upgrade to Premium for unlimited sessions.'),
+    t('プレミアムへ','Go Premium'),
     () => goto('premium')
   );
   requestAnimationFrame(() => {
@@ -1153,7 +784,7 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // ================================================================
 const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
                 'notifications','notif-settings','challenge','session','interrupt','post-session',
-                'premium','create-group','terms','privacy','group-detail'];
+                'premium','create-group','terms','privacy'];
 
 function goto(page) {
   // Stop friend timers when leaving friends page
@@ -1190,12 +821,11 @@ function goto(page) {
 
   // Page-specific render
   if (page === 'home')         renderHome();
+  if (page === 'tuneout')      renderTuneout();
   if (page === 'friends')      renderFriends();
   if (page === 'messages')     renderMessages();
   if (page === 'profile')      renderProfile();
   if (page === 'notifications') renderNotifications();
-  // Apply language after render
-  if (S.lang === 'en') setTimeout(applyLang, 0);
 }
 
 // ================================================================
@@ -1204,9 +834,9 @@ function goto(page) {
 document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
   btn.addEventListener('click', () => {
     const page = btn.dataset.page;
-    if (page === 'disconnect') {
+    if (page === 'tuneout') {
       if (S.activeSession) goto('session');
-      else openManualSheet();
+      else goto('tuneout');
     } else {
       goto(page);
     }
@@ -1225,16 +855,16 @@ function renderLogin() {
         </svg>
       </div>
       <h1 class="text-4xl font-black text-white">(DIS)CONNECT</h1>
-      <p class="text-gray-500 mt-2 text-sm">デジタルデトックスを、みんなで。</p>
+      <p class="text-gray-500 mt-2 text-sm">${t('デジタルデトックスを、みんなで。','Digital detox, together.')}</p>
     </div>
     <div class="space-y-3">
-      <input id="li-email" class="input-field" type="email" placeholder="メールアドレス / 電話番号">
-      <input id="li-pass"  class="input-field" type="password" placeholder="パスワード">
+      <input id="li-email" class="input-field" type="email" placeholder="${t('メールアドレス / 電話番号','Email / Phone')}">
+      <input id="li-pass"  class="input-field" type="password" placeholder="${t('パスワード','Password')}">
       <button id="li-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
-        ログイン
+        ${t('ログイン','Log In')}
       </button>
       <button id="li-reg-btn" class="w-full border border-gray-800 text-gray-300 font-semibold py-4 rounded-full text-base hover:bg-white/5 transition">
-        新規登録
+        ${t('新規登録','Sign Up')}
       </button>
     </div>
   `;
@@ -1245,13 +875,12 @@ function renderLogin() {
 function handleLogin() {
   let u = getUser();
   if (!u) {
-    u = { name: 'ゆうき', handle: '@yuuki', bio: 'デジタルデトックス挑戦中',
+    u = { name: t('ゆうき','Yuuki'), handle: '@yuuki', bio: t('デジタルデトックス挑戦中','Digital detox challenger'),
           avatar: 'https://placehold.co/72x72/334155/FFF?text=U',
           email: 'user@example.com', isPublic: true };
     saveUser(u);
   }
   goto('home');
-  setTimeout(triggerChallengeBanner, 2500);
 }
 
 // ================================================================
@@ -1264,38 +893,38 @@ function renderRegister() {
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
       </svg>
     </button>
-    <h2 class="text-3xl font-black text-white mb-8">アカウント作成</h2>
+    <h2 class="text-3xl font-black text-white mb-8">${t('アカウント作成','Create Account')}</h2>
     <div class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーネーム</label>
-        <input id="reg-name" class="input-field" type="text" placeholder="表示名">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーネーム','Username')}</label>
+        <input id="reg-name" class="input-field" type="text" placeholder="${t('表示名','Display name')}">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーID (@)</label>
-        <input id="reg-handle" class="input-field" type="text" placeholder="例: disconnect_user">
-        <p class="text-xs text-gray-700 mt-1 ml-1">3〜30文字、英数字・_・. のみ</p>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーID (@)','User ID (@)')}</label>
+        <input id="reg-handle" class="input-field" type="text" placeholder="${t('例: tuneout_user','e.g. tuneout_user')}">
+        <p class="text-xs text-gray-700 mt-1 ml-1">${t('3〜30文字、英数字・_・. のみ','3–30 chars, letters, numbers, _ and . only')}</p>
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">メールアドレス</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('メールアドレス','Email')}</label>
         <input id="reg-email" class="input-field" type="email" placeholder="mail@example.com">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">生年月日</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('生年月日','Date of Birth')}</label>
         <input id="reg-birth" class="input-field" type="text" placeholder="YYYY/MM/DD">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">パスワード</label>
-        <input id="reg-pass" class="input-field" type="password" placeholder="8文字以上">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('パスワード','Password')}</label>
+        <input id="reg-pass" class="input-field" type="password" placeholder="${t('8文字以上','8+ characters')}">
       </div>
       <label class="flex items-start space-x-3 pt-1 cursor-pointer">
         <input id="reg-agree" type="checkbox" class="mt-1 flex-shrink-0 accent-white w-4 h-4">
         <span class="text-sm text-gray-400">
-          <span id="open-terms" class="text-white underline">利用規約</span>および
-          <span id="open-privacy" class="text-white underline">プライバシーポリシー</span>に同意します
+          <span id="open-terms" class="text-white underline">${t('利用規約','Terms of Service')}</span>${t('および','and')}
+          <span id="open-privacy" class="text-white underline">${t('プライバシーポリシー','Privacy Policy')}</span>${t('に同意します','')}
         </span>
       </label>
       <button id="reg-submit" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
-        登録する
+        ${t('登録する','Sign Up')}
       </button>
     </div>
   `;
@@ -1317,8 +946,8 @@ function renderRegister() {
     const handle = document.getElementById('reg-handle').value.trim();
     const email  = document.getElementById('reg-email').value.trim();
     const agree  = document.getElementById('reg-agree').checked;
-    if (!name || !handle || !email) { alert('必須項目を入力してください'); return; }
-    if (!agree) { alert('利用規約に同意してください'); return; }
+    if (!name || !handle || !email) { alert(t('必須項目を入力してください','Please fill in all required fields')); return; }
+    if (!agree) { alert(t('利用規約に同意してください','Please agree to the Terms of Service')); return; }
     const u = {
       name, handle: `@${handle.replace('@','')}`,
       bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
@@ -1326,7 +955,6 @@ function renderRegister() {
     };
     saveUser(u);
     goto('home');
-    setTimeout(triggerChallengeBanner, 2500);
   });
 }
 
@@ -1349,21 +977,6 @@ document.getElementById('confirm-ok-btn').addEventListener('click', () => {
   if (S.pendingConfirm) { S.pendingConfirm(); S.pendingConfirm = null; }
 });
 
-// ================================================================
-// CHALLENGE BANNER
-// ================================================================
-function triggerChallengeBanner() {
-  const choices = [30,45,60,90,120,150];
-  const dur = choices[Math.floor(Math.random() * choices.length)];
-  S.challengeData = { duration: dur * 60 };
-  document.getElementById('banner-sub').textContent = S.lang === 'en' ? `Today's detox: ${dur}m` : `今日のデトックス: ${dur}分間`;
-  document.getElementById('challenge-banner').classList.add('visible');
-  setTimeout(() => document.getElementById('challenge-banner').classList.remove('visible'), 9000);
-}
-document.getElementById('banner-join-btn').addEventListener('click', () => {
-  document.getElementById('challenge-banner').classList.remove('visible');
-  if (S.challengeData) openChallengePage();
-});
 
 // ================================================================
 // HOME FEED
@@ -1580,79 +1193,8 @@ const ALL_APPS = [
   { label: 'Discord',   bg: '5865F2' },
   { label: 'Twitch',    bg: '9146FF' },
 ];
-const getBlockedApps = () => {
-  if (S.groupDetox?.blockedApps) return ALL_APPS.filter(a => S.groupDetox.blockedApps.includes(a.label));
-  return ALL_APPS.filter(a => S.selectedApps.has(a.label));
-};
+const getBlockedApps = () => ALL_APPS.filter(a => S.selectedApps.has(a.label));
 
-function openChallengePage() {
-  const durMin = Math.round((S.challengeData?.duration || 3600) / 60);
-  document.getElementById('page-challenge').innerHTML = `
-    <div class="text-center">
-      <p class="text-xs text-gray-600 font-bold uppercase tracking-widest mb-3">今日のチャレンジ</p>
-      <h2 class="text-7xl font-black text-white leading-none">${durMin}</h2>
-      <p class="text-2xl text-gray-500 font-bold mt-1">分間</p>
-      <p class="text-gray-600 text-sm mt-2">のデジタルデトックス</p>
-    </div>
-
-    <div class="w-full text-center">
-      <p class="text-gray-600 text-xs mb-1">承諾まで</p>
-      <p id="ch-countdown" class="text-4xl font-black text-white tabular-nums">2:00</p>
-    </div>
-
-    <div class="card p-4 w-full">
-      <p class="text-xs text-gray-600 font-semibold mb-3">ブロック対象アプリ</p>
-      <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar">
-        ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
-      </div>
-    </div>
-
-    <div class="w-full">
-      <div class="slider-track h-16" id="ch-slider">
-        <div class="slider-reveal" id="ch-reveal"></div>
-        <div class="slider-thumb w-20 h-14" id="ch-thumb">
-          <svg class="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </div>
-        <span class="slider-label">スワイプしてデトックス開始</span>
-      </div>
-      <button id="ch-skip-btn" class="w-full text-gray-700 font-semibold py-3 mt-2 text-sm">今回はスキップ</button>
-    </div>
-  `;
-
-  goto('challenge');
-
-  // Accept countdown 2 min
-  let remaining = 120;
-  updateChallengeCountdown(remaining);
-  if (S.challengeAcceptTimerId) clearInterval(S.challengeAcceptTimerId);
-  S.challengeAcceptTimerId = setInterval(() => {
-    remaining--;
-    updateChallengeCountdown(remaining);
-    if (remaining <= 0) {
-      clearInterval(S.challengeAcceptTimerId);
-      goto('home');
-    }
-  }, 1000);
-
-  initSlider('ch-slider', 'ch-thumb', 'ch-reveal', () => {
-    clearInterval(S.challengeAcceptTimerId);
-    startSession(S.challengeData.duration, true);
-  });
-
-  document.getElementById('ch-skip-btn').addEventListener('click', () => {
-    clearInterval(S.challengeAcceptTimerId);
-    goto('home');
-  });
-}
-
-function updateChallengeCountdown(sec) {
-  const el = document.getElementById('ch-countdown');
-  if (!el) return;
-  const m = Math.floor(sec / 60), s = sec % 60;
-  el.textContent = `${m}:${String(s).padStart(2,'0')}`;
-}
 
 // ================================================================
 // SESSION ACTIVE
@@ -1669,15 +1211,15 @@ function renderSessionPage() {
     <div class="w-full rounded-2xl px-4 py-3 flex items-center gap-3" style="background:${g.color}18;border:1px solid ${g.color}33">
       <span class="text-xl">${g.emoji}</span>
       <div class="flex-grow">
-        <p class="text-xs font-bold" style="color:${g.color}">${g.name} · グループデトックス中</p>
+        <p class="text-xs font-bold" style="color:${g.color}">${g.name} · ${t('グループデトックス中','Group Detox Active')}</p>
         <div class="flex gap-1 mt-1" id="gd-sess-avatars">
           ${gd.allMembers.map(id => {
             const isMe = id === 'me';
             const f = isMe ? null : friendById(id);
             const u2 = getUser();
-            const name = isMe ? (u2?u2.name:'あなた') : (f?f.name:id);
+            const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
             const avatar = isMe
-              ? `https://placehold.co/24x24/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
+              ? `https://placehold.co/24x24/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
               : (f?f.avatar.replace('48x48','24x24'):`https://placehold.co/24x24/555/FFF?text=${id[0].toUpperCase()}`);
             return `<img src="${avatar}" class="w-6 h-6 rounded-full border-2 border-black" title="${name}">`;
           }).join('')}
@@ -1700,13 +1242,13 @@ function renderSessionPage() {
       </svg>
       <div class="text-center">
         <div id="sess-timer" class="text-5xl font-black text-white tabular-nums">00:00:00</div>
-        <div class="text-gray-700 text-xs mt-1">残り時間</div>
+        <div class="text-gray-700 text-xs mt-1">${t('残り時間','Time Left')}</div>
       </div>
     </div>
 
     <div class="w-full space-y-3">
       <div class="card p-3">
-        <p class="text-xs text-gray-600 mb-2 font-semibold">ブロック中</p>
+        <p class="text-xs text-gray-600 mb-2 font-semibold">${t('ブロック中','Blocking')}</p>
         <div class="flex space-x-2">
           ${getBlockedApps().map(a=>`<img src="https://placehold.co/36x36/${a.bg}/FFF?text=${a.label[0]}" class="rounded-lg w-9 h-9" alt="${a.label}">`).join('')}
         </div>
@@ -1714,23 +1256,23 @@ function renderSessionPage() {
       <div class="grid grid-cols-2 gap-3">
         <div class="card p-3">
           <p class="text-2xl font-black text-white">1,247,831</p>
-          <p class="text-xs text-gray-600 mt-1">人が国内でデトックス中</p>
+          <p class="text-xs text-gray-600 mt-1">${t('人が国内でデトックス中','detoxing nationwide')}</p>
         </div>
         <div class="card p-3">
           <p class="text-2xl font-black text-white" id="sess-friend-cnt">
             ${MOCK_FRIENDS.filter(f=>f.isFriend&&f.sessionStart).length}
           </p>
-          <p class="text-xs text-gray-600 mt-1">人のフレンドがデトックス中</p>
+          <p class="text-xs text-gray-600 mt-1">${t('人のフレンドがデトックス中','friends detoxing')}</p>
         </div>
       </div>
     </div>
 
     <div class="w-full space-y-2">
       <button id="go-mainroom-btn" class="w-full border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm hover:bg-white/5 transition">
-        メインルームへ
+        ${t('メインルームへ','Main Room')}
       </button>
       <button id="interrupt-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">
-        デトックスを中断する
+        ${t('デトックスを中断する','Stop Detox')}
       </button>
     </div>
   `;
@@ -1748,8 +1290,8 @@ function startSession(durationSec, isChallenge = false) {
   goto('session');
   tickSession();
   S.activeSession.timerId = setInterval(tickSession, 1000);
-  // update disconnect nav icon
-  const tb = document.getElementById('disconnect-nav-btn');
+  // update tuneout nav icon
+  const tb = document.getElementById('tuneout-nav-btn');
   if (tb) { tb.classList.add('active-nav','text-white'); tb.classList.remove('text-gray-500'); }
 }
 
@@ -1781,7 +1323,7 @@ function endSession(completed) {
     saveHistory(h);
   }
   S.activeSession = null;
-  const tb = document.getElementById('disconnect-nav-btn');
+  const tb = document.getElementById('tuneout-nav-btn');
   if (tb) { tb.classList.remove('active-nav','text-white'); tb.classList.add('text-gray-500'); }
 
   // Group detox result
@@ -1797,7 +1339,7 @@ function endSession(completed) {
       if (g) g.streak = 0;
       const u = getUser();
       gd.failed = true;
-      gd.failedBy = u ? u.name : 'あなた';
+      gd.failedBy = u ? u.name : t('あなた','You');
       renderPostSession(duration, false, { groupFailed: true, group: g, failedBy: gd.failedBy });
     }
     S.groupDetox = null;
@@ -1817,8 +1359,8 @@ function renderInterruptPage() {
     ${g ? `
     <div class="w-full rounded-2xl px-4 py-3 mb-6 text-center" style="background:${g.color}18;border:1px solid ${g.color}44">
       <p class="text-base font-black mb-1" style="color:${g.color}">${g.emoji} ${g.name}</p>
-      <p class="text-sm text-white font-semibold">グループセッション参加中！</p>
-      <p class="text-xs text-gray-400 mt-1">中断すると<span class="text-red-400 font-bold">チーム全員が失敗</span>になります</p>
+      <p class="text-sm text-white font-semibold">${t('グループセッション参加中！','Group Session Active!')}</p>
+      <p class="text-xs text-gray-400 mt-1">${t('中断すると','Stopping will cause ')}<span class="text-red-400 font-bold">${t('チーム全員が失敗','the whole team to fail')}</span>${t('になります','')}</p>
     </div>
     ` : ''}
     <div class="w-16 h-16 rounded-full bg-red-900/25 flex items-center justify-center mb-6">
@@ -1826,9 +1368,9 @@ function renderInterruptPage() {
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
       </svg>
     </div>
-    <h2 class="text-2xl font-black text-white mb-2">本当に中断しますか？</h2>
-    <p class="text-gray-500 text-sm mb-1">中断すると<span class="text-white font-semibold">広告動画</span>が再生されます。</p>
-    <p class="text-gray-700 text-xs mb-10">（15〜30秒、スキップ可能）</p>
+    <h2 class="text-2xl font-black text-white mb-2">${t('本当に中断しますか？','Really stop detox?')}</h2>
+    <p class="text-gray-500 text-sm mb-1">${t('中断すると','Stopping will play an ')}<span class="text-white font-semibold">${t('広告動画','ad video')}</span>${t('が再生されます。','.')}</p>
+    <p class="text-gray-700 text-xs mb-10">${t('（15〜30秒、スキップ可能）','(15–30 sec, skippable)')}</p>
 
     <div class="w-full mb-4">
       <div class="slider-track h-16" id="int-slider" style="border-color:rgba(127,29,29,0.4);">
@@ -1838,16 +1380,16 @@ function renderInterruptPage() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
         </div>
-        <span class="slider-label">スワイプして中断</span>
+        <span class="slider-label">${t('スワイプして中断','Swipe to Stop')}</span>
       </div>
     </div>
-    <button id="int-back-btn" class="text-gray-600 font-semibold py-2 text-sm">戻る（デトックス継続）</button>
+    <button id="int-back-btn" class="text-gray-600 font-semibold py-2 text-sm">${t('戻る（デトックス継続）','Back (Continue Detox)')}</button>
   `;
 
   initSlider('int-slider', 'int-thumb', 'int-reveal', () => {
     // Show "ad" then end
     endSession(false);
-    setTimeout(() => alert('📺 広告動画を再生（シミュレーション）\n実際のアプリではスキップ可能な動画広告が入ります。'), 100);
+    setTimeout(() => alert(t('📺 広告動画を再生（シミュレーション）\n実際のアプリではスキップ可能な動画広告が入ります。','📺 Playing ad (simulation)\nIn the real app, a skippable video ad would play here.')), 100);
   });
   document.getElementById('int-back-btn').addEventListener('click', () => goto('session'));
 }
@@ -1865,20 +1407,20 @@ function renderPostSession(duration, completed, groupResult = null) {
     ${isGroupSuccess && grp ? `
     <div class="rounded-2xl px-4 py-4 mb-4 text-center" style="background:${grp.color}18;border:1px solid ${grp.color}44">
       <p class="text-2xl mb-1">${grp.emoji}</p>
-      <p class="text-base font-black text-white mb-1">チーム達成！</p>
-      <p class="text-xs text-gray-400 mb-2">${grp.name}の全員がデトックスを完走しました</p>
+      <p class="text-base font-black text-white mb-1">${t('チーム達成！','Team Success!')}</p>
+      <p class="text-xs text-gray-400 mb-2">${grp.name}${t('の全員がデトックスを完走しました',' — everyone completed the detox')}</p>
       <div class="flex items-center justify-center gap-2">
-        <span class="text-3xl font-black text-orange-400">🔥 ${grp.streak}日</span>
-        <span class="text-xs text-gray-500">グループストリーク</span>
+        <span class="text-3xl font-black text-orange-400">🔥 ${grp.streak}${t('日',' days')}</span>
+        <span class="text-xs text-gray-500">${t('グループストリーク','Group Streak')}</span>
       </div>
     </div>
     ` : ''}
     ${isGroupFailed && grp ? `
     <div class="rounded-2xl px-4 py-4 mb-4 text-center bg-red-900/15 border border-red-900/30">
       <p class="text-2xl mb-1">${grp.emoji}</p>
-      <p class="text-base font-black text-red-400 mb-1">チーム失敗...</p>
-      <p class="text-xs text-gray-500">${groupResult.failedBy}が中断したため、グループセッションが終了しました</p>
-      <p class="text-xs text-gray-700 mt-1">ストリークがリセットされました</p>
+      <p class="text-base font-black text-red-400 mb-1">${t('チーム失敗...','Team Failed...')}</p>
+      <p class="text-xs text-gray-500">${groupResult.failedBy}${t('が中断したため、グループセッションが終了しました',' stopped the session, ending the group detox')}</p>
+      <p class="text-xs text-gray-700 mt-1">${t('ストリークがリセットされました','Streak has been reset')}</p>
     </div>
     ` : ''}
     <div class="text-center mb-8">
@@ -1889,31 +1431,31 @@ function renderPostSession(duration, completed, groupResult = null) {
             : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
         </svg>
       </div>
-      <p class="text-gray-500 text-sm">${completed?'デトックス完了！':'セッション中断'}</p>
+      <p class="text-gray-500 text-sm">${completed?t('デトックス完了！','Detox Complete!'):t('セッション中断','Session Stopped')}</p>
       <h2 class="text-5xl font-black text-white mt-1">${dur}</h2>
     </div>
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">達成したこと（任意）</label>
-        <textarea id="ps-task" class="input-field resize-none rounded-xl h-20" placeholder="例: 読書3章、英単語100個..."></textarea>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('達成したこと（任意）','What you accomplished (optional)')}</label>
+        <textarea id="ps-task" class="input-field resize-none rounded-xl h-20" placeholder="${t('例: 読書3章、英単語100個...','e.g. Read 3 chapters, studied vocab...')}"></textarea>
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">一言コメント（任意）</label>
-        <input id="ps-comment" class="input-field" type="text" placeholder="今日のデトックスはどうでしたか？">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('一言コメント（任意）','Comment (optional)')}</label>
+        <input id="ps-comment" class="input-field" type="text" placeholder="${t('今日のデトックスはどうでしたか？','How was your detox today?')}">
       </div>
       <button id="ps-img-btn" class="card w-full p-4 flex items-center space-x-3 text-left hover:bg-[#2C2C2E] transition">
         <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
         </svg>
-        <span class="text-gray-400 text-sm">画像を追加</span>
+        <span class="text-gray-400 text-sm">${t('画像を追加','Add Photo')}</span>
       </button>
       <input type="file" id="ps-img-input" class="hidden" accept="image/*">
       <div id="ps-img-preview" class="hidden rounded-2xl overflow-hidden">
         <img id="ps-img-preview-src" class="w-full max-h-48 object-cover" alt="">
       </div>
-      <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">投稿する</button>
-      <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">スキップ</button>
+      <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">${t('投稿する','Post')}</button>
+      <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">${t('スキップ','Skip')}</button>
     </div>
   `;
 
@@ -2007,13 +1549,13 @@ function renderFriends() {
       <h1 class="text-3xl font-black text-white">Friends</h1>
     </div>
     <div class="flex-shrink-0 px-4 pb-3 flex gap-2">
-      <button id="tab-friends-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black">フレンド</button>
-      <button id="tab-groups-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400">グループ</button>
+      <button id="tab-friends-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black">${t('フレンド','Friends')}</button>
+      <button id="tab-groups-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400">${t('グループ','Groups')}</button>
     </div>
     <div id="friends-tab-content" class="flex-grow overflow-y-auto no-scrollbar pb-28">
       <div id="friends-panel">
         <div class="px-4 pb-3 relative">
-          <input id="friend-search" class="input-field rounded-full pl-10" placeholder="フレンドを検索">
+          <input id="friend-search" class="input-field rounded-full pl-10" placeholder="${t('フレンドを検索','Search friends')}">
           <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
@@ -2057,7 +1599,7 @@ function renderGroupsList() {
     const inviteSection = document.createElement('div');
     inviteSection.className = 'mb-4';
     inviteSection.innerHTML = `
-      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">招待が届いています</p>
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">${t('招待が届いています','Pending Invitations')}</p>
       ${pendingGroups.map(g => {
         const fromUser = friendById(g.pendingInvite.from);
         return `
@@ -2066,13 +1608,13 @@ function renderGroupsList() {
               <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" style="background:${g.color}22;border:1.5px solid ${g.color}55">${g.emoji}</div>
               <div class="flex-grow min-w-0">
                 <p class="font-bold text-white text-sm">${g.name}</p>
-                <p class="text-xs text-gray-500">${fromUser ? fromUser.name : g.pendingInvite.from}から招待が届きました</p>
+                <p class="text-xs text-gray-500">${t('','Invited by ')}${fromUser ? fromUser.name : g.pendingInvite.from}${t('から招待が届きました','')}</p>
               </div>
-              <span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style="background:${g.color}22;color:${g.color};">招待</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style="background:${g.color}22;color:${g.color};">${t('招待','Invite')}</span>
             </div>
             <div class="flex gap-2">
-              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-white invite-accept-btn" data-gid="${g.id}" style="background:${g.color};">参加する</button>
-              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-gray-400 bg-[#2C2C2E] invite-decline-btn" data-gid="${g.id}">断る</button>
+              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-white invite-accept-btn" data-gid="${g.id}" style="background:${g.color};">${t('参加する','Join')}</button>
+              <button class="flex-1 py-2 rounded-xl font-bold text-sm text-gray-400 bg-[#2C2C2E] invite-decline-btn" data-gid="${g.id}">${t('断る','Decline')}</button>
             </div>
           </div>
         `;
@@ -2086,14 +1628,7 @@ function renderGroupsList() {
   if (myGroups.length) {
     const mySection = document.createElement('div');
     mySection.className = 'mb-3';
-    const limitLabel = isPremium()
-      ? `<span class="text-yellow-500 font-bold">∞</span>`
-      : `<span class="${myGroups.length >= 3 ? 'text-red-400' : 'text-gray-600'}">${myGroups.length}/3</span>`;
-    mySection.innerHTML = `
-      <div class="flex items-center justify-between mb-2 px-1">
-        <p class="text-xs font-bold uppercase tracking-wider text-gray-600">マイグループ</p>
-        <p class="text-xs text-gray-600">${limitLabel}</p>
-      </div>`;
+    mySection.innerHTML = `<p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 px-1">${t('マイグループ','My Groups')}</p>`;
     list.appendChild(mySection);
   }
 
@@ -2115,12 +1650,12 @@ function renderGroupsList() {
               <p class="font-bold text-white text-base">${g.name}</p>
               <svg class="w-3.5 h-3.5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </div>
-            <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers}人</p>
+            <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers}${t('人','')}</p>
           </div>
         </div>
         ${g.isActive
-          ? `<div class="flex flex-col items-end"><span class="text-xs font-bold px-2 py-0.5 rounded-full mb-1" style="background:${g.color}33;color:${g.color}">実施中</span><span class="text-xs text-gray-500">${fmtCountdown(elapsed)}</span></div>`
-          : `<button class="text-xs font-bold px-3 py-1.5 rounded-full border" style="border-color:${g.color};color:${g.color}">開始</button>`
+          ? `<div class="flex flex-col items-end"><span class="text-xs font-bold px-2 py-0.5 rounded-full mb-1" style="background:${g.color}33;color:${g.color}">${t('実施中','Active')}</span><span class="text-xs text-gray-500">${fmtCountdown(elapsed)}</span></div>`
+          : `<button class="text-xs font-bold px-3 py-1.5 rounded-full border" style="border-color:${g.color};color:${g.color}">${t('開始','Start')}</button>`
         }
       </div>
       <p class="text-xs text-gray-600 mb-3">${g.description}</p>
@@ -2131,19 +1666,19 @@ function renderGroupsList() {
           const isOn = !!f.sessionStart;
           return `<div class="relative"><img src="${f.avatar}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
         }).join('')}
-        ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length}人がデトックス中</span>` : `<span class="text-xs text-gray-700 ml-1">待機中</span>`}
+        ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length}${t('人がデトックス中',' detoxing')}</span>` : `<span class="text-xs text-gray-700 ml-1">${t('待機中','Waiting')}</span>`}
       </div>
     `;
     card.addEventListener('click', () => renderGroupDetail(g.id));
     list.appendChild(card);
   });
 
-  // Invite accept → navigate to group detail (preview) so user sees info before joining
+  // Invite accept/decline handlers
   list.querySelectorAll('.invite-accept-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const g = MOCK_GROUPS.find(x => x.id === btn.dataset.gid);
-      if (g) renderGroupDetail(g.id);
+      if (g) { delete g.pendingInvite; renderGroupsList(); }
     });
   });
   list.querySelectorAll('.invite-decline-btn').forEach(btn => {
@@ -2159,7 +1694,7 @@ function renderGroupsList() {
   addBtn.className = 'w-full card p-4 flex items-center justify-center gap-2 text-gray-600 font-semibold text-sm border-dashed border-gray-800 hover:bg-[#2C2C2E] transition';
   addBtn.innerHTML = `
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-    新しいグループを作成（招待制・最大5名）
+    ${t('新しいグループを作成（招待制・最大5名）','Create New Group (invite-only, max 5)')}
   `;
   addBtn.addEventListener('click', () => renderCreateGroup());
   list.appendChild(addBtn);
@@ -2168,83 +1703,44 @@ function renderGroupsList() {
 function renderGroupDetail(groupId) {
   const g = MOCK_GROUPS.find(x => x.id === groupId);
   if (!g) return;
-  if (S.lobbyTimerInterval) { clearInterval(S.lobbyTimerInterval); S.lobbyTimerInterval = null; }
   const page = document.getElementById('page-group-detail');
   const gd = S.groupDetox;
   const isMyGroup = gd && gd.groupId === groupId;
-  const inLobby   = isMyGroup && !gd.startTime;
-  const isPending  = !!g.pendingInvite;
+  const inLobby = isMyGroup && !gd.startTime;
+  const isPending = !!g.pendingInvite;
 
-  // Reset tab when viewing a pending invite
   if (isPending) S.groupDetailTab = 'detox';
   const currentTab = S.groupDetailTab || 'detox';
 
-  function fmtDur(sec) {
-    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
-  }
-
   function memberReadyRows(readyList) {
     const u = getUser();
-    const myName = u ? u.name : 'あなた';
-    const passedList = gd?.passedMembers || [];
-    return ['me', ...g.members].map(id => {
+    const myName = u ? u.name : t('あなた','You');
+    const allIds = ['me', ...g.members];
+    return allIds.map(id => {
       const isMe = id === 'me';
-      const f    = isMe ? null : friendById(id);
+      const f = isMe ? null : friendById(id);
       const name = isMe ? myName : (f ? f.name : id);
       const avatar = isMe
         ? `https://placehold.co/40x40/334155/FFF?text=${myName[0].toUpperCase()}`
         : (f ? f.avatar : `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
-      const ready  = readyList.includes(id);
-      const passed = !ready && passedList.includes(id);
-      const badge = ready
-        ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1 flex-shrink-0"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>参加</span>`
-        : passed
-          ? `<span class="text-xs text-gray-600 flex-shrink-0">今回はパス</span>`
-          : `<span class="text-xs text-gray-700 flex-shrink-0">待機中...</span>`;
+      const ready = readyList.includes(id);
       return `
-        <div class="flex items-center justify-between py-2 gap-2">
-          <div class="flex items-center gap-3 flex-grow min-w-0">
-            <img src="${avatar}" class="w-9 h-9 rounded-full flex-shrink-0 ${ready?'':'opacity-40'}" alt="${name}">
-            <div class="min-w-0">
-              <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
+        <div class="flex items-center justify-between py-2">
+          <div class="flex items-center gap-3">
+            <img src="${avatar}" class="w-9 h-9 rounded-full ${ready?'':'opacity-40'}" alt="${name}">
+            <div>
+              <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
             </div>
           </div>
-          ${badge}
-        </div>`;
+          ${ready
+            ? `<span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('準備完了','Ready')}</span>`
+            : `<span class="text-xs text-gray-600">${t('待機中...','Waiting...')}</span>`
+          }
+        </div>
+      `;
     }).join('');
   }
 
-  const headerInviteBtn = (!isPending && g.members.length < (g.maxMembers||5))
-    ? `<button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        招待
-       </button>`
-    : '';
-
-  function memberListRows(ids) {
-    return ids.map(id => {
-      const isMe = id === 'me';
-      const f    = isMe ? null : friendById(id);
-      const u2   = getUser();
-      const name   = isMe ? (u2?u2.name:'あなた') : (f?f.name:id);
-      const avatar = isMe
-        ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:'あなた')[0].toUpperCase()}`
-        : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
-      const apps = isMe ? null : (f?.blockApps || []);
-      return `
-        <div class="flex items-center gap-3 py-2">
-          <img src="${avatar}" class="w-9 h-9 rounded-full flex-shrink-0" alt="${name}">
-          <div class="min-w-0">
-            <p class="text-sm font-semibold text-white">${name}${isMe?' (あなた)':''}</p>
-            ${isMe ? `<span class="text-xs font-bold px-1.5 py-0.5 rounded" style="background:${g.color}22;color:${g.color}">作成者</span>` : ''}
-            ${apps !== null ? `<div class="flex flex-wrap gap-1 mt-0.5">${apps.map(a=>`<span class="text-xs px-1.5 py-0.5 rounded bg-[#2C2C2E] text-gray-500">${a}</span>`).join('')}</div>` : '<p class="text-xs text-gray-600 mt-0.5">（ここで選択）</p>'}
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  // ── Common header HTML ────────────────────────────────────────
   const headerHtml = `
     <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3 gap-3">
       <button id="gd-back" class="text-gray-400 p-1">
@@ -2254,58 +1750,33 @@ function renderGroupDetail(groupId) {
       <div class="flex-grow">
         <div class="flex items-center gap-2">
           <h1 class="text-xl font-black text-white">${g.name}</h1>
-          ${(g.inviteOnly && !isPending) ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>招待制</span>` : ''}
+          ${(g.inviteOnly && !isPending) ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>${t('招待制','Invite Only')}</span>` : ''}
         </div>
         <div class="flex items-center gap-2">
-          <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5}人</p>
-          ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}日連続</span>` : ''}
+          <p class="text-xs text-gray-600">${g.members.length}/${g.maxMembers||5}${t('人','')}</p>
+          ${g.streak ? `<span class="text-xs font-bold text-orange-400">🔥 ${g.streak}${t('日連続',' day streak')}</span>` : ''}
         </div>
       </div>
-      ${headerInviteBtn}
+      ${(!isPending && g.members.length < (g.maxMembers||5)) ? `
+      <button id="gd-invite-btn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border" style="border-color:${g.color}44;color:${g.color};">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        ${t('招待','Invite')}
+      </button>` : ''}
     </div>`;
 
-  // ── Tab bar (only for joined members) ────────────────────────
   const tabBarHtml = !isPending ? `
     <div class="flex-shrink-0 flex px-4 pb-2 gap-2">
-      <button id="gd-tab-detox" class="flex-1 py-2 rounded-full text-sm font-bold transition ${currentTab==='detox'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">デトックス</button>
-      <button id="gd-tab-chat"  class="flex-1 py-2 rounded-full text-sm font-bold transition ${currentTab==='chat' ?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">チャット</button>
+      <button id="gd-tab-detox" class="flex-1 py-2 rounded-full text-sm font-bold transition ${currentTab==='detox'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">${t('デトックス','Detox')}</button>
+      <button id="gd-tab-chat"  class="flex-1 py-2 rounded-full text-sm font-bold transition ${currentTab==='chat' ?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">${t('チャット','Chat')}</button>
     </div>` : '';
 
-  // ── Body content ──────────────────────────────────────────────
-  let bodyHtml = '';
-
-  if (isPending) {
-    // ── PREVIEW ────────────────────────────────────────────────
-    const fromUser = friendById(g.pendingInvite.from);
-    const fromName = fromUser ? fromUser.name : g.pendingInvite.from;
-    bodyHtml = `
-      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
-        <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:${g.color}">招待が届いています</p>
-        <p class="text-sm text-gray-400">${fromName}から招待されました</p>
-      </div>
-      <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
-        <p class="text-sm text-gray-400">${g.description}</p>
-        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
-      </div>
-      <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー (${g.members.length}人)</p>
-        <div>${memberListRows(g.members)}</div>
-      </div>
-      <button id="gd-accept-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
-        招待を承認する
-      </button>
-      <button id="gd-decline-btn" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">
-        断る
-      </button>`;
-
-  } else if (currentTab === 'chat') {
-    // ── CHAT TAB ───────────────────────────────────────────────
+  // ── CHAT TAB ─────────────────────────────────────────────────
+  if (!isPending && currentTab === 'chat') {
     const msgs = getGroupChat(groupId);
     const chatMsgsHtml = msgs.map(msg => {
       if (msg.type === 'detox_invite') {
-        const fromF   = friendById(msg.from);
-        const durStr  = fmtDur(msg.duration);
+        const fromF  = friendById(msg.from);
+        const durStr = fmtDuration(msg.duration, true);
         const alreadyUsed = !isPremium() && getGroupDetoxCount() >= 3;
         return `
           <div class="flex justify-start mb-3">
@@ -2316,20 +1787,20 @@ function renderGroupDetail(groupId) {
                 <span class="text-xs text-gray-700">${msg.time}</span>
               </div>
               <div class="rounded-2xl rounded-bl-sm p-3" style="background:${g.color}18;border:1px solid ${g.color}44;">
-                <p class="text-xs font-bold mb-0.5" style="color:${g.color}">グループデトックス招待</p>
-                <p class="text-sm text-white font-semibold">${durStr}のデトックス</p>
+                <p class="text-xs font-bold mb-0.5" style="color:${g.color}">${t('グループデトックス招待','Group Detox Invite')}</p>
+                <p class="text-sm text-white font-semibold">${durStr}${t('のデトックス',' detox')}</p>
                 ${alreadyUsed
-                  ? `<p class="text-xs text-gray-600 mt-1">今日の上限（3回）に達しました</p>`
-                  : `<p class="text-xs text-gray-500 mt-0.5 mb-2">一緒に参加しますか？</p>
-                     <button class="gd-chat-invite-btn w-full py-2 rounded-xl font-bold text-sm text-black" style="background:${g.color}" data-duration="${msg.duration}">参加する</button>`
+                  ? `<p class="text-xs text-gray-600 mt-1">${t('今日の上限（3回）に達しました','Daily limit (3 sessions) reached')}</p>`
+                  : `<p class="text-xs text-gray-500 mt-0.5 mb-2">${t('一緒に参加しますか？','Join together?')}</p>
+                     <button class="gd-chat-invite-btn w-full py-2 rounded-xl font-bold text-sm text-black" style="background:${g.color}" data-duration="${msg.duration}">${t('参加する','Join')}</button>`
                 }
               </div>
             </div>
           </div>`;
       } else {
-        const isMe   = msg.from === 'me';
+        const isMe  = msg.from === 'me';
         const fromF2 = isMe ? null : friendById(msg.from);
-        const name2  = isMe ? (getUser()?.name || 'あなた') : (fromF2?.name || msg.from);
+        const name2  = isMe ? (getUser()?.name || t('あなた','You')) : (fromF2?.name || msg.from);
         return `
           <div class="flex ${isMe?'justify-end':'justify-start'} mb-2">
             ${!isMe ? `<img src="${fromF2?.avatar || `https://placehold.co/32x32/555/FFF?text=${msg.from[0].toUpperCase()}`}" class="w-8 h-8 rounded-full mr-2 flex-shrink-0 self-end" alt="">` : ''}
@@ -2342,22 +1813,21 @@ function renderGroupDetail(groupId) {
       }
     }).join('');
 
-    // Chat tab renders with full flex-col layout including input at bottom
     page.innerHTML = `
       ${headerHtml}
       ${tabBarHtml}
       <div class="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-gray-900/60">
-        <span class="text-xs text-gray-600">グループチャット</span>
+        <span class="text-xs text-gray-600">${t('グループチャット','Group Chat')}</span>
         <button id="gd-leave-btn" class="flex items-center gap-1.5 text-xs font-semibold text-red-500 px-3 py-1.5 rounded-full border border-red-500/30">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-          グループから退出
+          ${t('グループから退出','Leave Group')}
         </button>
       </div>
       <div id="gd-chat-scroll" class="flex-grow overflow-y-auto no-scrollbar px-4 py-2">
-        ${chatMsgsHtml || '<p class="text-center text-gray-700 text-sm mt-8">まだメッセージはありません</p>'}
+        ${chatMsgsHtml || `<p class="text-center text-gray-700 text-sm mt-8">${t('まだメッセージはありません','No messages yet')}</p>`}
       </div>
       <div class="flex-shrink-0 flex items-center gap-2 px-4 pt-3 pb-6 border-t border-gray-900">
-        <input id="gd-chat-input" class="input-field rounded-full py-2.5 flex-grow text-sm" placeholder="メッセージ..." type="text">
+        <input id="gd-chat-input" class="input-field rounded-full py-2.5 flex-grow text-sm" placeholder="${t('メッセージ...','Message...')}" type="text">
         <button id="gd-chat-send" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:${g.color}">
           <svg class="w-4 h-4 text-black" style="transform:rotate(45deg)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
@@ -2368,7 +1838,6 @@ function renderGroupDetail(groupId) {
 
     goto('group-detail');
 
-    // Wire back + tabs
     document.getElementById('gd-back').addEventListener('click', () => {
       S.groupDetailTab = 'detox';
       goto('friends');
@@ -2378,17 +1847,15 @@ function renderGroupDetail(groupId) {
     document.getElementById('gd-tab-detox').addEventListener('click', () => { S.groupDetailTab = 'detox'; renderGroupDetail(groupId); });
     document.getElementById('gd-tab-chat').addEventListener('click',  () => { S.groupDetailTab = 'chat';  renderGroupDetail(groupId); });
 
-    // Scroll to bottom
     const scrollEl = document.getElementById('gd-chat-scroll');
     if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
 
-    // Send message
     function sendGroupMsg() {
       const input = document.getElementById('gd-chat-input');
       const text  = input.value.trim();
       if (!text) return;
       const msgs2 = getGroupChat(groupId);
-      msgs2.push({ from: 'me', text, time: '今' });
+      msgs2.push({ from: 'me', text, time: t('今','now') });
       saveGroupChat(groupId, msgs2);
       input.value = '';
       S.groupDetailTab = 'chat';
@@ -2397,7 +1864,6 @@ function renderGroupDetail(groupId) {
     document.getElementById('gd-chat-send').addEventListener('click', sendGroupMsg);
     document.getElementById('gd-chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendGroupMsg(); });
 
-    // Detox invite "参加する" in chat
     document.querySelectorAll('.gd-chat-invite-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
@@ -2406,12 +1872,11 @@ function renderGroupDetail(groupId) {
       });
     });
 
-    // Leave group button (chat tab top)
     document.getElementById('gd-leave-btn')?.addEventListener('click', () => {
       showConfirm(
-        'グループから退出',
-        `「${g.name}」から退出しますか？退出後は再度招待が必要です。`,
-        '退出する',
+        t('グループから退出','Leave Group'),
+        `「${g.name}」${t('から退出しますか？退出後は再度招待が必要です。','— are you sure? You\'ll need to be re-invited to rejoin.')}`,
+        t('退出する','Leave'),
         () => {
           const idx = MOCK_GROUPS.findIndex(x => x.id === groupId);
           if (idx !== -1) MOCK_GROUPS.splice(idx, 1);
@@ -2422,374 +1887,201 @@ function renderGroupDetail(groupId) {
       );
     });
 
-    return; // Early return — layout already set above
-  } else if (inLobby) {
-    // ── LOBBY ─────────────────────────────────────────────────
-    if (!gd.lobbyStartTime) gd.lobbyStartTime = Date.now();
-    if (!gd.passedMembers)  gd.passedMembers  = [];
-    const elapsedSec = Math.floor((Date.now() - gd.lobbyStartTime) / 1000);
-    const remainSec  = Math.max(0, 300 - elapsedSec);
-    const remM = Math.floor(remainSec / 60);
-    const remS = remainSec % 60;
-    const respondedCount = gd.readyMembers.length + gd.passedMembers.length;
-    const totalCount = gd.allMembers.length;
-    bodyHtml = `
-      <div class="card p-4 text-center">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-1">自動スタートまで</p>
-        <p class="text-5xl font-black text-white tabular-nums" id="gd-lobby-countdown">${remM}:${remS.toString().padStart(2,'0')}</p>
-        <p class="text-xs text-gray-600 mt-1">全員が反応するか5分後に自動でスタート</p>
-      </div>
-      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
-        <div class="flex items-center justify-between mb-3">
-          <p class="text-xs font-bold uppercase tracking-wider" style="color:${g.color}">メンバーの状況</p>
-          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${respondedCount}/${totalCount}人 反応済み</span>
-        </div>
-        <div id="gd-member-rows">
-          ${memberReadyRows(gd.readyMembers)}
-        </div>
-        <div class="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
-          <span class="text-xs text-gray-600">設定時間 <span class="text-white font-bold">${fmtDur(gd.duration)}</span></span>
-          <span class="text-xs font-bold text-green-400">${gd.readyMembers.length}人参加</span>
-        </div>
-      </div>
-      ${gd.initiatedBy === 'me'
-        ? `<button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">デトックスをキャンセル</button>`
-        : (gd.readyMembers.includes('me')
-          ? `<button id="gd-leave-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">準備を取り消す</button>`
-          : '')
-      }`;
-
-  } else {
-    // ── SETUP ─────────────────────────────────────────────────
-    const detoxCount  = getGroupDetoxCount();
-    const limitBanner = (!isPremium() && detoxCount >= 3)
-      ? `<div class="rounded-2xl p-3" style="background:#f59e0b15;border:1px solid #f59e0b44;">
-           <p class="text-xs font-bold text-yellow-400 mb-0.5">本日の上限に達しました</p>
-           <p class="text-xs text-gray-500">グループデトックスは1日3回までです。<button class="text-yellow-400 font-semibold underline" onclick="goto('premium')">プレミアムへ</button></p>
-         </div>`
-      : '';
-
-    // Determine host: if group has a pendingDetox set by someone else → member view
-    const isHost = !g.pendingDetox || g.pendingDetox.creatorId === 'me';
-    const leaveBtn = `
-      <button id="gd-leave-btn" class="w-full py-3 rounded-2xl font-semibold text-sm text-red-500 border border-red-500/30 flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-        グループから退出
-      </button>`;
-
-    if (isHost) {
-      // ── HOST VIEW: editable time + apps ──────────────────────
-      bodyHtml = `
-        ${limitBanner}
-        <div class="card p-4">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">デトックス時間</p>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">あなたが作成</span>
-          </div>
-          <div class="flex justify-center items-center relative" style="height:12rem;">
-            <div class="absolute left-1/2 -translate-x-1/2 w-40 h-14 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
-            <div class="absolute inset-0 bg-gradient-to-b from-[#1C1C1E] via-transparent to-[#1C1C1E] pointer-events-none z-10"></div>
-            <div class="z-20 flex items-center space-x-1">
-              <div id="gd-picker-hours" class="picker-col"></div>
-              <span class="text-3xl font-black text-gray-600">:</span>
-              <div id="gd-picker-minutes" class="picker-col"></div>
-            </div>
-          </div>
-          <p class="text-center text-xs text-gray-600 mt-2">メンバー全員がこの時間でデトックスします</p>
-        </div>
-        <div class="card p-4">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">ブロックするアプリ</p>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">あなたが作成</span>
-          </div>
-          <div id="gd-app-chips" class="flex flex-wrap gap-2"></div>
-        </div>
-        <div class="card p-4">
-          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
-          <div>${memberListRows(['me', ...g.members])}</div>
-        </div>
-        <div class="card p-4">
-          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
-          <p class="text-sm text-gray-400">${g.description}</p>
-          ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
-        </div>
-        <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black flex items-center justify-center gap-2" style="background:${g.color}">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-          グループデトックスを作成
-        </button>
-        <p class="text-center text-xs text-gray-700">メンバーが参加すると自動でスタートします</p>`;
-
-    } else {
-      // ── MEMBER VIEW: read-only (host already set time + apps) ─
-      const pd = g.pendingDetox;
-      const hostF = friendById(pd.creatorId);
-      const hostName = hostF ? hostF.name : pd.creatorId;
-      const readonlyApps = pd.apps.map(a =>
-        `<span class="text-xs px-3 py-1.5 rounded-full border border-gray-700 text-gray-400">${a}</span>`
-      ).join('');
-      const membersWithHost = [pd.creatorId, ...g.members.filter(id => id !== pd.creatorId)];
-      const memberRowsHtml = membersWithHost.map(id => {
-        const isMe2 = id === 'me';
-        const f2 = isMe2 ? null : friendById(id);
-        const u2 = getUser();
-        const name2 = isMe2 ? (u2?.name || 'あなた') : (f2?.name || id);
-        const avatar2 = isMe2
-          ? `https://placehold.co/40x40/334155/FFF?text=${(u2?.name||'あ')[0].toUpperCase()}`
-          : (f2?.avatar || `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
-        const isHostMember = id === pd.creatorId;
-        return `
-          <div class="flex items-center gap-3 py-2">
-            <img src="${avatar2}" class="w-9 h-9 rounded-full flex-shrink-0" alt="${name2}">
-            <div class="min-w-0 flex-grow">
-              <p class="text-sm font-semibold text-white">${name2}${isMe2?' (あなた)':''}</p>
-            </div>
-            ${isHostMember ? `<span class="text-xs font-bold px-2 py-0.5 rounded flex-shrink-0" style="background:${g.color}22;color:${g.color}">作成者</span>` : ''}
-          </div>`;
-      }).join('');
-      bodyHtml = `
-        ${limitBanner}
-        <div class="rounded-2xl p-3" style="background:${g.color}12;border:1px solid ${g.color}33;">
-          <p class="text-xs font-bold mb-0.5" style="color:${g.color}">${hostName}がデトックスを作成しました</p>
-          <p class="text-xs text-gray-500">内容は作成者のみ変更できます</p>
-        </div>
-        <div class="card p-4">
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">デトックス時間</p>
-            <span class="text-xs text-gray-600">作成者が設定</span>
-          </div>
-          <p class="text-3xl font-black text-white text-center py-3">${fmtDur(pd.duration)}</p>
-          <p class="text-center text-xs text-gray-600">メンバー全員がこの時間でデトックスします</p>
-        </div>
-        <div class="card p-4">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">ブロックするアプリ</p>
-            <span class="text-xs text-gray-600">作成者が設定</span>
-          </div>
-          <div class="flex flex-wrap gap-2">${readonlyApps}</div>
-        </div>
-        <div class="card p-4">
-          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">メンバー</p>
-          <div>${memberRowsHtml}</div>
-        </div>
-        <div class="card p-4">
-          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">グループについて</p>
-          <p class="text-sm text-gray-400">${g.description}</p>
-          ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 グループストリーク ${g.streak}日</p>` : ''}
-        </div>
-        <div class="flex gap-3">
-          <button id="gd-pass-btn" class="flex-1 py-4 rounded-2xl font-bold text-sm border border-gray-700 text-gray-400">
-            今回はパス
-          </button>
-          <button id="gd-ready-btn" class="flex-1 py-4 rounded-2xl font-bold text-sm text-black flex items-center justify-center gap-1.5" style="background:${g.color}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            参加する
-          </button>
-        </div>
-        <p class="text-center text-xs text-gray-700">全員が反応するか5分後に自動でスタートします</p>`;
-    }
+    return;
   }
 
-  // ── Render page (detox tab layout / pending preview layout) ──
+  // ── DETOX TAB / LOBBY / PENDING ───────────────────────────────
   page.innerHTML = `
     ${headerHtml}
     ${tabBarHtml}
-    <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-16 space-y-3">
-      ${bodyHtml}
+    <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10 space-y-3">
+
+      ${isPending ? (() => {
+        const fromUser = friendById(g.pendingInvite.from);
+        const fromName = fromUser ? fromUser.name : g.pendingInvite.from;
+        return `
+      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
+        <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:${g.color}">${t('招待が届いています','Invitation received')}</p>
+        <p class="text-sm text-gray-400">${fromName}${t('から招待されました',' invited you')}</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">${t('グループについて','About')}</p>
+        <p class="text-sm text-gray-400">${g.description}</p>
+        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 ${t('グループストリーク','Group Streak')} ${g.streak}${t('日',' days')}</p>` : ''}
+      </div>
+      <button id="gd-accept-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+        ${t('招待を承認する','Accept Invite')}
+      </button>
+      <button id="gd-decline-btn" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">
+        ${t('断る','Decline')}
+      </button>`;
+      })() : inLobby ? (() => {
+        const meReady = gd.readyMembers.includes('me');
+        const initiator = gd.initiatedBy;
+        const initiatorName = initiator === 'me' ? (getUser()?.name||t('あなた','You')) : (friendById(initiator)?.name || initiator);
+        return `
+      <div class="rounded-2xl p-4" style="background:${g.color}12;border:1px solid ${g.color}33">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider" style="color:${g.color}">${t('準備中 — 全員が揃ったら自動でスタート','Lobby — auto-starts when everyone is ready')}</span>
+        </div>
+        <p class="text-xs text-gray-500 mb-3">${initiatorName}${t('がデトックスを作成しました',' created the detox session')}</p>
+        <div class="space-y-0" id="gd-member-rows">
+          ${memberReadyRows(gd.readyMembers)}
+        </div>
+        <div class="mt-3 flex items-center justify-between">
+          <span class="text-xs text-gray-600">${t('時間:','Duration:')} <span class="text-white font-bold">${fmtDuration(gd.duration, true)}</span></span>
+          <span class="text-xs font-bold" style="color:${g.color}" id="gd-ready-count">${gd.readyMembers.length}/${gd.allMembers.length}${t('人 準備完了',' ready')}</span>
+        </div>
+      </div>
+      ${!meReady ? `
+      <button id="gd-join-lobby" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">${t('参加する','Join')}</button>
+      ` : ''}
+      ${gd.initiatedBy === 'me'
+        ? `<button id="gd-cancel-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${t('デトックスをキャンセル','Cancel Detox Session')}</button>`
+        : meReady
+          ? `<button id="gd-leave-lobby" class="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600 border border-gray-800">${t('準備を取り消す','Undo Ready')}</button>`
+          : ''
+      }
+      `})() : `
+      <!-- DEFAULT: setup -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">${t('デトックス時間','Detox Duration')}</p>
+        <div class="flex justify-center items-center relative" style="height:15rem;">
+          <div class="absolute left-1/2 -translate-x-1/2 w-44 h-16 bg-[#2C2C2E] rounded-2xl pointer-events-none z-0"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-[#1C1C1E] via-transparent to-[#1C1C1E] pointer-events-none z-10"></div>
+          <div class="z-20 flex items-center space-x-1">
+            <div id="gd-picker-hours" class="picker-col"></div>
+            <span class="text-3xl font-black text-gray-600">:</span>
+            <div id="gd-picker-minutes" class="picker-col"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">${t('メンバー','Members')}</p>
+          <span class="text-xs text-gray-600">${t('全員がデトックスを作成できます','Anyone can start the detox')}</span>
+        </div>
+        <div class="space-y-0">
+          ${['me', ...g.members].map(id => {
+            const isMe = id === 'me';
+            const f = isMe ? null : friendById(id);
+            const u2 = getUser();
+            const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
+            const avatar = isMe
+              ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
+              : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+            return `
+              <div class="flex items-center justify-between py-2">
+                <div class="flex items-center gap-3">
+                  <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
+                  <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
+                </div>
+                <span class="text-xs text-gray-700">${t('作成可能','Can start')}</span>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">${t('グループについて','About')}</p>
+        <p class="text-sm text-gray-400">${g.description}</p>
+        ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 ${t('グループストリーク','Group Streak')} ${g.streak}${t('日',' days')}</p>` : ''}
+      </div>
+
+      <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
+        ${t('デトックスを作成する','Start Detox Session')}
+      </button>
+      <p class="text-center text-xs text-gray-700">${t('あなたが作成したら、メンバーに通知されます','Members will be notified when you start')}</p>
+      `}
     </div>
   `;
 
-  // ── Event wiring ──────────────────────────────────────────────
   document.getElementById('gd-back').addEventListener('click', () => {
     S.groupDetailTab = 'detox';
     goto('friends');
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
   });
   document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
-
-  // Tab switching
   document.getElementById('gd-tab-detox')?.addEventListener('click', () => { S.groupDetailTab = 'detox'; renderGroupDetail(groupId); });
   document.getElementById('gd-tab-chat')?.addEventListener('click',  () => { S.groupDetailTab = 'chat';  renderGroupDetail(groupId); });
 
   if (isPending) {
-    document.getElementById('gd-accept-btn').addEventListener('click', () => {
-      // Check group limit (max 3 for free users)
-      const joinedCount = MOCK_GROUPS.filter(x => !x.pendingInvite).length;
-      if (!isPremium() && joinedCount >= 3) { showGroupLimitPrompt(); return; }
-      delete g.pendingInvite;
+    document.getElementById('gd-accept-btn')?.addEventListener('click', () => {
+      g.pendingInvite = null;
       S.groupDetailTab = 'detox';
       renderGroupDetail(groupId);
     });
-    document.getElementById('gd-decline-btn').addEventListener('click', () => {
+    document.getElementById('gd-decline-btn')?.addEventListener('click', () => {
       const idx = MOCK_GROUPS.findIndex(x => x.id === groupId);
       if (idx !== -1) MOCK_GROUPS.splice(idx, 1);
       goto('friends');
       setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
     });
-
   } else if (inLobby) {
-    // Start countdown interval
-    function checkLobbyAutoStart() {
-      if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
-      const gd2 = S.groupDetox;
-      const responded = gd2.readyMembers.length + (gd2.passedMembers?.length || 0);
-      const total = gd2.allMembers.length;
-      const elapsed = (Date.now() - gd2.lobbyStartTime) / 1000;
-      if (responded >= total || elapsed >= 300) {
-        clearInterval(S.lobbyTimerInterval);
-        S.lobbyTimerInterval = null;
-        if (gd2.readyMembers.length > 0) {
-          gd2.startTime = Date.now();
-          addGroupDetoxCount();
-          setTimeout(() => startSession(gd2.duration, false), 600);
-        } else {
-          S.groupDetox = null;
-          renderGroupDetail(groupId);
+    document.getElementById('gd-join-lobby')?.addEventListener('click', () => {
+      if (!S.groupDetox.readyMembers.includes('me')) {
+        S.groupDetox.readyMembers.push('me');
+        const rows = document.getElementById('gd-member-rows');
+        const cnt  = document.getElementById('gd-ready-count');
+        if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
+        if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}${t('人 準備完了',' ready')}`;
+        renderGroupDetail(groupId);
+        if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
+          S.groupDetox.startTime = Date.now();
+          setTimeout(() => startSession(S.groupDetox.duration, false), 600);
         }
-        return;
       }
-      // Update UI
-      const remaining = Math.max(0, 300 - Math.floor(elapsed));
-      const m = Math.floor(remaining / 60), s = remaining % 60;
-      const el = document.getElementById('gd-lobby-countdown');
-      if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
-      const cntEl = document.getElementById('gd-ready-count');
-      if (cntEl) cntEl.textContent = `${responded}/${total}人 反応済み`;
-    }
-    S.lobbyTimerInterval = setInterval(checkLobbyAutoStart, 1000);
-
+    });
+    // 作成者のみグループデトックス全体をキャンセル可能
     if (gd.initiatedBy === 'me') {
       document.getElementById('gd-cancel-lobby')?.addEventListener('click', () => {
-        clearInterval(S.lobbyTimerInterval);
-        S.lobbyTimerInterval = null;
         S.groupDetox = null;
-        g.pendingDetox = null;
         renderGroupDetail(groupId);
       });
     } else {
+      // 非作成者は自分の準備状態のみ取り消し可能
       document.getElementById('gd-leave-lobby')?.addEventListener('click', () => {
         S.groupDetox.readyMembers = S.groupDetox.readyMembers.filter(id => id !== 'me');
         renderGroupDetail(groupId);
       });
     }
-
   } else {
-    const isHost = !g.pendingDetox || g.pendingDetox.creatorId === 'me';
+    initGroupDetoxPicker();
 
-    if (isHost) {
-      // Host: wire up editable time picker + app chips
-      createTimePicker('gd-picker-hours', 'gd-picker-minutes');
-      const gdApps = new Set(S.selectedApps);
-      const chipsEl = document.getElementById('gd-app-chips');
-      function renderGdChips() {
-        chipsEl.innerHTML = ALL_APPS.map(a => {
-          const sel = gdApps.has(a.label);
-          return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel?'border-white/30 bg-white/10 text-white':'border-gray-800 text-gray-600'}" data-app="${a.label}">
-            <img src="https://placehold.co/14x14/${a.bg}/FFF?text=${a.label[0]}" class="w-3.5 h-3.5 rounded" alt="">
-            ${a.label}
-          </button>`;
-        }).join('');
-        chipsEl.querySelectorAll('.gd-app-chip').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const app = btn.dataset.app;
-            if (gdApps.has(app)) gdApps.delete(app); else gdApps.add(app);
-            renderGdChips();
-          });
-        });
-      }
-      renderGdChips();
-
-      document.getElementById('gd-ready-btn').addEventListener('click', () => {
-        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
-        const h = getPickerValue('gd-picker-hours');
-        const m = getPickerValue('gd-picker-minutes');
-        const totalSec = h * 3600 + m * 60;
-        if (totalSec === 0) {
-          const card = document.getElementById('gd-picker-hours')?.closest('.card');
-          if (card) { card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 450); }
-          return;
-        }
-        // Save creator's settings on the group for member views
-        g.pendingDetox = { creatorId: 'me', duration: totalSec, apps: [...gdApps] };
-        S.groupDetox = {
-          groupId,
-          duration: totalSec,
-          blockedApps: [...gdApps],
-          readyMembers: ['me'],
-          passedMembers: [],
-          allMembers: ['me', ...g.members],
-          startTime: null,
-          lobbyStartTime: Date.now(),
-          failed: false,
-          failedBy: null,
-          initiatedBy: 'me',
-        };
-        renderGroupDetail(groupId);
-        // Simulate other members responding (some join, some pass)
-        [...g.members].forEach((id, i) => {
-          setTimeout(() => {
-            if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
-            const gd2 = S.groupDetox;
-            // Simulate: 2nd+ member might pass
-            if (i === 1 && g.members.length > 2) {
-              gd2.passedMembers.push(id);
-            } else {
-              gd2.readyMembers.push(id);
-            }
-            const rows = document.getElementById('gd-member-rows');
-            if (rows) rows.innerHTML = memberReadyRows(gd2.readyMembers);
-          }, (i + 1) * 1500);
-        });
+    document.getElementById('gd-ready-btn').addEventListener('click', () => {
+      const gdH = getPickerValue('gd-picker-hours');
+      const gdM = getPickerValue('gd-picker-minutes');
+      const gdSelectedDur = Math.max(300, gdH * 3600 + gdM * 60);
+      S.groupDetox = {
+        groupId,
+        duration: gdSelectedDur,
+        readyMembers: ['me'],
+        allMembers: ['me', ...g.members],
+        startTime: null,
+        failed: false,
+        failedBy: null,
+        initiatedBy: 'me',
+      };
+      renderGroupDetail(groupId);
+      const others = [...g.members];
+      others.forEach((id, i) => {
+        setTimeout(() => {
+          if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
+          S.groupDetox.readyMembers.push(id);
+          const rows = document.getElementById('gd-member-rows');
+          const cnt  = document.getElementById('gd-ready-count');
+          if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
+          if (cnt)  cnt.textContent = `${S.groupDetox.readyMembers.length}/${S.groupDetox.allMembers.length}${t('人 準備完了',' ready')}`;
+          if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
+            S.groupDetox.startTime = Date.now();
+            setTimeout(() => {
+              startSession(S.groupDetox.duration, false);
+            }, 600);
+          }
+        }, (i + 1) * 1500);
       });
-
-    } else {
-      // Member: "参加する" enters lobby with creator's settings
-      document.getElementById('gd-ready-btn').addEventListener('click', () => {
-        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
-        const pd = g.pendingDetox;
-        S.groupDetox = {
-          groupId,
-          duration: pd.duration,
-          blockedApps: pd.apps,
-          readyMembers: ['me'],
-          passedMembers: [],
-          allMembers: ['me', ...g.members],
-          startTime: null,
-          lobbyStartTime: Date.now(),
-          failed: false,
-          failedBy: null,
-          initiatedBy: pd.creatorId,
-        };
-        renderGroupDetail(groupId);
-        // Simulate other members responding
-        [...g.members].forEach((id, i) => {
-          setTimeout(() => {
-            if (!S.groupDetox || S.groupDetox.groupId !== groupId) return;
-            S.groupDetox.readyMembers.push(id);
-            const rows = document.getElementById('gd-member-rows');
-            if (rows) rows.innerHTML = memberReadyRows(S.groupDetox.readyMembers);
-          }, (i + 1) * 1500);
-        });
-      });
-
-      // Member: "今回はパス" — show passed state and return to setup
-      document.getElementById('gd-pass-btn')?.addEventListener('click', () => {
-        // Show a brief "passed" notice within the page
-        const body = document.querySelector('#page-group-detail .flex-grow');
-        if (body) {
-          body.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full gap-4 py-12">
-              <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
-                <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-              </div>
-              <p class="text-lg font-bold text-white">今回はパスしました</p>
-              <p class="text-sm text-gray-500 text-center px-6">次回のグループデトックスで一緒に頑張ろう！</p>
-              <button id="gd-pass-back" class="mt-2 px-6 py-3 rounded-2xl font-bold text-sm border border-gray-700 text-gray-400">グループに戻る</button>
-            </div>`;
-          document.getElementById('gd-pass-back')?.addEventListener('click', () => renderGroupDetail(groupId));
-        }
-      });
-    }
-
+    });
   }
 
   goto('group-detail');
@@ -2817,7 +2109,7 @@ function renderFriendsList(filter = '') {
   if (active.length && offline.length) {
     const sep = document.createElement('div');
     sep.className = 'text-center text-gray-800 text-xs font-bold uppercase tracking-widest py-2';
-    sep.textContent = 'オフライン';
+    sep.textContent = t('オフライン','Offline');
     list.appendChild(sep);
   }
 
@@ -2825,7 +2117,7 @@ function renderFriendsList(filter = '') {
   offline.forEach(f => list.appendChild(buildFriendCard(f, false)));
 
   if (friends.length === 0) {
-    list.innerHTML = '<p class="text-gray-700 text-sm text-center mt-8">フレンドが見つかりません</p>';
+    list.innerHTML = `<p class="text-gray-700 text-sm text-center mt-8">${t('フレンドが見つかりません','No friends found')}</p>`;
   }
 }
 
@@ -2836,7 +2128,7 @@ function buildFriendCard(f, isActive) {
 
   const elapsed = isActive ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
   const blockText = (isActive && f.isPublic && f.blockPublic)
-    ? '<p class="text-xs text-gray-500 mt-0.5">YouTube, Instagram をブロック中</p>'
+    ? `<p class="text-xs text-gray-500 mt-0.5">${t('YouTube, Instagram をブロック中','Blocking YouTube, Instagram')}</p>`
     : '';
 
   el.innerHTML = `
@@ -2854,7 +2146,7 @@ function buildFriendCard(f, isActive) {
     <div class="text-right flex-shrink-0 ml-2">
       ${isActive
         ? `<p class="font-bold text-white text-sm friend-elapsed" data-start="${f.sessionStart}">${fmtCountdown(elapsed)}</p>
-           <p class="text-xs text-gray-700">経過</p>`
+           <p class="text-xs text-gray-700">${t('経過','Elapsed')}</p>`
         : `<svg class="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
            </svg>`
@@ -2883,7 +2175,7 @@ function renderMessages(filter = '') {
       <h1 class="text-3xl font-black text-white">Messages</h1>
     </div>
     <div class="flex-shrink-0 px-4 pb-3 relative">
-      <input id="msg-search" class="input-field rounded-full pl-10" placeholder="フレンドを検索">
+      <input id="msg-search" class="input-field rounded-full pl-10" placeholder="${t('フレンドを検索','Search friends')}">
       <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
       </svg>
@@ -2905,7 +2197,7 @@ function renderMsgList(filter = '') {
   );
 
   if (friends.length === 0) {
-    list.innerHTML = '<p class="text-gray-700 text-sm text-center mt-8">フレンドが見つかりません</p>';
+    list.innerHTML = `<p class="text-gray-700 text-sm text-center mt-8">${t('フレンドが見つかりません','No friends found')}</p>`;
     return;
   }
 
@@ -2921,7 +2213,7 @@ function renderMsgList(filter = '') {
       </div>
       <div class="flex-grow min-w-0">
         <p class="font-bold text-white text-sm">${f.name}</p>
-        <p class="text-gray-600 text-sm truncate">${last ? last.text : '会話を開始しよう'}</p>
+        <p class="text-gray-600 text-sm truncate">${last ? last.text : t('会話を開始しよう','Start a conversation')}</p>
       </div>
       <p class="text-gray-800 text-xs flex-shrink-0">${last ? last.time : ''}</p>
     `;
@@ -3014,7 +2306,7 @@ function renderProfile() {
       <div class="flex items-center gap-2">
         <button id="premium-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold" style="background:linear-gradient(135deg,#f59e0b22,#f9731622);border:1px solid #f59e0b44;color:#f59e0b;">
           <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm2 3h10v2H7v-2z"/></svg>
-          プレミアム
+          ${t('プレミアム','Premium')}
         </button>
         <button id="settings-btn" class="w-9 h-9 flex items-center justify-center rounded-full bg-[#1C1C1E] text-gray-500">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3029,7 +2321,7 @@ function renderProfile() {
     <div class="px-4 flex items-center space-x-4 mb-4">
       <img id="prof-avatar" src="${u.avatar||''}" class="w-18 h-18 rounded-full border-2 border-[#2C2C2E] cursor-pointer" style="width:72px;height:72px;" alt="">
       <div class="flex-grow min-w-0">
-        <h2 class="text-xl font-black text-white">${u.name||'ユーザー'}</h2>
+        <h2 class="text-xl font-black text-white">${u.name||t('ユーザー','User')}</h2>
         <p class="text-gray-600 text-sm">${u.handle||''}</p>
         ${u.bio ? `<p class="text-gray-400 text-sm mt-0.5 line-clamp-2">${u.bio}</p>` : ''}
       </div>
@@ -3037,7 +2329,7 @@ function renderProfile() {
 
     <div class="px-4 mb-5">
       <button id="edit-profile-btn" class="w-full border border-gray-800 text-white font-semibold py-2.5 rounded-full text-sm hover:bg-white/5 transition">
-        プロフィールを編集
+        ${t('プロフィールを編集','Edit Profile')}
       </button>
     </div>
 
@@ -3047,14 +2339,14 @@ function renderProfile() {
         <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:#f9731618;border:1.5px solid #f9731644;">🔥</div>
         <div>
           <p class="text-2xl font-black text-white leading-none">${streak}</p>
-          <p class="text-xs text-gray-600 mt-0.5">日連続</p>
+          <p class="text-xs text-gray-600 mt-0.5">${t('日連続','day streak')}</p>
         </div>
       </div>
       <div class="card p-4 flex items-center gap-3">
         <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:#ffffff0d;border:1.5px solid #ffffff18;">✅</div>
         <div>
           <p class="text-2xl font-black text-white leading-none">${totalSessions}</p>
-          <p class="text-xs text-gray-600 mt-0.5">完了セッション</p>
+          <p class="text-xs text-gray-600 mt-0.5">${t('完了セッション','Sessions Done')}</p>
         </div>
       </div>
     </div>
@@ -3073,7 +2365,7 @@ function renderProfile() {
 
     <!-- Session history -->
     <div class="px-4">
-      <h3 class="font-bold text-white text-sm mb-3">セッション履歴</h3>
+      <h3 class="font-bold text-white text-sm mb-3">${t('セッション履歴','Session History')}</h3>
       <div id="history-list" class="space-y-2 pb-4"></div>
     </div>
   `;
@@ -3106,18 +2398,14 @@ function buildWeeklyChart(chartId, labelsId, totalId, data) {
   const totalEl  = document.getElementById(totalId);
   if (!chartEl || !labelsEl) return;
 
-  const DAY_LABELS = S.lang === 'en'
-    ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-    : ['日','月','火','水','木','金','土'];
+  const DAY_LABELS = S.lang === 'en' ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] : ['日','月','火','水','木','金','土'];
   const today  = new Date().getDay();
   const maxVal = Math.max(...data, 1);
   const total  = data.reduce((a,b) => a+b, 0);
 
   chartEl.innerHTML  = '';
   labelsEl.innerHTML = '';
-  if (totalEl) totalEl.textContent = S.lang === 'en'
-    ? `This week ${Math.floor(total/60)}h ${total%60}m`
-    : `今週 ${Math.floor(total/60)}h ${total%60}m`;
+  if (totalEl) totalEl.textContent = `${t('今週','This week')} ${Math.floor(total/60)}h ${total%60}m`;
 
   DAY_LABELS.forEach((day, i) => {
     const pct     = data[i] / maxVal * 100;
@@ -3146,7 +2434,7 @@ function buildHistoryList(history) {
   if (!el) return;
   const sorted = [...history].reverse().slice(0, 10);
   if (sorted.length === 0) {
-    el.innerHTML = '<p class="text-gray-700 text-sm text-center mt-4">まだセッションがありません</p>';
+    el.innerHTML = `<p class="text-gray-700 text-sm text-center mt-4">${t('まだセッションがありません','No sessions yet')}</p>`;
     return;
   }
   sorted.forEach(h => {
@@ -3162,8 +2450,8 @@ function buildHistoryList(history) {
           <p class="text-gray-600 text-xs">${fmtDate(h.date)}</p>
         </div>
         ${h.completed
-          ? '<span class="text-xs text-gray-600 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">完了</span>'
-          : '<span class="text-xs text-gray-700 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">中断</span>'}
+          ? `<span class="text-xs text-gray-600 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">${t('完了','Done')}</span>`
+          : `<span class="text-xs text-gray-700 font-semibold border border-gray-800 px-2 py-0.5 rounded-full">${t('中断','Stopped')}</span>`}
       </div>
     `);
   });
@@ -3177,9 +2465,9 @@ function renderEditProfile() {
   const page = document.getElementById('page-edit-profile');
   page.innerHTML = `
     <div class="flex justify-between items-center mb-6">
-      <button id="ep-cancel" class="text-gray-500 font-semibold py-1 px-1">キャンセル</button>
-      <h2 class="text-base font-bold text-white">プロフィール編集</h2>
-      <button id="ep-save" class="text-white font-bold py-1 px-1">保存</button>
+      <button id="ep-cancel" class="text-gray-500 font-semibold py-1 px-1">${t('キャンセル','Cancel')}</button>
+      <h2 class="text-base font-bold text-white">${t('プロフィール編集','Edit Profile')}</h2>
+      <button id="ep-save" class="text-white font-bold py-1 px-1">${t('保存','Save')}</button>
     </div>
 
     <div class="flex flex-col items-center mb-6">
@@ -3197,15 +2485,15 @@ function renderEditProfile() {
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーネーム</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーネーム','Username')}</label>
         <input id="ep-name"   class="input-field" type="text" value="${u.name||''}">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">ユーザーID (@)</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーID (@)','User ID (@)')}</label>
         <input id="ep-handle" class="input-field" type="text" value="${(u.handle||'').replace('@','')}">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">自己紹介</label>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('自己紹介','Bio')}</label>
         <textarea id="ep-bio" class="input-field resize-none h-20 rounded-xl">${u.bio||''}</textarea>
       </div>
     </div>
@@ -3237,139 +2525,11 @@ function renderEditProfile() {
 }
 
 // ================================================================
-// SETTINGS PAGE
-// ================================================================
-function renderSettings() {
-  const u = getUser() || {};
-  const page = document.getElementById('page-settings');
-  page.innerHTML = `
-    <div class="flex items-center mb-6">
-      <button id="st-back" class="p-2 -ml-2 text-gray-500">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h2 class="text-xl font-bold text-white ml-2">設定</h2>
-    </div>
-
-    <div class="space-y-4">
-      <!-- Account -->
-      <div class="card p-4 space-y-0">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">アカウント</p>
-        <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
-          <span class="text-white text-sm">メールアドレス</span>
-          <span class="text-gray-600 text-sm">${u.email||'—'}</span>
-        </div>
-        <div class="flex justify-between items-center py-2.5">
-          <span class="text-white text-sm">アカウントの公開設定</span>
-          <div class="flex items-center space-x-2">
-            <span id="privacy-lbl" class="text-gray-600 text-sm">${u.isPublic?'公開':'非公開'}</span>
-            <div id="privacy-toggle" class="toggle ${u.isPublic?'on':''}">
-              <div class="toggle-knob"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- App settings -->
-      <div class="card p-4">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">アプリ設定</p>
-        <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
-          <span class="text-white text-sm">言語</span>
-          <button id="lang-toggle-btn" class="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#2C2C2E] border border-gray-700 px-3 py-1 rounded-full hover:bg-[#3A3A3C] transition">
-            ${S.lang === 'en' ? '🇺🇸 English' : '🇯🇵 日本語'}
-          </button>
-        </div>
-        <button id="st-notif-btn" class="w-full flex justify-between items-center py-2.5 border-t border-gray-900">
-          <span class="text-white text-sm">通知設定</span>
-          <div class="flex items-center gap-2">
-            <span class="text-gray-600 text-sm">${S.notifPrefs.enabled ? 'オン' : 'オフ'}</span>
-            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </div>
-        </button>
-      </div>
-
-      <!-- Blocked apps -->
-      <div class="card p-4">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">ブロック対象アプリ</p>
-        <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
-          ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
-          <button class="w-12 h-12 rounded-xl bg-[#2C2C2E] border border-gray-800 flex items-center justify-center flex-shrink-0 text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Legal -->
-      <div class="card p-4 space-y-0">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">法律・サポート</p>
-        <button id="st-terms-btn" class="w-full flex justify-between items-center py-2.5 border-b border-gray-900">
-          <span class="text-white text-sm">利用規約</span>
-          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
-        <button id="st-privacy-btn" class="w-full flex justify-between items-center py-2.5">
-          <span class="text-white text-sm">プライバシーポリシー</span>
-          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-
-      <button id="logout-btn" class="w-full bg-red-900/25 text-red-400 font-bold py-4 rounded-2xl hover:bg-red-900/40 transition mt-2">
-        ログアウト
-      </button>
-    </div>
-  `;
-
-  goto('settings');
-
-  document.getElementById('st-back').addEventListener('click', () => goto('profile'));
-  document.getElementById('lang-toggle-btn').addEventListener('click', () => {
-    S.lang = S.lang === 'ja' ? 'en' : 'ja';
-    localStorage.setItem('to_lang', S.lang);
-    renderSettings();
-  });
-  document.getElementById('st-terms-btn').addEventListener('click', () => {
-    S._prevPage = 'settings';
-    renderTerms();
-    goto('terms');
-  });
-  document.getElementById('st-privacy-btn').addEventListener('click', () => {
-    S._prevPage = 'settings';
-    renderPrivacy();
-    goto('privacy');
-  });
-  document.getElementById('privacy-toggle').addEventListener('click', () => {
-    const u = getUser() || {};
-    u.isPublic = !u.isPublic;
-    saveUser(u);
-    document.getElementById('privacy-toggle').classList.toggle('on', u.isPublic);
-    document.getElementById('privacy-lbl').textContent = u.isPublic ? '公開' : '非公開';
-  });
-  document.getElementById('st-notif-btn').addEventListener('click', () => {
-    renderNotifSettings();
-  });
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    showConfirm('ログアウト', 'ログアウトしますか？', 'ログアウト', () => {
-      localStorage.removeItem('to_user');
-      goto('login');
-      renderLogin();
-    });
-  });
-}
-
-// ================================================================
 // NOTIFICATION SETTINGS PAGE
 // ================================================================
 function renderNotifSettings() {
   const p = S.notifPrefs;
-  let page = document.getElementById('page-notif-settings');
-  if (!page) {
-    page = document.createElement('div');
-    page.id = 'page-notif-settings';
-    page.className = 'page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10';
-    document.getElementById('app').appendChild(page);
-  }
+  const page = document.getElementById('page-notif-settings');
 
   function row(id, label, key, border = true) {
     return `
@@ -3398,13 +2558,13 @@ function renderNotifSettings() {
           </div>
           <div class="flex items-center gap-3 flex-shrink-0">
             <div class="flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-600">開始</span>
+              <span class="text-xs text-gray-600">${t('開始','Start')}</span>
               <div id="nspref-friend-${f.id}-start" class="toggle ${onStart ? 'on' : ''}">
                 <div class="toggle-knob"></div>
               </div>
             </div>
             <div class="flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-600">終了</span>
+              <span class="text-xs text-gray-600">${t('終了','End')}</span>
               <div id="nspref-friend-${f.id}-end" class="toggle ${onEnd ? 'on' : ''}">
                 <div class="toggle-knob"></div>
               </div>
@@ -3421,35 +2581,40 @@ function renderNotifSettings() {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      <h2 class="text-xl font-bold text-white ml-2">通知設定</h2>
+      <h2 class="text-xl font-bold text-white ml-2">${t('通知設定','Notification Settings')}</h2>
     </div>
     <div class="space-y-4">
+      <!-- Master toggle -->
       <div class="card p-4">
         <div class="flex justify-between items-center py-1">
           <div>
-            <p class="text-white text-sm font-semibold">通知を受け取る</p>
-            <p class="text-xs text-gray-600 mt-0.5">すべての通知のオン/オフ</p>
+            <p class="text-white text-sm font-semibold">${t('通知を受け取る','Enable Notifications')}</p>
+            <p class="text-xs text-gray-600 mt-0.5">${t('すべての通知のオン/オフ','Master switch for all notifications')}</p>
           </div>
           <div id="nspref-enabled" class="toggle ${p.enabled ? 'on' : ''}">
             <div class="toggle-knob"></div>
           </div>
         </div>
       </div>
+
+      <!-- Friend detox notifications -->
       <div class="card p-4">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">フレンドのデトックス</p>
-        ${row('friendDetoxStart', 'デトックス開始通知', 'friendDetoxStart', true)}
-        ${row('friendDetoxEnd',   'デトックス終了通知', 'friendDetoxEnd',   detoxEnabled)}
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('フレンドのデトックス','Friend Detox')}</p>
+        ${row('friendDetoxStart', t('デトックス開始通知','Friend Starts Detox'), 'friendDetoxStart', true)}
+        ${row('friendDetoxEnd',   t('デトックス終了通知','Friend Ends Detox'),   'friendDetoxEnd',   detoxEnabled)}
         ${detoxEnabled ? `
           <div id="ns-friend-list" class="mt-3 pt-3 border-t border-gray-900">
-            <p class="text-xs text-gray-600 font-semibold mb-2">通知するフレンド</p>
+            <p class="text-xs text-gray-600 font-semibold mb-2">${t('通知するフレンド','Notify me about')}</p>
             ${friendRows()}
           </div>` : ''}
       </div>
+
+      <!-- Social notifications -->
       <div class="card p-4">
-        <p class="text-xs text-gray-700 font-bold uppercase mb-3">ソーシャル</p>
-        ${row('likes',       'いいね',       'likes',       true)}
-        ${row('comments',    'コメント',     'comments',    true)}
-        ${row('groupInvite', 'グループ招待', 'groupInvite', false)}
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('ソーシャル','Social')}</p>
+        ${row('likes',       t('いいね','Likes'),           'likes',       true)}
+        ${row('comments',    t('コメント','Comments'),       'comments',    true)}
+        ${row('groupInvite', t('グループ招待','Group Invite'), 'groupInvite', false)}
       </div>
     </div>
   `;
@@ -3470,7 +2635,6 @@ function renderNotifSettings() {
     document.getElementById(`nspref-${id}`)?.addEventListener('click', function() {
       S.notifPrefs[key] = !S.notifPrefs[key];
       this.classList.toggle('on', S.notifPrefs[key]);
-      // デトックス系が変わったらフレンドリストの表示を再描画
       if (key === 'friendDetoxStart' || key === 'friendDetoxEnd') {
         renderNotifSettings();
       }
@@ -3485,6 +2649,129 @@ function renderNotifSettings() {
         p.friendFilter[f.id][type] = !p.friendFilter[f.id][type];
         this.classList.toggle('on', p.friendFilter[f.id][type]);
       });
+    });
+  });
+}
+
+// ================================================================
+// SETTINGS PAGE
+// ================================================================
+function renderSettings() {
+  const u = getUser() || {};
+  const page = document.getElementById('page-settings');
+  page.innerHTML = `
+    <div class="flex items-center mb-6">
+      <button id="st-back" class="p-2 -ml-2 text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="text-xl font-bold text-white ml-2">${t('設定','Settings')}</h2>
+    </div>
+
+    <div class="space-y-4">
+      <!-- Account -->
+      <div class="card p-4 space-y-0">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('アカウント','Account')}</p>
+        <div class="flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">${t('メールアドレス','Email')}</span>
+          <span class="text-gray-600 text-sm">${u.email||'—'}</span>
+        </div>
+        <div class="flex justify-between items-center py-2.5">
+          <span class="text-white text-sm">${t('アカウントの公開設定','Account Privacy')}</span>
+          <div class="flex items-center space-x-2">
+            <span id="privacy-lbl" class="text-gray-600 text-sm">${u.isPublic?t('公開','Public'):t('非公開','Private')}</span>
+            <div id="privacy-toggle" class="toggle ${u.isPublic?'on':''}">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App settings -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('アプリ設定','App Settings')}</p>
+        <button id="st-lang-btn" class="w-full flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">${S.lang === 'ja' ? '言語' : 'Language'}</span>
+          <div class="flex items-center gap-2">
+            <span id="st-lang-label" class="text-gray-400 text-sm font-semibold">${S.lang === 'ja' ? '日本語' : 'English'}</span>
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </button>
+        <button id="st-notif-btn" class="w-full flex justify-between items-center py-2.5 border-t border-gray-900">
+          <span class="text-white text-sm">${t('通知設定','Notification Settings')}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-600 text-sm">${S.notifPrefs.enabled ? t('オン','On') : t('オフ','Off')}</span>
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </button>
+      </div>
+
+      <!-- Blocked apps -->
+      <div class="card p-4">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('ブロック対象アプリ','Blocked Apps')}</p>
+        <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
+          ${getBlockedApps().map(a=>`<img src="https://placehold.co/48x48/${a.bg}/FFF?text=${a.label[0]}" class="rounded-xl flex-shrink-0 w-12 h-12" alt="${a.label}">`).join('')}
+          <button class="w-12 h-12 rounded-xl bg-[#2C2C2E] border border-gray-800 flex items-center justify-center flex-shrink-0 text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Legal -->
+      <div class="card p-4 space-y-0">
+        <p class="text-xs text-gray-700 font-bold uppercase mb-3">${S.lang === 'en' ? 'Legal & Support' : '法律・サポート'}</p>
+        <button id="st-terms-btn" class="w-full flex justify-between items-center py-2.5 border-b border-gray-900">
+          <span class="text-white text-sm">${S.lang === 'en' ? 'Terms of Service' : '利用規約'}</span>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button id="st-privacy-btn" class="w-full flex justify-between items-center py-2.5">
+          <span class="text-white text-sm">${S.lang === 'en' ? 'Privacy Policy' : 'プライバシーポリシー'}</span>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <button id="logout-btn" class="w-full bg-red-900/25 text-red-400 font-bold py-4 rounded-2xl hover:bg-red-900/40 transition mt-2">
+        ${t('ログアウト','Log Out')}
+      </button>
+    </div>
+  `;
+
+  goto('settings');
+
+  document.getElementById('st-back').addEventListener('click', () => goto('profile'));
+  document.getElementById('st-terms-btn').addEventListener('click', () => {
+    S._prevPage = 'settings';
+    renderTerms();
+    goto('terms');
+  });
+  document.getElementById('st-privacy-btn').addEventListener('click', () => {
+    S._prevPage = 'settings';
+    renderPrivacy();
+    goto('privacy');
+  });
+  document.getElementById('privacy-toggle').addEventListener('click', () => {
+    const u = getUser() || {};
+    u.isPublic = !u.isPublic;
+    saveUser(u);
+    document.getElementById('privacy-toggle').classList.toggle('on', u.isPublic);
+    document.getElementById('privacy-lbl').textContent = u.isPublic ? t('公開','Public') : t('非公開','Private');
+  });
+  document.getElementById('st-notif-btn').addEventListener('click', () => {
+    renderNotifSettings();
+  });
+  document.getElementById('st-lang-btn').addEventListener('click', () => {
+    S.lang = S.lang === 'ja' ? 'en' : 'ja';
+    renderStaticLabels();
+    renderSettings();
+  });
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    showConfirm(t('ログアウト','Log Out'), t('ログアウトしますか？','Are you sure you want to log out?'), t('ログアウト','Log Out'), () => {
+      localStorage.removeItem('to_user');
+      goto('login');
+      renderLogin();
     });
   });
 }
@@ -3517,9 +2804,9 @@ function openUserProfile(userId) {
 
       <div class="flex space-x-3 mb-6">
         <button id="up-msg-btn" class="flex-1 bg-white text-black font-bold py-3 rounded-full text-sm">
-          メッセージ
+          ${t('メッセージ','Message')}
         </button>
-        ${f.isFriend ? `<button id="up-remove-btn" class="flex-1 border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm">フレンド解除</button>` : ''}
+        ${f.isFriend ? `<button id="up-remove-btn" class="flex-1 border border-gray-800 text-gray-500 font-semibold py-3 rounded-full text-sm">${t('フレンド解除','Unfriend')}</button>` : ''}
       </div>
 
       <!-- Weekly record -->
@@ -3530,7 +2817,7 @@ function openUserProfile(userId) {
       </div>
 
       <!-- Their posts -->
-      <h3 class="font-bold text-white text-sm mb-3">投稿</h3>
+      <h3 class="font-bold text-white text-sm mb-3">${t('投稿','Posts')}</h3>
       <div class="space-y-2">
         ${MOCK_POSTS.filter(p=>p.userId===userId).map(p=>`
           <div class="card p-3 flex items-center space-x-3">
@@ -3556,7 +2843,7 @@ function openUserProfile(userId) {
   document.getElementById('up-back').addEventListener('click', () => history.length > 1 ? goto('home') : goto('home'));
   document.getElementById('up-msg-btn').addEventListener('click', () => openDM(f));
   document.getElementById('up-remove-btn')?.addEventListener('click', () => {
-    showConfirm('フレンド解除', `${f.name} をフレンドから解除しますか？`, '解除', () => {
+    showConfirm(t('フレンド解除','Unfriend'), t(`${f.name} をフレンドから解除しますか？`,`Unfriend ${f.name}?`), t('解除','Unfriend'), () => {
       f.isFriend = false;
       goto('home');
     });
@@ -3575,22 +2862,21 @@ function renderNotifications() {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      <h2 class="text-xl font-bold text-white ml-2">通知</h2>
+      <h2 class="text-xl font-bold text-white ml-2">${t('通知','Notifications')}</h2>
     </div>
     <div class="flex-grow overflow-y-auto no-scrollbar divide-y divide-gray-900">
       ${(() => {
         const all = [
-          { icon:'⏱', type:'friendDetoxStart', friendId:'chloe', text:'<b>Chloe</b> がデトックスを開始しました', sub:'1時間前' },
-          { icon:'❤️', type:'likes',            friendId:null,    text:'<b>Alice</b> があなたの投稿にいいねしました', sub:'2時間前' },
-          { icon:'✅', type:'friendDetoxEnd',   friendId:'ben',   text:'<b>Ben</b> がデトックスを終了しました（60分）', sub:'3時間前' },
-          { icon:'💬', type:'comments',         friendId:null,    text:'<b>Ben</b> がコメントしました: "いいね！"', sub:'5時間前' },
-          { icon:'⏱', type:'friendDetoxStart', friendId:'david', text:'<b>David</b> がデトックスを開始しました', sub:'昨日' },
-          { icon:'✅', type:'friendDetoxEnd',   friendId:'chloe', text:'<b>Chloe</b> がデトックスを終了しました（30分）', sub:'昨日' },
+          { icon:'⏱', type:'friendDetoxStart', friendId:'chloe', text: t('<b>Chloe</b> がデトックスを開始しました','<b>Chloe</b> started a detox session'), sub: t('1時間前','1h ago') },
+          { icon:'❤️', type:'likes',            friendId:null,    text: t('<b>Alice</b> があなたの投稿にいいねしました','<b>Alice</b> liked your post'), sub: t('2時間前','2h ago') },
+          { icon:'✅', type:'friendDetoxEnd',   friendId:'ben',   text: t('<b>Ben</b> がデトックスを終了しました（60分）','<b>Ben</b> completed a detox session (60 min)'), sub: t('3時間前','3h ago') },
+          { icon:'💬', type:'comments',         friendId:null,    text: t('<b>Ben</b> がコメントしました: "いいね！"','<b>Ben</b> commented: "Nice!"'), sub: t('5時間前','5h ago') },
+          { icon:'⏱', type:'friendDetoxStart', friendId:'david', text: t('<b>David</b> がデトックスを開始しました','<b>David</b> started a detox session'), sub: t('昨日','Yesterday') },
+          { icon:'✅', type:'friendDetoxEnd',   friendId:'chloe', text: t('<b>Chloe</b> がデトックスを終了しました（30分）','<b>Chloe</b> completed a detox session (30 min)'), sub: t('昨日','Yesterday') },
         ];
         const p = S.notifPrefs;
         const filtered = p.enabled ? all.filter(n => {
           if (!p[n.type]) return false;
-          // デトックス通知はフレンドフィルターも確認
           if (n.friendId && (n.type === 'friendDetoxStart' || n.type === 'friendDetoxEnd')) {
             const ff = p.friendFilter[n.friendId];
             const sub = n.type === 'friendDetoxStart' ? 'start' : 'end';
@@ -3599,7 +2885,7 @@ function renderNotifications() {
           return true;
         }) : [];
         if (filtered.length === 0) {
-          return '<p class="text-center text-gray-700 text-sm mt-12">通知はありません</p>';
+          return `<p class="text-center text-gray-700 text-sm mt-12">${t('通知はありません','No notifications')}</p>`;
         }
         return filtered.map(n=>`
           <div class="flex items-start space-x-3 px-4 py-4">
@@ -3613,6 +2899,7 @@ function renderNotifications() {
       })()}
     </div>
   `;
+  goto('notifications');
   document.getElementById('notif-back').addEventListener('click', () => goto('home'));
 }
 
@@ -3643,6 +2930,151 @@ function renderAppChips() {
   });
 }
 
+// ================================================================
+// TUNEOUT (DETOX) PAGE
+// ================================================================
+function renderTuneout() {
+  const page = document.getElementById('page-tuneout');
+  const detoxTabState = S.detoxTab || 'now';
+  page.innerHTML = `
+    <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3">
+      <h1 class="text-2xl font-black text-white">${t('デトックス','Detox')}</h1>
+    </div>
+    <div class="flex-shrink-0 flex items-center bg-[#1C1C1E] rounded-full mx-4 mb-4 p-1.5 gap-1.5">
+      <button id="tab-detox-now-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition ${detoxTabState==='now'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">${t('今すぐ始める','Start Now')}</button>
+      <button id="tab-detox-reserve-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition ${detoxTabState==='reserve'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}">${t('予約','Reservations')}</button>
+    </div>
+    <div id="detox-tab-content" class="flex-grow overflow-y-auto no-scrollbar pb-28 px-4"></div>
+  `;
+  document.getElementById('tab-detox-now-btn').addEventListener('click', () => {
+    S.detoxTab = 'now';
+    document.getElementById('tab-detox-now-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-detox-reserve-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    renderDetoxNow();
+  });
+  document.getElementById('tab-detox-reserve-btn').addEventListener('click', () => {
+    S.detoxTab = 'reserve';
+    document.getElementById('tab-detox-reserve-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-detox-now-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    renderDetoxReserve();
+  });
+  if (detoxTabState === 'reserve') renderDetoxReserve();
+  else renderDetoxNow();
+}
+
+function renderDetoxNow() {
+  const content = document.getElementById('detox-tab-content');
+  if (!content) return;
+  content.innerHTML = `
+    <div class="mt-2 space-y-4">
+      <div class="card p-5">
+        <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">${t('デトックスを始める','Start a Detox')}</p>
+        <p class="text-gray-400 text-sm mb-4">${t('アプリを制限して、集中した時間を作ろう。','Block apps and create focused time.')}</p>
+        <button id="detox-start-now-btn" class="w-full bg-white text-black font-bold py-4 rounded-2xl text-base active:bg-gray-200 transition">
+          ${t('今すぐ開始','Start Now')}
+        </button>
+      </div>
+      <div class="card p-5">
+        <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">${t('今週の実績','This Week')}</p>
+        <div class="flex justify-around text-center">
+          <div>
+            <p class="text-2xl font-black text-white">3</p>
+            <p class="text-xs text-gray-600 mt-0.5">${t('セッション','Sessions')}</p>
+          </div>
+          <div class="w-px bg-gray-800"></div>
+          <div>
+            <p class="text-2xl font-black text-white">5h 20m</p>
+            <p class="text-xs text-gray-600 mt-0.5">${t('合計時間','Total Time')}</p>
+          </div>
+          <div class="w-px bg-gray-800"></div>
+          <div>
+            <p class="text-2xl font-black text-white">🔥 3</p>
+            <p class="text-xs text-gray-600 mt-0.5">${t('連続日数','Day Streak')}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('detox-start-now-btn')?.addEventListener('click', openManualSheet);
+}
+
+function renderDetoxReserve() {
+  const content = document.getElementById('detox-tab-content');
+  if (!content) return;
+  const gdt = S.globalDetoxTime;
+  const timeStr = gdt ? `${String(gdt.h).padStart(2,'0')}:${String(gdt.m).padStart(2,'0')}` : '--:--';
+  const beforeNoon = new Date().getHours() < 12;
+  const reserved = S.globalDetoxReserved;
+  content.innerHTML = `
+    <div class="mt-2 space-y-4">
+      <div class="card p-5">
+        <p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:#a78bfa">${t('全ユーザーデトックス','All-User Detox')}</p>
+        <p class="text-2xl font-black text-white mb-1">${t('今日','Today')} ${timeStr}</p>
+        <p class="text-sm text-gray-500 mb-4">${beforeNoon ? t('正午まで予約受付中','Reservations open until noon') : t('本日の予約受付終了','Reservations closed for today')}</p>
+        ${!reserved
+          ? (beforeNoon
+            ? `<button id="global-reserve-btn" class="w-full bg-white text-black font-bold py-3 rounded-2xl text-sm active:bg-gray-200 transition">${t('予約する','Reserve')}</button>`
+            : `<p class="text-gray-700 font-semibold text-sm">${t('受付終了','Closed')}</p>`)
+          : `<div class="flex items-center justify-between">
+               <div class="flex items-center gap-2 text-green-400 font-bold text-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('予約済み','Reserved')}</div>
+               <button id="global-cancel-reserve-btn" class="text-xs text-red-400 font-semibold underline">${t('キャンセル','Cancel')}</button>
+             </div>`
+        }
+      </div>
+      <div class="card p-5">
+        <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">${t('予約について','About Reservations')}</p>
+        <p class="text-gray-600 text-sm leading-relaxed">${t('全ユーザーデトックスは毎日19〜22時の間で行われます。正午までに予約してみんなで参加しよう！','The all-user detox happens daily between 19:00–22:00. Reserve by noon and detox together!')}</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('global-reserve-btn')?.addEventListener('click', () => {
+    S.globalDetoxReserved = true;
+    renderDetoxReserve();
+  });
+  document.getElementById('global-cancel-reserve-btn')?.addEventListener('click', () => {
+    S.globalDetoxReserved = false;
+    renderDetoxReserve();
+  });
+}
+
+function renderGlobalDetoxCard() {
+  const card = document.getElementById('global-detox-card');
+  if (!card || !S.globalDetoxTime) return;
+  const { h, m } = S.globalDetoxTime;
+  const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const beforeNoon = new Date().getHours() < 12;
+  const reserved = S.globalDetoxReserved;
+  card.className = 'flex-shrink-0 mx-4 mt-3 mb-1 rounded-2xl p-4 border border-gray-800 bg-[#1C1C1E]';
+  card.innerHTML = `
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:#a78bfa">${t('全ユーザーデトックス','All-User Detox')}</p>
+        <p class="text-xl font-black text-white">${t('今日','Today')} ${timeStr}</p>
+        <p class="text-xs text-gray-600 mt-0.5">${beforeNoon
+          ? t('正午まで予約受付中','Reservations open until noon')
+          : t('本日の予約受付終了','Reservations closed')}</p>
+      </div>
+      ${!reserved
+        ? (beforeNoon
+          ? `<button id="global-reserve-btn" class="ml-3 bg-white text-black px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap">${t('予約する','Reserve')}</button>`
+          : `<span class="ml-3 text-xs text-gray-700 font-semibold">${t('受付終了','Closed')}</span>`)
+        : `<div class="ml-3 flex flex-col items-end gap-1">
+             <span class="text-xs font-bold text-green-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${t('予約済み','Reserved')}</span>
+             <button id="global-cancel-reserve-btn" class="text-xs text-red-400 font-semibold underline">${t('キャンセル','Cancel')}</button>
+           </div>`
+      }
+    </div>
+  `;
+  document.getElementById('global-reserve-btn')?.addEventListener('click', () => {
+    S.globalDetoxReserved = true;
+    renderGlobalDetoxCard();
+  });
+  document.getElementById('global-cancel-reserve-btn')?.addEventListener('click', () => {
+    S.globalDetoxReserved = false;
+    renderGlobalDetoxCard();
+  });
+}
+
 function openManualSheet() {
   document.getElementById('manual-sheet').classList.add('open');
   renderAppChips();
@@ -3658,7 +3090,6 @@ function openManualSheet() {
       return;
     }
     document.getElementById('manual-sheet').classList.remove('open');
-    S.challengeData = { duration: total };
     startSession(total, false);
   });
 }
@@ -3667,36 +3098,62 @@ document.getElementById('manual-cancel-btn').addEventListener('click', () => {
   resetSlider('manual-slider','manual-thumb','manual-reveal');
 });
 
-function buildPickerEl(el, count, step) {
-  el.innerHTML = '';
-  const pad = document.createElement('div'); pad.className = 'picker-pad';
-  el.appendChild(pad.cloneNode());
-  for (let i = 0; i < count; i += step) {
-    const item = document.createElement('div');
-    item.className = 'picker-item';
-    item.textContent = String(i).padStart(2,'0');
-    el.appendChild(item);
-  }
-  el.appendChild(pad.cloneNode());
-}
+let pickerInited = false;
+function initGroupDetoxPicker() {
+  const hPicker = document.getElementById('gd-picker-hours');
+  const mPicker = document.getElementById('gd-picker-minutes');
+  if (!hPicker || !mPicker || hPicker.children.length > 0) return;
 
-function createTimePicker(hoursId, minutesId) {
-  const hPicker = document.getElementById(hoursId);
-  const mPicker = document.getElementById(minutesId);
-  if (!hPicker || !mPicker) return;
-  buildPickerEl(hPicker, 6,  1);   // 0-5 hours
-  buildPickerEl(mPicker, 60, 5);   // 0,5,10...55 min
+  function buildCol(el, count, step) {
+    const pad = document.createElement('div'); pad.className = 'picker-pad';
+    el.appendChild(pad.cloneNode());
+    for (let i = 0; i < count; i += step) {
+      const item = document.createElement('div');
+      item.className = 'picker-item';
+      item.textContent = String(i).padStart(2,'0');
+      el.appendChild(item);
+    }
+    el.appendChild(pad.cloneNode());
+  }
+  buildCol(hPicker, 6, 1);   // 0-5 hours
+  buildCol(mPicker, 60, 5);  // 0,5,10...55 min
+
+  // Scroll to default: 1 hour 0 min
   [hPicker, mPicker].forEach(p => {
     p.addEventListener('scroll', () => highlightCenter(p));
-    setTimeout(() => highlightCenter(p), 50);
+    setTimeout(() => {
+      const items = p.querySelectorAll('.picker-item');
+      if (p === hPicker && items[1]) p.scrollTop = items[1].offsetTop - p.clientHeight / 2 + items[1].offsetHeight / 2;
+      highlightCenter(p);
+    }, 50);
   });
 }
 
-let pickerInited = false;
 function initTimePicker() {
   if (pickerInited) return;
   pickerInited = true;
-  createTimePicker('picker-hours', 'picker-minutes');
+  const hPicker = document.getElementById('picker-hours');
+  const mPicker = document.getElementById('picker-minutes');
+
+  function buildPicker(el, count, step) {
+    const pad = document.createElement('div'); pad.className = 'picker-pad';
+    el.appendChild(pad.cloneNode());
+    for (let i = 0; i < count; i += step) {
+      const item = document.createElement('div');
+      item.className = 'picker-item';
+      item.textContent = String(i).padStart(2,'0');
+      el.appendChild(item);
+    }
+    el.appendChild(pad.cloneNode());
+  }
+  buildPicker(hPicker, 6,  1);  // 0-5 hours
+  buildPicker(mPicker, 60, 5);  // 0,5,10...55 min
+
+  [hPicker, mPicker].forEach(p => {
+    p.addEventListener('scroll', () => highlightCenter(p));
+    // scroll to 0 by default
+    setTimeout(() => highlightCenter(p), 50);
+  });
 }
 
 function highlightCenter(picker) {
@@ -3774,14 +3231,15 @@ function renderInviteSheet(group) {
   const overlay = document.getElementById('invite-overlay');
 
   const remaining = (group.maxMembers || 5) - group.members.length;
-  document.getElementById('invite-sheet-title').textContent = `${group.name}に招待`;
-  document.getElementById('invite-sheet-subtitle').textContent = `あと${remaining}人招待できます（最大${group.maxMembers||5}名）`;
+  document.getElementById('invite-sheet-title').textContent = t(`${group.name}に招待`, `Invite to ${group.name}`);
+  document.getElementById('invite-close-btn').textContent = t('閉じる','Close');
+  document.getElementById('invite-sheet-subtitle').textContent = t(`あと${remaining}人招待できます（最大${group.maxMembers||5}名）`, `${remaining} more invite(s) available (max ${group.maxMembers||5})`);
 
   const friendsList = document.getElementById('invite-friends-list');
   const invitableFriends = MOCK_FRIENDS.filter(f => f.isFriend && !group.members.includes(f.id));
 
   if (invitableFriends.length === 0) {
-    friendsList.innerHTML = '<p class="text-gray-600 text-sm text-center py-4">招待できるフレンドがいません</p>';
+    friendsList.innerHTML = `<p class="text-gray-600 text-sm text-center py-4">${t('招待できるフレンドがいません','No friends available to invite')}</p>`;
   } else {
     friendsList.innerHTML = invitableFriends.map(f => `
       <div class="flex items-center justify-between py-2">
@@ -3793,12 +3251,12 @@ function renderInviteSheet(group) {
           </div>
         </div>
         <button class="text-xs font-bold px-3 py-1.5 rounded-full invite-send-btn" data-uid="${f.id}"
-          style="background:${group.color}22;color:${group.color};border:1px solid ${group.color}44;">招待する</button>
+          style="background:${group.color}22;color:${group.color};border:1px solid ${group.color}44;">${t('招待する','Invite')}</button>
       </div>
     `).join('');
     friendsList.querySelectorAll('.invite-send-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        btn.textContent = '招待済み';
+        btn.textContent = t('招待済み','Invited');
         btn.disabled = true;
         btn.style.opacity = '0.5';
       });
@@ -3832,9 +3290,9 @@ function renderCreateGroup() {
 
   page.innerHTML = `
     <div class="flex items-center justify-between mb-6 px-1">
-      <button id="cg-cancel" class="text-gray-500 font-semibold">キャンセル</button>
-      <h2 class="text-base font-bold text-white">新規グループ</h2>
-      <button id="cg-create" class="text-white font-bold">作成</button>
+      <button id="cg-cancel" class="text-gray-500 font-semibold">${t('キャンセル','Cancel')}</button>
+      <h2 class="text-base font-bold text-white">${t('新規グループ','New Group')}</h2>
+      <button id="cg-create" class="text-white font-bold">${t('作成','Create')}</button>
     </div>
 
     <!-- Emoji + Color picker -->
@@ -3850,29 +3308,29 @@ function renderCreateGroup() {
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">グループ名</label>
-        <input id="cg-name" class="input-field" type="text" placeholder="例: 朝活デトックス部" maxlength="20">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('グループ名','Group Name')}</label>
+        <input id="cg-name" class="input-field" type="text" placeholder="${t('例: 朝活デトックス部','e.g. Morning Detox Club')}" maxlength="20">
       </div>
       <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">説明（任意）</label>
-        <input id="cg-desc" class="input-field" type="text" placeholder="グループの目的を一言で">
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('説明（任意）','Description (optional)')}</label>
+        <input id="cg-desc" class="input-field" type="text" placeholder="${t('グループの目的を一言で','Briefly describe the group')}">
       </div>
       <div class="card p-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           <div>
-            <p class="text-sm font-semibold text-white">招待制</p>
-            <p class="text-xs text-gray-600">招待したフレンドのみ参加可能</p>
+            <p class="text-sm font-semibold text-white">${t('招待制','Invite Only')}</p>
+            <p class="text-xs text-gray-600">${t('招待したフレンドのみ参加可能','Only invited friends can join')}</p>
           </div>
         </div>
         <div class="w-11 h-6 rounded-full bg-white flex items-center px-0.5 justify-end"><div class="w-5 h-5 rounded-full bg-black"></div></div>
       </div>
       <div class="card p-4 flex items-center justify-between">
         <div>
-          <p class="text-sm font-semibold text-white">最大メンバー数</p>
-          <p class="text-xs text-gray-600">グループに参加できる上限</p>
+          <p class="text-sm font-semibold text-white">${t('最大メンバー数','Max Members')}</p>
+          <p class="text-xs text-gray-600">${t('グループに参加できる上限','Maximum members allowed')}</p>
         </div>
-        <span class="text-white font-black text-lg">5名</span>
+        <span class="text-white font-black text-lg">${t('5名','5')}</span>
       </div>
     </div>
   `;
@@ -3883,12 +3341,9 @@ function renderCreateGroup() {
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
   });
   document.getElementById('cg-create').addEventListener('click', () => {
-    // Check group limit (max 3 for free users)
-    const joinedCount = MOCK_GROUPS.filter(x => !x.pendingInvite).length;
-    if (!isPremium() && joinedCount >= 3) { showGroupLimitPrompt(); return; }
     const name = document.getElementById('cg-name').value.trim();
     if (!name) { document.getElementById('cg-name').classList.add('shake'); setTimeout(() => document.getElementById('cg-name').classList.remove('shake'), 500); return; }
-    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, description: document.getElementById('cg-desc').value.trim() || 'グループの説明なし', activeSince: null, isActive: false, streak: 0 };
+    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
     MOCK_GROUPS.push(newGroup);
     goto('friends');
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
@@ -3917,8 +3372,80 @@ function renderCreateGroup() {
 // TERMS OF SERVICE
 // ================================================================
 function renderTerms() {
+  const isEn = S.lang === 'en';
   const page = document.getElementById('page-terms');
-  page.innerHTML = `
+  page.innerHTML = isEn ? `
+    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
+      <button id="terms-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-black text-white">Terms of Service</h1>
+    </div>
+    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
+      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
+      <p class="text-sm text-gray-400 leading-relaxed">Welcome to (DIS)CONNECT (the "App"). By downloading, installing, or using the App, you agree to be bound by these Terms of Service with the Operator.</p>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 1 – Service Description</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The App is a tool that helps users practice digital detox by temporarily restricting access to selected applications and sharing progress with friends and communities. The App is developed and operated by an individual.</p>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">Article 2 – Eligibility</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">1. The App is available only to users aged 13 or older. Users under 18 are assumed to have obtained parental consent.</p>
+        <p class="text-sm text-gray-400 leading-relaxed">2. Certain features (e.g., the "Campus" feed) may require verification via a method specified by the Operator (e.g., a university email address).</p>
+      </div>
+
+      <div class="space-y-2">
+        <div class="card p-4 border border-yellow-500/30 bg-yellow-500/5">
+          <h2 class="text-base font-bold text-yellow-400 mb-2">Article 3 – Detox Feature & Disclaimer ⚠️ Important</h2>
+          <p class="text-xs text-gray-400 leading-relaxed mb-3">The core feature of the App blocks or restricts access to other apps and notifications during a Detox Session. By using this feature, you acknowledge the following:</p>
+          <div class="space-y-2">
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">1. Missed communications:</span> During a session, you may miss important calls, messages, notifications, or emergency alerts.</p>
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">2. No liability:</span> The Operator is NOT liable for any damages resulting from your inability to access your device or other apps during a session.</p>
+            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">3. Your responsibility:</span> It is your responsibility to ensure access to emergency communication means.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 4 – Account Management</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">You are responsible for managing your account credentials. If false information is provided during registration, the Operator reserves the right to suspend or delete the account.</p>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">Article 5 – User Content</h2>
+        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">License:</span> You retain copyright over content you post, but grant the Operator a non-exclusive right to display and distribute such content within the App.</p>
+        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">Prohibited content:</span> Posting illegal, obscene, defamatory, or harassing content is strictly prohibited.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 6 – Service Changes & Termination</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The Operator may modify, suspend, or discontinue the App at any time without prior notice. The Operator is not liable for any damages arising from such changes.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 7 – Limitation of Liability</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">Except in cases of intentional misconduct or gross negligence, the Operator is not liable for any damages incurred through use of the App. Any liability is limited to direct and ordinary damages.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 8 – Governing Law & Jurisdiction</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">These Terms are governed by the laws of Japan. All disputes relating to the App shall be subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">Article 9 – Contact</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">For inquiries regarding these Terms, please contact us at:</p>
+        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-xs text-gray-600 text-center">Terms of Service / Effective Date: January 4, 2026</p>
+        <p class="text-xs text-gray-700 leading-relaxed mt-2">(DIS)CONNECT is a social digital detox application. By using the App, you acknowledge that you may miss calls, messages, and emergency alerts during a Detox Session. The Operator is NOT liable for any resulting damages. These Terms are governed by the laws of Japan.</p>
+      </div>
+    </div>
+  ` : `
     <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
       <button id="terms-back" class="text-gray-400 p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -3997,8 +3524,95 @@ function renderTerms() {
 // PRIVACY POLICY
 // ================================================================
 function renderPrivacy() {
+  const isEn = S.lang === 'en';
   const page = document.getElementById('page-privacy');
-  page.innerHTML = `
+  page.innerHTML = isEn ? `
+    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
+      <button id="privacy-back" class="text-gray-400 p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-black text-white">Privacy Policy</h1>
+    </div>
+    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
+      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
+      <p class="text-sm text-gray-400 leading-relaxed">The Operator of (DIS)CONNECT respects your privacy. This Policy explains how personal information is handled in this individually operated app.</p>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">1. Information We Collect</h2>
+        <div class="card p-4 space-y-3">
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Information you provide</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Account details (name, email, profile image, etc.), campus verification credentials, user-generated content (posts, messages)</p>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Automatically collected information</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Usage data (detox duration, status), device information (model, OS), push notification tokens</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <p class="text-sm font-semibold text-white mb-1">App usage detection</p>
+            <p class="text-xs text-gray-400 leading-relaxed">The App detects which apps you attempt to open during a session. However, we <span class="text-white">never collect or store the content of messages</span> from LINE, messaging apps, or similar services.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">2. How We Use Your Information</h2>
+        <div class="space-y-1">
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To provide, maintain, and improve the App</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To enable social features between users</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To verify student status</p></div>
+          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To send important notices and event notifications</p></div>
+        </div>
+        <div class="card p-3 flex items-center gap-3 mt-2">
+          <span class="text-xl">🚫</span>
+          <p class="text-sm text-gray-300 font-semibold">We will <span class="text-white">never sell</span> your personal data to third parties</p>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-base font-bold text-white">3. Information Sharing & Third-Party Services</h2>
+        <div class="card p-4 space-y-3">
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Between users</p>
+            <p class="text-xs text-gray-400 leading-relaxed">Your profile and posts may be visible to other users based on app settings.</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-base">🔥</span>
+              <p class="text-sm font-semibold text-white">Google Firebase</p>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">The App uses Google Firebase for data storage, authentication, and analytics. Your data may be stored and processed on Firebase servers, including servers outside Japan.</p>
+            <p class="text-xs text-gray-600 mt-1">Google Privacy Policy: https://policies.google.com/privacy</p>
+          </div>
+          <div class="border-t border-white/5 pt-3">
+            <p class="text-sm font-semibold text-white mb-1">Legal requirements</p>
+            <p class="text-xs text-gray-400">We may disclose information when required to do so by law.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">4. Data Security</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">The Operator strives to implement appropriate security measures to prevent data breaches or loss. Please note that, as an individually operated service, we cannot guarantee the same level of security as a corporation.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">5. Data Deletion</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">You may delete your account and associated data at any time through the App settings.</p>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-base font-bold text-white">6. Contact</h2>
+        <p class="text-sm text-gray-400">For questions about this Privacy Policy, please contact us at:</p>
+        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-xs text-gray-600 text-center">Privacy Policy / Effective Date: January 4, 2026</p>
+        <p class="text-xs text-gray-700 leading-relaxed mt-2">We use Google Firebase to host data, manage authentication, and analyze app usage. We do NOT sell your personal data. You may request deletion of your account and data at any time through the App settings.</p>
+      </div>
+    </div>
+  ` : `
     <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
       <button id="privacy-back" class="text-gray-400 p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -4094,35 +3708,35 @@ function renderPrivacy() {
 function renderPremium() {
   const page = document.getElementById('page-premium');
   const FEATURES = [
-    { icon: '🔥', title: 'ストリークバッジ', desc: '連続記録を特別なバッジでアピール', locked: true },
-    { icon: '📊', title: '詳細アナリティクス', desc: '月次・年次の統計データを表示', locked: true },
-    { icon: '👥', title: 'グループ無制限作成', desc: '複数グループを自由に作成・管理', locked: true },
-    { icon: '🎨', title: 'カスタムテーマ', desc: 'プロフィールカラーと背景をカスタマイズ', locked: true },
-    { icon: '🔔', title: 'スマートリマインダー', desc: 'AIが最適なデトックス時間を提案', locked: true },
-    { icon: '🏆', title: 'リーダーボード', desc: 'フレンドとのランキング比較', locked: true },
+    { icon: '🔥', title: t('ストリークバッジ','Streak Badges'), desc: t('連続記録を特別なバッジでアピール','Show off your streaks with special badges'), locked: true },
+    { icon: '📊', title: t('詳細アナリティクス','Detailed Analytics'), desc: t('月次・年次の統計データを表示','View monthly and yearly stats'), locked: true },
+    { icon: '👥', title: t('グループ無制限作成','Unlimited Groups'), desc: t('複数グループを自由に作成・管理','Create and manage multiple groups freely'), locked: true },
+    { icon: '🎨', title: t('カスタムテーマ','Custom Themes'), desc: t('プロフィールカラーと背景をカスタマイズ','Customize profile colors and backgrounds'), locked: true },
+    { icon: '🔔', title: t('スマートリマインダー','Smart Reminders'), desc: t('AIが最適なデトックス時間を提案','AI suggests the best detox times for you'), locked: true },
+    { icon: '🏆', title: t('リーダーボード','Leaderboard'), desc: t('フレンドとのランキング比較','Compare rankings with friends'), locked: true },
   ];
   page.innerHTML = `
     <div class="flex items-center px-4 pt-6 pb-4 gap-3">
       <button id="prem-back" class="text-gray-400 p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h1 class="text-2xl font-black text-white">プレミアム</h1>
+      <h1 class="text-2xl font-black text-white">${t('プレミアム','Premium')}</h1>
     </div>
 
     <!-- Hero card -->
     <div class="mx-4 mb-6 rounded-3xl p-6 text-center relative overflow-hidden" style="background:linear-gradient(135deg,#f59e0b18,#f9731618);border:1px solid #f59e0b33;">
       <div class="text-5xl mb-3">👑</div>
       <h2 class="text-2xl font-black text-white mb-1">(DIS)CONNECT Premium</h2>
-      <p class="text-sm text-gray-400 mb-4">デトックス体験をさらにパワーアップ</p>
+      <p class="text-sm text-gray-400 mb-4">${t('デトックス体験をさらにパワーアップ','Supercharge your detox experience')}</p>
       <div class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold text-gray-600 bg-[#2C2C2E] border border-gray-800">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        近日公開予定
+        ${t('近日公開予定','Coming Soon')}
       </div>
     </div>
 
     <!-- Features list -->
     <div class="px-4 space-y-3 pb-10">
-      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">プレミアム機能（予定）</p>
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">${t('プレミアム機能（予定）','Planned Premium Features')}</p>
       ${FEATURES.map(f => `
         <div class="card p-4 flex items-center gap-4 opacity-70">
           <div class="w-12 h-12 rounded-2xl bg-[#2C2C2E] flex items-center justify-center text-2xl flex-shrink-0">${f.icon}</div>
@@ -4135,7 +3749,7 @@ function renderPremium() {
       `).join('')}
 
       <div class="card p-4 mt-4" style="border-color:#f59e0b22;">
-        <p class="text-xs text-gray-600 text-center">プレミアムの詳細が決まり次第、<br>こちらでお知らせします。</p>
+        <p class="text-xs text-gray-600 text-center">${t('プレミアムの詳細が決まり次第、<br>こちらでお知らせします。','Details will be announced here<br>once Premium is ready.')}</p>
       </div>
     </div>
   `;
@@ -4147,15 +3761,22 @@ function renderPremium() {
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Generate today's all-user detox time: random 15-min slot between 19:00–21:45
+  (() => {
+    const slots = [];
+    for (let h = 19; h <= 21; h++) for (let m = 0; m < 60; m += 15) slots.push({ h, m });
+    S.globalDetoxTime = slots[Math.floor(Math.random() * slots.length)];
+  })();
+
   renderLogin();
   renderRegister();
   renderInterruptPage();
+  renderStaticLabels();
 
   const u = getUser();
   if (u) {
     if (!maybeRestoreSession()) {
       goto('home');
-      setTimeout(triggerChallengeBanner, 2500);
     }
   } else {
     goto('login');
