@@ -1768,7 +1768,28 @@ function renderGroupDetail(groupId) {
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
         ${t('招待','Invite')}
       </button>` : ''}
+      ${(isOwner && !isPending) ? `
+      <button id="gd-settings-btn" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-[#2C2C2E] text-gray-500">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>` : ''}
     </div>`;
+
+  const groupEditHtml = (isOwner && !isPending && S.groupEditing === groupId) ? `
+    <div id="gd-edit-panel" class="flex-shrink-0 mx-4 mb-3 card p-4 space-y-3">
+      <p class="text-xs text-gray-600 font-bold uppercase">${t('グループ設定','Group Settings')}</p>
+      <div>
+        <label class="text-xs text-gray-600 mb-1 block">${t('グループ名','Group Name')}</label>
+        <input id="gd-edit-name" class="input-field text-sm py-2" value="${g.name}">
+      </div>
+      <div>
+        <label class="text-xs text-gray-600 mb-1 block">${t('説明','Description')}</label>
+        <input id="gd-edit-desc" class="input-field text-sm py-2" value="${g.description}">
+      </div>
+      <div class="flex gap-2">
+        <button id="gd-edit-save" class="flex-1 py-2 rounded-xl font-bold text-sm text-black" style="background:${g.color}">${t('保存','Save')}</button>
+        <button id="gd-edit-cancel" class="flex-1 py-2 rounded-xl font-semibold text-sm text-gray-400 border border-gray-800">${t('キャンセル','Cancel')}</button>
+      </div>
+    </div>` : '';
 
   const tabBarHtml = !isPending ? `
     <div class="flex-shrink-0 flex px-4 pb-2 gap-2">
@@ -1821,6 +1842,7 @@ function renderGroupDetail(groupId) {
 
     page.innerHTML = `
       ${headerHtml}
+      ${groupEditHtml}
       ${tabBarHtml}
       <div class="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-gray-900/60">
         <span class="text-xs text-gray-600">${t('グループチャット','Group Chat')}</span>
@@ -1899,6 +1921,7 @@ function renderGroupDetail(groupId) {
   // ── DETOX TAB / LOBBY / PENDING ───────────────────────────────
   page.innerHTML = `
     ${headerHtml}
+    ${groupEditHtml}
     ${tabBarHtml}
     <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10 space-y-3">
 
@@ -1979,7 +2002,6 @@ function renderGroupDetail(groupId) {
       <div class="card p-4">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs text-gray-600 font-bold uppercase tracking-wider">${t('メンバー','Members')}</p>
-          <span class="text-xs text-gray-600">${isOwner ? t('オーナーがデトックスを作成できます','Owner can start detox') : t('メンバーとして参加中','Joined as member')}</span>
         </div>
         <div class="space-y-0">
           ${['me', ...g.members].map(id => {
@@ -1991,16 +2013,21 @@ function renderGroupDetail(groupId) {
               ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
               : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
             const isGroupOwner = g.owner === id || (isMe && g.owner === 'me');
-            const roleLabel = isGroupOwner
+            const badge = isGroupOwner
               ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">${t('オーナー','Owner')}</span>`
               : `<span class="text-xs text-gray-700">${t('メンバー','Member')}</span>`;
+            const kickBtn = (isOwner && !isMe && !isGroupOwner)
+              ? `<button class="gd-kick-btn ml-2 text-gray-700 hover:text-red-500 transition" data-uid="${id}" title="${t('退会させる','Remove')}">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </button>`
+              : '';
             return `
               <div class="flex items-center justify-between py-2">
                 <div class="flex items-center gap-3">
                   <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
                   <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
                 </div>
-                ${roleLabel}
+                <div class="flex items-center">${badge}${kickBtn}</div>
               </div>`;
           }).join('')}
         </div>
@@ -2012,16 +2039,10 @@ function renderGroupDetail(groupId) {
         ${g.streak ? `<p class="text-xs text-orange-400 font-bold mt-2">🔥 ${t('グループストリーク','Group Streak')} ${g.streak}${t('日',' days')}</p>` : ''}
       </div>
 
-      ${isOwner ? `
       <button id="gd-ready-btn" class="w-full py-4 rounded-2xl font-bold text-base text-black" style="background:${g.color}">
         ${t('デトックスを作成する','Start Detox Session')}
       </button>
       <p class="text-center text-xs text-gray-700">${t('あなたが作成したら、メンバーに通知されます','Members will be notified when you start')}</p>
-      ` : `
-      <div class="w-full py-4 rounded-2xl text-center text-sm text-gray-600 border border-gray-800">
-        ${t('オーナーがデトックスを開始するまでお待ちください','Waiting for the owner to start a detox session')}
-      </div>
-      `}
       `}
     </div>
   `;
@@ -2034,6 +2055,42 @@ function renderGroupDetail(groupId) {
   document.getElementById('gd-invite-btn')?.addEventListener('click', () => renderInviteSheet(g));
   document.getElementById('gd-tab-detox')?.addEventListener('click', () => { S.groupDetailTab = 'detox'; renderGroupDetail(groupId); });
   document.getElementById('gd-tab-chat')?.addEventListener('click',  () => { S.groupDetailTab = 'chat';  renderGroupDetail(groupId); });
+
+  // オーナー: グループ設定
+  document.getElementById('gd-settings-btn')?.addEventListener('click', () => {
+    S.groupEditing = (S.groupEditing === groupId) ? null : groupId;
+    renderGroupDetail(groupId);
+  });
+  document.getElementById('gd-edit-save')?.addEventListener('click', () => {
+    const newName = document.getElementById('gd-edit-name')?.value.trim();
+    const newDesc = document.getElementById('gd-edit-desc')?.value.trim();
+    if (newName) g.name = newName;
+    if (newDesc !== undefined) g.description = newDesc;
+    S.groupEditing = null;
+    renderGroupDetail(groupId);
+  });
+  document.getElementById('gd-edit-cancel')?.addEventListener('click', () => {
+    S.groupEditing = null;
+    renderGroupDetail(groupId);
+  });
+
+  // オーナー: メンバーキック
+  document.querySelectorAll('.gd-kick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const uid = btn.dataset.uid;
+      const f = friendById(uid);
+      const name = f ? f.name : uid;
+      showConfirm(
+        t('メンバーを退会させる','Remove Member'),
+        `${name}${t('をグループから退会させますか？','— remove from this group?')}`,
+        t('退会させる','Remove'),
+        () => {
+          g.members = g.members.filter(id => id !== uid);
+          renderGroupDetail(groupId);
+        }
+      );
+    });
+  });
 
   if (isPending) {
     document.getElementById('gd-accept-btn')?.addEventListener('click', () => {
@@ -2079,7 +2136,7 @@ function renderGroupDetail(groupId) {
     initGroupDetoxPicker();
     renderGroupAppChips();
 
-    document.getElementById('gd-ready-btn')?.addEventListener('click', () => {
+    document.getElementById('gd-ready-btn').addEventListener('click', () => {
       const gdH = getPickerValue('gd-picker-hours');
       const gdM = getPickerValue('gd-picker-minutes');
       const gdSelectedDur = Math.max(300, gdH * 3600 + gdM * 60);
