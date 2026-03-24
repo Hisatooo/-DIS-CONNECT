@@ -656,6 +656,7 @@ const S = {
     likes: true,             // いいね
     comments: true,          // コメント
     groupInvite: true,       // グループ招待
+    friendFilter: {},        // { [friendId]: bool } – true=通知する（未設定も通知する）
   },
 };
 
@@ -2537,6 +2538,26 @@ function renderNotifSettings() {
       </div>`;
   }
 
+  const friends = MOCK_FRIENDS.filter(f => f.isFriend);
+  const detoxEnabled = p.friendDetoxStart || p.friendDetoxEnd;
+
+  function friendRows() {
+    return friends.map((f, i) => {
+      const on = p.friendFilter[f.id] !== false;
+      const border = i < friends.length - 1 ? 'border-b border-gray-900' : '';
+      return `
+        <div class="flex justify-between items-center py-3 ${border}">
+          <div class="flex items-center gap-2.5">
+            <img src="${f.avatar}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
+            <span class="text-white text-sm">${f.name}</span>
+          </div>
+          <div id="nspref-friend-${f.id}" class="toggle ${on ? 'on' : ''}">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
   page.innerHTML = `
     <div class="flex items-center mb-6">
       <button id="ns-back" class="p-2 -ml-2 text-gray-500">
@@ -2564,7 +2585,12 @@ function renderNotifSettings() {
       <div class="card p-4">
         <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('フレンドのデトックス','Friend Detox')}</p>
         ${row('friendDetoxStart', t('デトックス開始通知','Friend Starts Detox'), 'friendDetoxStart', true)}
-        ${row('friendDetoxEnd',   t('デトックス終了通知','Friend Ends Detox'),   'friendDetoxEnd',   false)}
+        ${row('friendDetoxEnd',   t('デトックス終了通知','Friend Ends Detox'),   'friendDetoxEnd',   detoxEnabled)}
+        ${detoxEnabled ? `
+          <div id="ns-friend-list" class="mt-3 pt-3 border-t border-gray-900">
+            <p class="text-xs text-gray-600 font-semibold mb-2">${t('通知するフレンド','Notify me about')}</p>
+            ${friendRows()}
+          </div>` : ''}
       </div>
 
       <!-- Social notifications -->
@@ -2579,23 +2605,32 @@ function renderNotifSettings() {
 
   goto('notif-settings');
 
-  document.getElementById('ns-back').addEventListener('click', () => {
-    renderSettings();
-  });
+  document.getElementById('ns-back').addEventListener('click', () => renderSettings());
 
-  // Toggle handlers
+  // グローバルトグル
   [
-    ['enabled', 'enabled'],
+    ['enabled',          'enabled'],
     ['friendDetoxStart', 'friendDetoxStart'],
     ['friendDetoxEnd',   'friendDetoxEnd'],
     ['likes',            'likes'],
     ['comments',         'comments'],
     ['groupInvite',      'groupInvite'],
   ].forEach(([id, key]) => {
-    document.getElementById(`nspref-${id}`).addEventListener('click', function() {
+    document.getElementById(`nspref-${id}`)?.addEventListener('click', function() {
       S.notifPrefs[key] = !S.notifPrefs[key];
       this.classList.toggle('on', S.notifPrefs[key]);
-      // Sync master toggle label in settings if needed
+      if (key === 'friendDetoxStart' || key === 'friendDetoxEnd') {
+        renderNotifSettings();
+      }
+    });
+  });
+
+  // フレンド別トグル
+  friends.forEach(f => {
+    document.getElementById(`nspref-friend-${f.id}`)?.addEventListener('click', function() {
+      const cur = p.friendFilter[f.id] !== false;
+      p.friendFilter[f.id] = !cur;
+      this.classList.toggle('on', !cur);
     });
   });
 }
@@ -2814,15 +2849,21 @@ function renderNotifications() {
     <div class="flex-grow overflow-y-auto no-scrollbar divide-y divide-gray-900">
       ${(() => {
         const all = [
-          { icon:'⏱', type:'friendDetoxStart', text: t('<b>Chloe</b> がデトックスを開始しました','<b>Chloe</b> started a detox session'), sub: t('1時間前','1h ago') },
-          { icon:'❤️', type:'likes', text: t('<b>Alice</b> があなたの投稿にいいねしました','<b>Alice</b> liked your post'), sub: t('2時間前','2h ago') },
-          { icon:'✅', type:'friendDetoxEnd', text: t('<b>Ben</b> がデトックスを終了しました（60分）','<b>Ben</b> completed a detox session (60 min)'), sub: t('3時間前','3h ago') },
-          { icon:'💬', type:'comments', text: t('<b>Ben</b> がコメントしました: "いいね！"','<b>Ben</b> commented: "Nice!"'), sub: t('5時間前','5h ago') },
-          { icon:'⏱', type:'friendDetoxStart', text: t('<b>David</b> がデトックスを開始しました','<b>David</b> started a detox session'), sub: t('昨日','Yesterday') },
-          { icon:'✅', type:'friendDetoxEnd', text: t('<b>Chloe</b> がデトックスを終了しました（30分）','<b>Chloe</b> completed a detox session (30 min)'), sub: t('昨日','Yesterday') },
+          { icon:'⏱', type:'friendDetoxStart', friendId:'chloe', text: t('<b>Chloe</b> がデトックスを開始しました','<b>Chloe</b> started a detox session'), sub: t('1時間前','1h ago') },
+          { icon:'❤️', type:'likes',            friendId:null,    text: t('<b>Alice</b> があなたの投稿にいいねしました','<b>Alice</b> liked your post'), sub: t('2時間前','2h ago') },
+          { icon:'✅', type:'friendDetoxEnd',   friendId:'ben',   text: t('<b>Ben</b> がデトックスを終了しました（60分）','<b>Ben</b> completed a detox session (60 min)'), sub: t('3時間前','3h ago') },
+          { icon:'💬', type:'comments',         friendId:null,    text: t('<b>Ben</b> がコメントしました: "いいね！"','<b>Ben</b> commented: "Nice!"'), sub: t('5時間前','5h ago') },
+          { icon:'⏱', type:'friendDetoxStart', friendId:'david', text: t('<b>David</b> がデトックスを開始しました','<b>David</b> started a detox session'), sub: t('昨日','Yesterday') },
+          { icon:'✅', type:'friendDetoxEnd',   friendId:'chloe', text: t('<b>Chloe</b> がデトックスを終了しました（30分）','<b>Chloe</b> completed a detox session (30 min)'), sub: t('昨日','Yesterday') },
         ];
         const p = S.notifPrefs;
-        const filtered = p.enabled ? all.filter(n => p[n.type] !== false) : [];
+        const filtered = p.enabled ? all.filter(n => {
+          if (!p[n.type]) return false;
+          if (n.friendId && (n.type === 'friendDetoxStart' || n.type === 'friendDetoxEnd')) {
+            return p.friendFilter[n.friendId] !== false;
+          }
+          return true;
+        }) : [];
         if (filtered.length === 0) {
           return `<p class="text-center text-gray-700 text-sm mt-12">${t('通知はありません','No notifications')}</p>`;
         }
