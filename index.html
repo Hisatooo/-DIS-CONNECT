@@ -386,6 +386,9 @@
   <!-- ===================== CREATE GROUP ===================== -->
   <div id="page-create-group" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
 
+  <!-- ===================== ONBOARDING ===================== -->
+  <div id="page-onboarding" class="page flex flex-col items-center justify-between px-6 pt-12 pb-10"></div>
+
   <!-- ===================== TERMS ===================== -->
   <div id="page-terms" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
 
@@ -813,7 +816,7 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // ================================================================
 const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
                 'notifications','notif-settings','challenge','session','interrupt','post-session',
-                'premium','create-group','terms','privacy'];
+                'premium','create-group','terms','privacy','onboarding'];
 
 function updateUnreadDots() {
   const bellDot = document.getElementById('notif-dot-btn');
@@ -1012,7 +1015,7 @@ function renderRegister() {
         };
         await db.collection('users').doc(cred.user.uid).set(u);
         saveUser({ ...u, uid: cred.user.uid });
-        goto('home');
+        renderOnboarding();
       })
       .catch(err => {
         console.error(err);
@@ -2970,6 +2973,10 @@ function renderSettings() {
             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </div>
         </button>
+        <button id="st-howto-btn" class="w-full flex justify-between items-center py-2.5 border-t border-gray-900">
+          <span class="text-white text-sm">${t('使い方を見る','How to Use')}</span>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
       </div>
 
       <!-- Blocked apps -->
@@ -3032,6 +3039,7 @@ function renderSettings() {
     renderStaticLabels();
     renderSettings();
   });
+  document.getElementById('st-howto-btn').addEventListener('click', () => renderOnboarding(true));
   document.getElementById('logout-btn').addEventListener('click', () => {
     showConfirm(t('ログアウト','Log Out'), t('ログアウトしますか？','Are you sure you want to log out?'), t('ログアウト','Log Out'), () => {
       auth.signOut().then(() => {
@@ -3627,9 +3635,51 @@ function renderCreateGroup() {
         </div>
         <span class="text-white font-black text-lg">${t('5名','5')}</span>
       </div>
+
+      <!-- Friend invite -->
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-2 ml-1">${t('フレンドを招待（任意）','Invite Friends (optional)')}</label>
+        <div class="space-y-2" id="cg-friends-list">
+          ${MOCK_FRIENDS.filter(f => f.isFriend).map(f => `
+            <div class="card p-3 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <img src="${f.avatar}" class="w-9 h-9 rounded-full" alt="${f.name}">
+                <div>
+                  <p class="text-sm font-semibold text-white">${f.name}</p>
+                  <p class="text-xs text-gray-600">${f.handle}</p>
+                </div>
+              </div>
+              <button class="cg-invite-toggle w-6 h-6 rounded-full border-2 border-gray-700 flex items-center justify-center transition" data-uid="${f.id}" data-selected="false">
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
     </div>
   `;
   goto('create-group');
+
+  const selectedInvites = new Set();
+
+  page.querySelectorAll('.cg-invite-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const uid = btn.dataset.uid;
+      const selected = btn.dataset.selected === 'true';
+      if (selected) {
+        selectedInvites.delete(uid);
+        btn.dataset.selected = 'false';
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.innerHTML = '';
+      } else {
+        selectedInvites.add(uid);
+        btn.dataset.selected = 'true';
+        btn.style.background = 'white';
+        btn.style.borderColor = 'white';
+        btn.innerHTML = '<svg class="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+      }
+    });
+  });
 
   document.getElementById('cg-cancel').addEventListener('click', () => {
     goto('friends');
@@ -3638,7 +3688,7 @@ function renderCreateGroup() {
   document.getElementById('cg-create').addEventListener('click', () => {
     const name = document.getElementById('cg-name').value.trim();
     if (!name) { document.getElementById('cg-name').classList.add('shake'); setTimeout(() => document.getElementById('cg-name').classList.remove('shake'), 500); return; }
-    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, owner: 'me', description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
+    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [...selectedInvites], maxMembers: 5, inviteOnly: true, owner: 'me', description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
     MOCK_GROUPS.push(newGroup);
     goto('friends');
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
@@ -4050,6 +4100,82 @@ function renderPremium() {
   `;
   goto('premium');
   document.getElementById('prem-back').addEventListener('click', () => goto('profile'));
+}
+
+// ================================================================
+// ONBOARDING
+// ================================================================
+function renderOnboarding(fromSettings = false) {
+  const slides = [
+    {
+      icon: '📵',
+      title: t('デジタルデトックスを始めよう', 'Start Your Digital Detox'),
+      desc: t('スマホから離れる時間を作ることで、集中力・睡眠・メンタルが改善します。', 'Taking breaks from your phone improves focus, sleep, and mental health.'),
+    },
+    {
+      icon: '👥',
+      title: t('フレンドと一緒に', 'Detox With Friends'),
+      desc: t('フレンドのデトックス状況をリアルタイムで確認。お互いに励まし合えます。', 'See your friends' detox status in real time and motivate each other.'),
+    },
+    {
+      icon: '🏆',
+      title: t('グループデトックス', 'Group Detox'),
+      desc: t('グループを作成して、メンバー全員で同時にデトックスに挑戦しましょう。', 'Create a group and challenge all members to detox at the same time.'),
+    },
+    {
+      icon: '🌍',
+      title: t('一斉デトックス', 'Global Detox'),
+      desc: t('毎日決まった時間に全ユーザーが一斉にデトックス。世界中の人と繋がれます。', 'Every day, all users detox together at the same time. Connect with the world.'),
+    },
+    {
+      icon: '🔥',
+      title: t('フィードでシェア', 'Share on Feed'),
+      desc: t('デトックス完了後に達成を投稿。フレンドからいいね・コメントをもらいましょう。', 'Post your achievements after detox. Get likes and comments from friends.'),
+    },
+  ];
+  let current = 0;
+
+  function render() {
+    const s = slides[current];
+    const isLast = current === slides.length - 1;
+    document.getElementById('page-onboarding').innerHTML = `
+      <div class="flex-1 flex flex-col items-center justify-center w-full">
+        <!-- Progress dots -->
+        <div class="flex gap-2 mb-10">
+          ${slides.map((_,i) => `<div class="h-1.5 rounded-full transition-all duration-300 ${i===current?'w-6 bg-white':'w-1.5 bg-gray-700'}"></div>`).join('')}
+        </div>
+
+        <!-- Icon -->
+        <div class="w-28 h-28 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-6xl mb-8">
+          ${s.icon}
+        </div>
+
+        <!-- Text -->
+        <div class="text-center space-y-3 px-2">
+          <h2 class="text-2xl font-black text-white leading-tight">${s.title}</h2>
+          <p class="text-gray-400 text-sm leading-relaxed">${s.desc}</p>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="w-full space-y-3">
+        <button id="ob-next" class="w-full bg-white text-black font-bold py-4 rounded-full text-base active:bg-gray-200 transition">
+          ${isLast ? t('始める', "Let's Go") : t('次へ', 'Next')}
+        </button>
+        ${!isLast ? `<button id="ob-skip" class="w-full text-gray-600 font-semibold py-3 text-sm">${t('スキップ', 'Skip')}</button>` : ''}
+      </div>
+    `;
+    document.getElementById('ob-next').addEventListener('click', () => {
+      if (isLast) { if (fromSettings) { renderSettings(); } else { goto('home'); } }
+      else { current++; render(); }
+    });
+    document.getElementById('ob-skip')?.addEventListener('click', () => {
+      if (fromSettings) { renderSettings(); } else { goto('home'); }
+    });
+  }
+
+  render();
+  goto('onboarding');
 }
 
 // ================================================================
