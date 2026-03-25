@@ -8,6 +8,10 @@
   <meta http-equiv="Expires" content="0">
   <title>(DIS)CONNECT</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     /* ===== BASE ===== */
@@ -540,6 +544,23 @@
 'use strict';
 
 // ================================================================
+// FIREBASE INIT
+// ================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBhhdcJ7Yigw5VGxuJxXSicqqHPe2xNcCY",
+  authDomain: "tuneout-a7c7b.firebaseapp.com",
+  databaseURL: "https://tuneout-a7c7b-default-rtdb.firebaseio.com",
+  projectId: "tuneout-a7c7b",
+  storageBucket: "tuneout-a7c7b.firebasestorage.app",
+  messagingSenderId: "798608722916",
+  appId: "1:798608722916:web:95d9766c02bdcfd52455f1",
+  measurementId: "G-ME79H7QYQ7"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ================================================================
 // MOCK DATA
 // ================================================================
 const MOCK_GROUPS = [
@@ -888,14 +909,28 @@ function renderLogin() {
 }
 
 function handleLogin() {
-  let u = getUser();
-  if (!u) {
-    u = { name: t('ゆうき','Yuuki'), handle: '@yuuki', bio: t('デジタルデトックス挑戦中','Digital detox challenger'),
-          avatar: 'https://placehold.co/72x72/334155/FFF?text=U',
-          email: 'user@example.com', isPublic: true };
-    saveUser(u);
-  }
-  goto('home');
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  if (!email || !pass) { alert(t('メールアドレスとパスワードを入力してください','Please enter email and password')); return; }
+  const btn = document.getElementById('li-btn');
+  btn.disabled = true;
+  btn.textContent = t('ログイン中...','Logging in...');
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(async (cred) => {
+      const snap = await db.collection('users').doc(cred.user.uid).get();
+      if (snap.exists) {
+        saveUser({ ...snap.data(), uid: cred.user.uid });
+      }
+      goto('home');
+    })
+    .catch(err => {
+      console.error(err);
+      alert(t('ログインに失敗しました: ' + err.message, 'Login failed: ' + err.message));
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = t('ログイン','Log In');
+    });
 }
 
 // ================================================================
@@ -960,16 +995,31 @@ function renderRegister() {
     const name   = document.getElementById('reg-name').value.trim();
     const handle = document.getElementById('reg-handle').value.trim();
     const email  = document.getElementById('reg-email').value.trim();
+    const pass   = document.getElementById('reg-pass').value;
     const agree  = document.getElementById('reg-agree').checked;
-    if (!name || !handle || !email) { alert(t('必須項目を入力してください','Please fill in all required fields')); return; }
+    if (!name || !handle || !email || !pass) { alert(t('必須項目を入力してください','Please fill in all required fields')); return; }
+    if (pass.length < 8) { alert(t('パスワードは8文字以上で入力してください','Password must be at least 8 characters')); return; }
     if (!agree) { alert(t('利用規約に同意してください','Please agree to the Terms of Service')); return; }
-    const u = {
-      name, handle: `@${handle.replace('@','')}`,
-      bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
-      email, isPublic: true,
-    };
-    saveUser(u);
-    goto('home');
+    const btn = document.getElementById('reg-submit');
+    btn.disabled = true;
+    btn.textContent = t('登録中...','Signing up...');
+    auth.createUserWithEmailAndPassword(email, pass)
+      .then(async (cred) => {
+        const u = {
+          name, handle: `@${handle.replace('@','')}`,
+          bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
+          email, isPublic: true,
+        };
+        await db.collection('users').doc(cred.user.uid).set(u);
+        saveUser({ ...u, uid: cred.user.uid });
+        goto('home');
+      })
+      .catch(err => {
+        console.error(err);
+        alert(t('登録に失敗しました: ' + err.message, 'Sign up failed: ' + err.message));
+        btn.disabled = false;
+        btn.textContent = t('登録する','Sign Up');
+      });
   });
 }
 
@@ -2984,9 +3034,11 @@ function renderSettings() {
   });
   document.getElementById('logout-btn').addEventListener('click', () => {
     showConfirm(t('ログアウト','Log Out'), t('ログアウトしますか？','Are you sure you want to log out?'), t('ログアウト','Log Out'), () => {
-      localStorage.removeItem('to_user');
-      goto('login');
-      renderLogin();
+      auth.signOut().then(() => {
+        localStorage.removeItem('to_user');
+        goto('login');
+        renderLogin();
+      });
     });
   });
 }
@@ -4022,14 +4074,28 @@ document.addEventListener('DOMContentLoaded', () => {
   renderStaticLabels();
   updateUnreadDots();
 
-  const u = getUser();
-  if (u) {
-    if (!maybeRestoreSession()) {
-      goto('home');
+  // Firebase Auth state check
+  auth.onAuthStateChanged(async (firebaseUser) => {
+    if (firebaseUser) {
+      let u = getUser();
+      if (!u || u.uid !== firebaseUser.uid) {
+        const snap = await db.collection('users').doc(firebaseUser.uid).get();
+        if (snap.exists) {
+          u = { ...snap.data(), uid: firebaseUser.uid };
+          saveUser(u);
+        }
+      }
+      if (u) {
+        if (!maybeRestoreSession()) {
+          goto('home');
+        }
+      } else {
+        goto('login');
+      }
+    } else {
+      goto('login');
     }
-  } else {
-    goto('login');
-  }
+  });
 });
 </script>
 </body>
