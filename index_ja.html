@@ -1743,7 +1743,7 @@ function renderGroupDetail(groupId) {
   const gd = S.groupDetox;
   const isMyGroup = gd && gd.groupId === groupId;
   const inLobby = isMyGroup && !gd.startTime;
-  const inOtherLobby = gd && gd.groupId !== groupId && !gd.startTime;
+  const inOtherLobby = gd && gd.groupId !== groupId && !gd.startTime && (gd.readyMembers || []).includes('me');
   const isPending = !!g.pendingInvite;
   const isOwner = g.owner === 'me';
 
