@@ -1719,6 +1719,27 @@ function renderGroupDetail(groupId) {
   const g = MOCK_GROUPS.find(x => x.id === groupId);
   if (!g) return;
   const page = document.getElementById('page-group-detail');
+
+  // チャットに他メンバーからの招待がある場合、S.groupDetox が完全に未設定なら自動でロビーを構築
+  if (!S.groupDetox) {
+    const chatMsgsCheck = getGroupChat(groupId);
+    const pendingInviteMsg = chatMsgsCheck.slice().reverse().find(m => m.type === 'detox_invite' && m.from !== 'me');
+    if (pendingInviteMsg) {
+      S.groupDetox = {
+        groupId,
+        duration: pendingInviteMsg.duration,
+        readyMembers: [pendingInviteMsg.from],
+        allMembers: ['me', ...g.members],
+        startTime: null,
+        failed: false,
+        failedBy: null,
+        initiatedBy: pendingInviteMsg.from,
+        apps: [],
+        declinedMembers: [],
+      };
+    }
+  }
+
   const gd = S.groupDetox;
   const isMyGroup = gd && gd.groupId === groupId;
   const inLobby = isMyGroup && !gd.startTime;
