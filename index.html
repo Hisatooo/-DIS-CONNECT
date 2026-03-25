@@ -559,9 +559,15 @@ const firebaseConfig = {
   appId: "1:798608722916:web:95d9766c02bdcfd52455f1",
   measurementId: "G-ME79H7QYQ7"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+let auth = null;
+let db   = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db   = firebase.firestore();
+} catch(e) {
+  console.error('Firebase init failed:', e);
+}
 
 // ================================================================
 // MOCK DATA
@@ -915,14 +921,21 @@ function handleLogin() {
   const email = document.getElementById('li-email').value.trim();
   const pass  = document.getElementById('li-pass').value;
   if (!email || !pass) { alert(t('メールアドレスとパスワードを入力してください','Please enter email and password')); return; }
+  // Firebase未初期化の場合はlocalStorageで代替
+  if (!auth) {
+    let u = getUser() || { name: 'User', handle: '@user', bio: '', avatar: 'https://placehold.co/72x72/334155/FFF?text=U', email, isPublic: true };
+    saveUser(u);
+    goto('home');
+    return;
+  }
   const btn = document.getElementById('li-btn');
   btn.disabled = true;
   btn.textContent = t('ログイン中...','Logging in...');
   auth.signInWithEmailAndPassword(email, pass)
     .then(async (cred) => {
-      const snap = await db.collection('users').doc(cred.user.uid).get();
-      if (snap.exists) {
-        saveUser({ ...snap.data(), uid: cred.user.uid });
+      if (db) {
+        const snap = await db.collection('users').doc(cred.user.uid).get();
+        if (snap.exists) saveUser({ ...snap.data(), uid: cred.user.uid });
       }
       goto('home');
     })
@@ -4201,14 +4214,23 @@ document.addEventListener('DOMContentLoaded', () => {
   updateUnreadDots();
 
   // Firebase Auth state check
+  if (!auth) {
+    // Firebase未初期化: localStorageで代替
+    const u = getUser();
+    if (u) { if (!maybeRestoreSession()) goto('home'); }
+    else goto('login');
+    return;
+  }
   auth.onAuthStateChanged(async (firebaseUser) => {
     if (firebaseUser) {
       let u = getUser();
       if (!u || u.uid !== firebaseUser.uid) {
-        const snap = await db.collection('users').doc(firebaseUser.uid).get();
-        if (snap.exists) {
-          u = { ...snap.data(), uid: firebaseUser.uid };
-          saveUser(u);
+        if (db) {
+          const snap = await db.collection('users').doc(firebaseUser.uid).get();
+          if (snap.exists) {
+            u = { ...snap.data(), uid: firebaseUser.uid };
+            saveUser(u);
+          }
         }
       }
       if (u) {
