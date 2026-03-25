@@ -1817,6 +1817,10 @@ function renderGroupDetail(groupId) {
         const fromF  = friendById(msg.from);
         const durStr = fmtDuration(msg.duration, true);
         const alreadyUsed = !isPremium() && getGroupDetoxCount() >= 3;
+        const lobbyForGroup = S.groupDetox && S.groupDetox.groupId === groupId;
+        const meJoined   = lobbyForGroup && S.groupDetox.readyMembers.includes('me');
+        const meDeclined = lobbyForGroup && (S.groupDetox.declinedMembers || []).includes('me');
+        const responded  = meJoined || meDeclined;
         return `
           <div class="flex justify-start mb-3" data-from="${msg.from}">
             <div class="max-w-xs w-full">
@@ -1828,13 +1832,17 @@ function renderGroupDetail(groupId) {
               <div class="rounded-2xl rounded-bl-sm p-3" style="background:${g.color}18;border:1px solid ${g.color}44;">
                 <p class="text-xs font-bold mb-0.5" style="color:${g.color}">${t('グループデトックス招待','Group Detox Invite')}</p>
                 <p class="text-sm text-white font-semibold">${durStr}${t('のデトックス',' detox')}</p>
-                ${alreadyUsed
-                  ? `<p class="text-xs text-gray-600 mt-1">${t('今日の上限（3回）に達しました','Daily limit (3 sessions) reached')}</p>`
-                  : `<p class="text-xs text-gray-500 mt-0.5 mb-2">${t('一緒に参加しますか？','Join together?')}</p>
-                     <div class="flex gap-2">
-                       <button class="gd-chat-invite-btn flex-1 py-2 rounded-xl font-bold text-sm text-black" style="background:${g.color}" data-duration="${msg.duration}" data-action="join">${t('参加する','Join')}</button>
-                       <button class="gd-chat-invite-btn flex-1 py-2 rounded-xl font-semibold text-sm text-gray-400 bg-[#2C2C2E]" data-duration="${msg.duration}" data-action="decline">${t('参加しない','Decline')}</button>
-                     </div>`
+                ${responded
+                  ? meJoined
+                    ? `<p class="text-xs text-green-400 font-semibold mt-1">✓ ${t('参加予定','Joining')}</p>`
+                    : `<p class="text-xs text-gray-600 mt-1">${t('不参加にしました','You declined')}</p>`
+                  : alreadyUsed
+                    ? `<p class="text-xs text-gray-600 mt-1">${t('今日の上限（3回）に達しました','Daily limit (3 sessions) reached')}</p>`
+                    : `<p class="text-xs text-gray-500 mt-0.5 mb-2">${t('一緒に参加しますか？','Join together?')}</p>
+                       <div class="flex gap-2">
+                         <button class="gd-chat-invite-btn flex-1 py-2 rounded-xl font-bold text-sm text-black" style="background:${g.color}" data-duration="${msg.duration}" data-action="join">${t('参加する','Join')}</button>
+                         <button class="gd-chat-invite-btn flex-1 py-2 rounded-xl font-semibold text-sm text-gray-400 bg-[#2C2C2E]" data-duration="${msg.duration}" data-action="decline">${t('参加しない','Decline')}</button>
+                       </div>`
                 }
               </div>
             </div>
