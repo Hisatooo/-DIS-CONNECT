@@ -1293,12 +1293,12 @@ function renderSessionPage() {
   `;
 
   document.getElementById('go-mainroom-btn').addEventListener('click', () => goto('home'));
-  document.getElementById('interrupt-btn').addEventListener('click', () => goto('interrupt'));
+  document.getElementById('interrupt-btn').addEventListener('click', () => { renderInterruptPage(); goto('interrupt'); });
 }
 
-function startSession(durationSec, isChallenge = false) {
+function startSession(durationSec, isChallenge = false, sessionType = 'personal') {
   if (S.activeSession) return;
-  const sess = { startTime: Date.now(), totalDuration: durationSec, isChallenge };
+  const sess = { startTime: Date.now(), totalDuration: durationSec, isChallenge, sessionType };
   S.activeSession = { ...sess, timerId: null };
   localStorage.setItem('to_active_session', JSON.stringify(sess));
   renderSessionPage();
@@ -1369,28 +1369,53 @@ function endSession(completed) {
 function renderInterruptPage() {
   const gd = S.groupDetox;
   const g  = gd ? MOCK_GROUPS.find(x => x.id === gd.groupId) : null;
+  const sessionType = S.activeSession?.sessionType || 'personal';
+  const showAd = sessionType === 'group' || sessionType === 'global';
+
+  const MOTIVATIONS = [
+    t('あと少し！スマホを置くだけで、未来の自分が変わる。','Almost there! Put it down — your future self will thank you.'),
+    t('今この瞬間だけ、通知から自由でいよう。','Just for now — be free from notifications.'),
+    t('デトックスを続けることが、本当の強さ。','Staying in the detox is real strength.'),
+    t('スクロールより、今ここにある時間の方が価値がある。','This moment is worth more than any scroll.'),
+    t('少しの我慢が、大きな集中力を生む。','A little resistance builds a lot of focus.'),
+  ];
+  const motivationMsg = MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)];
 
   document.getElementById('page-interrupt').innerHTML = `
-    ${g ? `
+    ${g && showAd ? `
     <div class="w-full rounded-2xl px-4 py-3 mb-6 text-center" style="background:${g.color}18;border:1px solid ${g.color}44">
       <p class="text-base font-black mb-1" style="color:${g.color}">${g.emoji} ${g.name}</p>
       <p class="text-sm text-white font-semibold">${t('グループセッション参加中！','Group Session Active!')}</p>
       <p class="text-xs text-gray-400 mt-1">${t('中断すると','Stopping will cause ')}<span class="text-red-400 font-bold">${t('チーム全員が失敗','the whole team to fail')}</span>${t('になります','')}</p>
     </div>
     ` : ''}
-    <div class="w-16 h-16 rounded-full bg-red-900/25 flex items-center justify-center mb-6">
-      <svg class="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-      </svg>
+    ${sessionType === 'global' && !g ? `
+    <div class="w-full rounded-2xl px-4 py-3 mb-6 text-center" style="background:#a78bfa18;border:1px solid #a78bfa44">
+      <p class="text-base font-black mb-1" style="color:#a78bfa">${t('全ユーザーデトックス参加中！','All-User Detox Active!')}</p>
+      <p class="text-xs text-gray-400 mt-1">${t('中断すると','Stopping will ')}<span class="text-red-400 font-bold">${t('広告が流れます','play an ad')}</span></p>
+    </div>
+    ` : ''}
+
+    <div class="w-16 h-16 rounded-full ${showAd ? 'bg-red-900/25' : 'bg-yellow-900/25'} flex items-center justify-center mb-6">
+      ${showAd
+        ? `<svg class="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
+        : `<svg class="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
+      }
     </div>
     <h2 class="text-2xl font-black text-white mb-2">${t('本当に中断しますか？','Really stop detox?')}</h2>
-    <p class="text-gray-500 text-sm mb-1">${t('中断すると','Stopping will play an ')}<span class="text-white font-semibold">${t('広告動画','ad video')}</span>${t('が再生されます。','.')}</p>
-    <p class="text-gray-700 text-xs mb-10">${t('（15〜30秒、スキップ可能）','(15–30 sec, skippable)')}</p>
+
+    ${showAd ? `
+      <p class="text-gray-500 text-sm mb-1">${t('中断すると','Stopping will play an ')}<span class="text-white font-semibold">${t('広告動画','ad video')}</span>${t('が再生されます。','.')}</p>
+      <p class="text-gray-700 text-xs mb-10">${t('（15〜30秒、スキップ可能）','(15–30 sec, skippable)')}</p>
+    ` : `
+      <p class="text-yellow-400/80 text-sm font-semibold mb-2 px-4">"${motivationMsg}"</p>
+      <p class="text-gray-700 text-xs mb-10">${t('それでも中断する場合はスワイプしてください。','Swipe below if you still want to stop.')}</p>
+    `}
 
     <div class="w-full mb-4">
-      <div class="slider-track h-16" id="int-slider" style="border-color:rgba(127,29,29,0.4);">
-        <div class="slider-reveal" id="int-reveal" style="background:rgba(239,68,68,0.15);"></div>
-        <div class="slider-thumb w-20 h-14 bg-red-500" id="int-thumb">
+      <div class="slider-track h-16" id="int-slider" style="border-color:${showAd ? 'rgba(127,29,29,0.4)' : 'rgba(113,63,18,0.4)'};">
+        <div class="slider-reveal" id="int-reveal" style="background:${showAd ? 'rgba(239,68,68,0.15)' : 'rgba(234,179,8,0.12)'};"></div>
+        <div class="slider-thumb w-20 h-14 ${showAd ? 'bg-red-500' : 'bg-yellow-600'}" id="int-thumb">
           <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
@@ -1402,9 +1427,10 @@ function renderInterruptPage() {
   `;
 
   initSlider('int-slider', 'int-thumb', 'int-reveal', () => {
-    // Show "ad" then end
     endSession(false);
-    setTimeout(() => alert(t('📺 広告動画を再生（シミュレーション）\n実際のアプリではスキップ可能な動画広告が入ります。','📺 Playing ad (simulation)\nIn the real app, a skippable video ad would play here.')), 100);
+    if (showAd) {
+      setTimeout(() => alert(t('📺 広告動画を再生（シミュレーション）\n実際のアプリではスキップ可能な動画広告が入ります。','📺 Playing ad (simulation)\nIn the real app, a skippable video ad would play here.')), 100);
+    }
   });
   document.getElementById('int-back-btn').addEventListener('click', () => goto('session'));
 }
@@ -2210,7 +2236,7 @@ function renderGroupDetail(groupId) {
           renderGroupDetail(groupId);
           if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
             S.groupDetox.startTime = Date.now();
-            setTimeout(() => startSession(S.groupDetox.duration, false), 600);
+            setTimeout(() => startSession(S.groupDetox.duration, false, 'group'), 600);
           }
         }
       });
@@ -2254,7 +2280,7 @@ function renderGroupDetail(groupId) {
           if (S.groupDetox.readyMembers.length >= S.groupDetox.allMembers.length) {
             S.groupDetox.startTime = Date.now();
             setTimeout(() => {
-              startSession(S.groupDetox.duration, false);
+              startSession(S.groupDetox.duration, false, 'group');
             }, 600);
           }
         }, (i + 1) * 1500);
