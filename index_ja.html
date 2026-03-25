@@ -3217,14 +3217,15 @@ function renderDetoxReserve() {
   const content = document.getElementById('detox-tab-content');
   if (!content) return;
   const gdt = S.globalDetoxTime;
-  const timeStr = gdt ? `${String(gdt.h).padStart(2,'0')}:${String(gdt.m).padStart(2,'0')}` : '--:--';
+  const startStr = gdt ? `${String(gdt.h).padStart(2,'0')}:${String(gdt.m).padStart(2,'0')}` : '--:--';
+  const endStr   = gdt ? `${String(gdt.h + 3).padStart(2,'0')}:${String(gdt.m).padStart(2,'0')}` : '--:--';
   const beforeNoon = new Date().getHours() < 12;
   const reserved = S.globalDetoxReserved;
   content.innerHTML = `
     <div class="mt-2 space-y-4">
       <div class="card p-5">
         <p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:#a78bfa">${t('全ユーザーデトックス','All-User Detox')}</p>
-        <p class="text-2xl font-black text-white mb-1">${t('今日','Today')} ${timeStr}</p>
+        <p class="text-2xl font-black text-white mb-1">${t('今日','Today')} ${startStr}〜${endStr}</p>
         <p class="text-sm text-gray-500 mb-4">${beforeNoon ? t('正午まで予約受付中','Reservations open until noon') : t('本日の予約受付終了','Reservations closed for today')}</p>
         ${!reserved
           ? (beforeNoon
@@ -3238,7 +3239,7 @@ function renderDetoxReserve() {
       </div>
       <div class="card p-5">
         <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">${t('予約について','About Reservations')}</p>
-        <p class="text-gray-600 text-sm leading-relaxed">${t('全ユーザーデトックスは毎日12:30〜22時の間でランダムに開始されます（最長3時間）。正午までに予約してみんなで参加しよう！','The all-user detox starts at a random time between 12:30–22:00 each day (up to 3 hours). Reserve by noon and detox together!')}</p>
+        <p class="text-gray-600 text-sm leading-relaxed">${t('全ユーザーデトックスは毎日12:30〜19:00のランダムな時間に開始（終了は最遅22:00）。正午までに予約してみんなで参加しよう！','The all-user detox starts at a random time between 12:30–19:00 each day, ending by 22:00 at the latest. Reserve by noon and detox together!')}</p>
       </div>
     </div>
   `;
@@ -3256,7 +3257,8 @@ function renderGlobalDetoxCard() {
   const card = document.getElementById('global-detox-card');
   if (!card || !S.globalDetoxTime) return;
   const { h, m } = S.globalDetoxTime;
-  const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const startStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const endStr   = `${String(h + 3).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   const beforeNoon = new Date().getHours() < 12;
   const reserved = S.globalDetoxReserved;
   card.className = 'flex-shrink-0 mx-4 mt-3 mb-1 rounded-2xl p-4 border border-gray-800 bg-[#1C1C1E]';
@@ -3264,7 +3266,7 @@ function renderGlobalDetoxCard() {
     <div class="flex items-center justify-between">
       <div>
         <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:#a78bfa">${t('全ユーザーデトックス','All-User Detox')}</p>
-        <p class="text-xl font-black text-white">${t('今日','Today')} ${timeStr}</p>
+        <p class="text-xl font-black text-white">${t('今日','Today')} ${startStr}〜${endStr}</p>
         <p class="text-xs text-gray-600 mt-0.5">${beforeNoon
           ? t('正午まで予約受付中','Reservations open until noon')
           : t('本日の予約受付終了','Reservations closed')}</p>
