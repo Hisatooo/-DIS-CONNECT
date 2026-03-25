@@ -653,7 +653,7 @@ const S = {
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
   groupSelectedApps: new Set(['YouTube', 'Instagram', 'X']),
   groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy, apps:[] }
-  globalDetoxTime: null, // { h, m } — today's all-user detox time (19-21:45, 15min slots)
+  globalDetoxTime: null, // { h, m } — today's all-user detox time (12:30–22:00, 15min slots, max 3h duration)
   globalDetoxReserved: false,
   detoxTab: 'now',       // 'now' | 'reserve'
   groupDetailTab: 'detox', // 'detox' | 'chat'
@@ -3238,7 +3238,7 @@ function renderDetoxReserve() {
       </div>
       <div class="card p-5">
         <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">${t('予約について','About Reservations')}</p>
-        <p class="text-gray-600 text-sm leading-relaxed">${t('全ユーザーデトックスは毎日19〜22時の間で行われます。正午までに予約してみんなで参加しよう！','The all-user detox happens daily between 19:00–22:00. Reserve by noon and detox together!')}</p>
+        <p class="text-gray-600 text-sm leading-relaxed">${t('全ユーザーデトックスは毎日12:30〜22時の間でランダムに開始されます（最長3時間）。正午までに予約してみんなで参加しよう！','The all-user detox starts at a random time between 12:30–22:00 each day (up to 3 hours). Reserve by noon and detox together!')}</p>
       </div>
     </div>
   `;
@@ -3976,10 +3976,15 @@ function renderPremium() {
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Generate today's all-user detox time: random 15-min slot between 19:00–21:45
+  // Generate today's all-user detox time: random 15-min slot between 12:30–22:00 (max 3h duration)
   (() => {
     const slots = [];
-    for (let h = 19; h <= 21; h++) for (let m = 0; m < 60; m += 15) slots.push({ h, m });
+    const startTotal = 12 * 60 + 30; // 12:30
+    const endTotal   = 22 * 60;      // 22:00 (start must be ≤ 19:00 to allow up to 3h)
+    const maxStart   = endTotal - 3 * 60; // latest start = 19:00
+    for (let total = startTotal; total <= maxStart; total += 15) {
+      slots.push({ h: Math.floor(total / 60), m: total % 60 });
+    }
     S.globalDetoxTime = slots[Math.floor(Math.random() * slots.length)];
   })();
 
