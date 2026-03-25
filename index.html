@@ -1831,7 +1831,10 @@ function renderGroupDetail(groupId) {
                 ${alreadyUsed
                   ? `<p class="text-xs text-gray-600 mt-1">${t('今日の上限（3回）に達しました','Daily limit (3 sessions) reached')}</p>`
                   : `<p class="text-xs text-gray-500 mt-0.5 mb-2">${t('一緒に参加しますか？','Join together?')}</p>
-                     <button class="gd-chat-invite-btn w-full py-2 rounded-xl font-bold text-sm text-black" style="background:${g.color}" data-duration="${msg.duration}">${t('参加する','Join')}</button>`
+                     <div class="flex gap-2">
+                       <button class="gd-chat-invite-btn flex-1 py-2 rounded-xl font-bold text-sm text-black" style="background:${g.color}" data-duration="${msg.duration}" data-action="join">${t('参加する','Join')}</button>
+                       <button class="gd-chat-invite-btn flex-1 py-2 rounded-xl font-semibold text-sm text-gray-400 bg-[#2C2C2E]" data-duration="${msg.duration}" data-action="decline">${t('参加しない','Decline')}</button>
+                     </div>`
                 }
               </div>
             </div>
@@ -1906,20 +1909,33 @@ function renderGroupDetail(groupId) {
 
     document.querySelectorAll('.gd-chat-invite-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
+        const action = btn.dataset.action || 'join';
         const duration = parseInt(btn.dataset.duration, 10) || 3600;
         const fromId = btn.closest('[data-from]')?.dataset.from || g.members[0] || 'alice';
-        // 招待者が作成したロビーに参加（自分は作成者ではない）
+
+        if (action === 'decline') {
+          // 不参加：ロビーに記録せず、ボタンを「不参加」表示に差し替え
+          const card = btn.closest('.rounded-2xl.rounded-bl-sm');
+          if (card) card.innerHTML += '';
+          const btnRow = btn.parentElement;
+          if (btnRow) btnRow.innerHTML = `<p class="text-xs text-gray-600">${t('不参加にしました','You declined')}</p>`;
+          return;
+        }
+
+        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
+
+        // 参加：招待者が作成したロビーに自分も追加
         S.groupDetox = {
           groupId,
           duration,
-          readyMembers: [fromId],
+          readyMembers: [fromId, 'me'],
           allMembers: ['me', ...g.members],
           startTime: null,
           failed: false,
           failedBy: null,
           initiatedBy: fromId,
           apps: [],
+          declinedMembers: [],
         };
         S.groupDetailTab = 'detox';
         renderGroupDetail(groupId);
