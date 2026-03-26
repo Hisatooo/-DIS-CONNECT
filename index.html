@@ -2922,8 +2922,8 @@ function renderNotifSettings() {
 
   function friendRow(f, i, total) {
     const ff = p.friendFilter[f.id] || {};
-    const onStart = ff.start !== false;
-    const onEnd   = ff.end   !== false;
+    const onStart = ff.start === true;
+    const onEnd   = ff.end   === true;
     const border  = i < total - 1 ? 'border-b border-gray-900' : '';
     return `
       <div class="flex justify-between items-center py-3 ${border}">
