@@ -814,7 +814,7 @@ function showGroupLimitPrompt() {
 function showDetoxLimitPrompt() {
   showConfirm(
     t('本日の上限に達しました','Daily Limit Reached'),
-    t('グループデトックスは1日3回まで参加できます。プレミアムにアップグレードすると無制限に参加できます。','You can join group detox sessions up to 3 times per day. Upgrade to Premium for unlimited sessions.'),
+    t('グループデトックスは1日2回まで参加できます。プレミアムにアップグレードすると無制限に参加できます。','You can join group detox sessions up to 2 times per day. Upgrade to Premium for unlimited sessions.'),
     t('プレミアムへ','Go Premium'),
     () => goto('premium')
   );
@@ -2020,7 +2020,7 @@ function renderGroupDetail(groupId) {
       if (msg.type === 'detox_invite') {
         const fromF  = friendById(msg.from);
         const durStr = fmtDuration(msg.duration, true);
-        const alreadyUsed = !isPremium() && getGroupDetoxCount() >= 3;
+        const alreadyUsed = !isPremium() && getGroupDetoxCount() >= 2;
         const lobbyForGroup = S.groupDetox && S.groupDetox.groupId === groupId;
         const meJoined   = lobbyForGroup && S.groupDetox.readyMembers.includes('me');
         const meDeclined = lobbyForGroup && (S.groupDetox.declinedMembers || []).includes('me');
@@ -2136,7 +2136,7 @@ function renderGroupDetail(groupId) {
           return;
         }
 
-        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
+        if (!isPremium() && getGroupDetoxCount() >= 2) { showDetoxLimitPrompt(); return; }
 
         // 参加：招待者が作成したロビーに自分も追加
         S.groupDetox = {
