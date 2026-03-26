@@ -404,10 +404,6 @@
   <div id="page-friends" class="page flex flex-col"></div>
   <div id="page-group-detail" class="page flex flex-col"></div>
 
-  <!-- ===================== COMMUNITY ===================== -->
-  <div id="page-community-search" class="page flex flex-col"></div>
-  <div id="page-community-detail" class="page flex flex-col"></div>
-
   <!-- ===================== MESSAGES ===================== -->
   <div id="page-messages" class="page flex flex-col"></div>
 
@@ -722,51 +718,6 @@ const MOCK_GROUP_CHATS = {
 };
 
 // ================================================================
-// COMMUNITY DATA
-// ================================================================
-const MOCK_COMMUNITIES = [
-  { id: 'comm1', name: '瞑想・マインドフルネス', emoji: '🧘', members: 1240, joined: true,  desc: '瞑想とデジタルデトックスを実践する人たちのコミュニティ', color: '#8b5cf6' },
-  { id: 'comm2', name: '読書クラブ',              emoji: '📚', members: 892,  joined: false, desc: '本を愛する人たちが集まる場所', color: '#f59e0b' },
-  { id: 'comm3', name: 'ランニング部',            emoji: '🏃', members: 654,  joined: false, desc: '走ることで心も体もデトックス', color: '#10b981' },
-  { id: 'comm4', name: '料理好き',                emoji: '👨‍🍳', members: 2103, joined: false, desc: 'スマホを置いて料理に集中', color: '#ef4444' },
-  { id: 'comm5', name: '映画・アニメ部',          emoji: '🎬', members: 1567, joined: false, desc: '映画について語り合おう', color: '#3b82f6' },
-  { id: 'comm6', name: 'ゲーム断ちサポート',      emoji: '🎮', members: 3201, joined: false, desc: 'ゲーム依存から自由になるための仲間', color: '#ec4899' },
-  { id: 'comm7', name: 'ヨガ・ストレッチ',        emoji: '🌿', members: 789,  joined: false, desc: 'デジタルデトックスとヨガを組み合わせた実践', color: '#06b6d4' },
-  { id: 'comm8', name: 'プログラマー集中部屋',    emoji: '💻', members: 1102, joined: false, desc: 'コードに集中するためのサポートコミュニティ', color: '#6366f1' },
-];
-
-const MOCK_COMMUNITY_POSTS = {
-  comm1: [
-    { id:'cp1', text: '30分の朝瞑想から一日を始めました。スマホを見る前に瞑想することで本当に心が落ち着く。', time:'5分前', upvotes:24, downvotes:1, upvoted:false, downvoted:false },
-    { id:'cp2', text: '今日で瞑想30日連続達成！最初は5分も続かなかったのに、今は20分でも平気になった。', time:'1時間前', upvotes:47, downvotes:2, upvoted:false, downvoted:false },
-    { id:'cp3', text: '仕事中にスマホ通知が気になってしまう。瞑想でこの衝動を抑えられるようになってきた気がする。', time:'3時間前', upvotes:18, downvotes:3, upvoted:false, downvoted:false },
-    { id:'cp4', text: '就寝前の10分瞑想を始めてから睡眠の質が上がった。デジタルデトックスとの相乗効果を感じてる。', time:'昨日', upvotes:63, downvotes:0, upvoted:false, downvoted:false },
-  ],
-  comm2: [
-    { id:'cp5', text: '今月は「深夜特急」を読み終えた。スマホを手放して読書する時間は本当に贅沢。', time:'2時間前', upvotes:31, downvotes:1, upvoted:false, downvoted:false },
-    { id:'cp6', text: '電子書籍より紙の本の方がデトックス感がある気がしてきた。みなさんはどっち？', time:'5時間前', upvotes:22, downvotes:4, upvoted:false, downvoted:false },
-  ],
-};
-
-const MOCK_COMMUNITY_CHATS = {
-  comm1: [
-    { id:'cc1', anon: '緑の熊🐻', text: 'みなさんはいつ瞑想していますか？朝派ですか夜派？', time:'30分前' },
-    { id:'cc2', anon: '青い鷹🦅', text: '私は朝5時に起きて瞑想してます！最初はきつかったけど習慣になりました', time:'25分前' },
-    { id:'cc3', anon: '赤い狐🦊', text: '夜のほうが静かで集中できます。瞑想アプリも使ってますか？', time:'20分前' },
-    { id:'cc4', anon: '白い猫🐱', text: '自分は朝と夜の両方！朝は5分、夜は15分くらい。(DIS)CONNECTと組み合わせると効果倍増な気がする', time:'10分前' },
-  ],
-  comm2: [
-    { id:'cc5', anon: '灰色のうさぎ🐇', text: '今月の推薦本はなんですか？', time:'1時間前' },
-    { id:'cc6', anon: '金色の亀🐢', text: '「スマホ脳」がおすすめ。デジタルデトックスへのモチベーションが上がった！', time:'45分前' },
-  ],
-};
-
-function getJoinedCommunityCount() {
-  return MOCK_COMMUNITIES.filter(c => c.joined).length;
-}
-function communityById(id) { return MOCK_COMMUNITIES.find(c => c.id === id); }
-
-// ================================================================
 // STATE
 // ================================================================
 const S = {
@@ -919,8 +870,7 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // ================================================================
 const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
                 'notifications','notif-settings','challenge','session','interrupt','post-session',
-                'premium','create-group','terms','privacy','onboarding',
-                'community-search','community-detail'];
+                'premium','create-group','terms','privacy','onboarding'];
 
 function updateUnreadDots() {
   const bellDot = document.getElementById('notif-dot-btn');
@@ -956,7 +906,7 @@ function goto(page) {
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     const match = btn.dataset.page === page ||
                   (btn.dataset.page === 'home' && page === 'home') ||
-                  (btn.dataset.page === 'friends' && (page === 'group-detail' || page === 'community-detail' || page === 'community-search'));
+                  (btn.dataset.page === 'friends' && page === 'group-detail');
     btn.classList.toggle('active-nav', match);
     btn.classList.toggle('text-white',  match);
     btn.classList.toggle('text-gray-500', !match);
@@ -969,7 +919,6 @@ function goto(page) {
   if (page === 'messages')     renderMessages();
   if (page === 'profile')      renderProfile();
   if (page === 'notifications') renderNotifications();
-  if (page === 'community-search') renderCommunitySearch();
 }
 
 // ================================================================
@@ -1174,14 +1123,9 @@ function renderHome() {
         </svg>
       </button>
     </div>
-    <div class="flex-shrink-0 overflow-x-auto no-scrollbar border-b border-gray-900">
-      <div class="flex px-4 gap-6 pb-3 whitespace-nowrap">
-        <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">${t('フォロー中','Following')}</button>
-        <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">${t('ワールド','World')}</button>
-        ${MOCK_COMMUNITIES.filter(c=>c.joined).map(c=>`
-          <button class="feed-tab ${S.feedTab===c.id?'active-tab':''}" data-tab="${c.id}" style="${S.feedTab===c.id?`color:${c.color};border-color:${c.color};`:''}">${c.emoji} ${c.name}</button>
-        `).join('')}
-      </div>
+    <div class="flex-shrink-0 flex space-x-6 px-4 border-b border-gray-900 pb-3">
+      <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">Following</button>
+      <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
     </div>
     <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
   `;
@@ -1199,49 +1143,6 @@ function renderFeedList() {
   const list = document.getElementById('feed-list');
   if (!list) return;
   list.innerHTML = '';
-
-  // Community tab
-  const comm = communityById(S.feedTab);
-  if (comm) {
-    const commPosts = MOCK_COMMUNITY_POSTS[comm.id] || [];
-    if (commPosts.length === 0) {
-      list.innerHTML = `<div class="py-12 text-center text-gray-600 text-sm">${t('まだ投稿がありません。最初に投稿してみよう！','No posts yet. Be the first to post!')}</div>`;
-      return;
-    }
-    commPosts.forEach(p => {
-      const el = document.createElement('div');
-      el.className = 'py-4 border-b border-gray-900';
-      el.innerHTML = `
-        <div class="flex gap-1 items-center mb-2">
-          <span class="text-xs px-2 py-0.5 rounded-full font-bold" style="background:${comm.color}22;color:${comm.color};">${comm.emoji} ${comm.name}</span>
-          <span class="text-xs text-gray-700">${t('匿名','Anonymous')} · ${p.time}</span>
-        </div>
-        <p class="text-gray-200 text-sm mb-3 leading-relaxed">${p.text}</p>
-        <div class="flex items-center gap-3">
-          <button class="cf-upvote flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${p.upvoted?'':'bg-[#2C2C2E] text-gray-500'}" style="${p.upvoted?`background:${comm.color}22;color:${comm.color};`:''}" data-cid="${comm.id}" data-pid="${p.id}">
-            <svg class="w-3.5 h-3.5" fill="${p.upvoted?'currentColor':'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-            ${p.upvotes}
-          </button>
-          <button class="cf-downvote flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${p.downvoted?'bg-red-900/30 text-red-400':'bg-[#2C2C2E] text-gray-500'}" data-cid="${comm.id}" data-pid="${p.id}">
-            <svg class="w-3.5 h-3.5" fill="${p.downvoted?'currentColor':'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            ${p.downvotes}
-          </button>
-        </div>
-      `;
-      el.querySelector('.cf-upvote').addEventListener('click', () => {
-        if (p.upvoted) { p.upvoted = false; p.upvotes--; }
-        else { if (p.downvoted) { p.downvoted = false; p.downvotes--; } p.upvoted = true; p.upvotes++; }
-        renderFeedList();
-      });
-      el.querySelector('.cf-downvote').addEventListener('click', () => {
-        if (p.downvoted) { p.downvoted = false; p.downvotes--; }
-        else { if (p.upvoted) { p.upvoted = false; p.upvotes--; } p.downvoted = true; p.downvotes++; }
-        renderFeedList();
-      });
-      list.appendChild(el);
-    });
-    return;
-  }
 
   const posts = S.feedTab === 'following'
     ? MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isFriend)
@@ -1709,20 +1610,6 @@ function renderPostSession(duration, completed, groupResult = null) {
       <div id="ps-img-preview" class="hidden rounded-2xl overflow-hidden">
         <img id="ps-img-preview-src" class="w-full max-h-48 object-cover" alt="">
       </div>
-      <!-- Destination picker -->
-      <div>
-        <label class="block text-xs text-gray-600 font-bold uppercase mb-2 ml-1">${t('投稿先を選択（複数可）','Post to (multiple allowed)')}</label>
-        <div id="ps-dest-list" class="flex flex-wrap gap-2">
-          <button class="ps-dest-btn active px-3 py-2 rounded-full text-xs font-bold transition" data-dest="friends" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.3);">
-            👥 ${t('フレンドフィード','Friends Feed')}
-          </button>
-          ${MOCK_COMMUNITIES.filter(c=>c.joined).map(c=>`
-            <button class="ps-dest-btn px-3 py-2 rounded-full text-xs font-bold transition" data-dest="${c.id}" style="background:${c.color}11;color:${c.color}88;border:1px solid ${c.color}22;">
-              ${c.emoji} ${c.name}
-            </button>
-          `).join('')}
-        </div>
-      </div>
       <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">${t('投稿する','Post')}</button>
       <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">${t('スキップ','Skip')}</button>
     </div>
@@ -1741,62 +1628,7 @@ function renderPostSession(duration, completed, groupResult = null) {
     };
     reader.readAsDataURL(file);
   });
-  // Destination toggle buttons
-  document.querySelectorAll('.ps-dest-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const isActive = btn.classList.contains('active');
-      const dest = btn.dataset.dest;
-      if (dest === 'friends') {
-        if (isActive) return; // friends feed always stays toggleable but keep at least one
-      }
-      btn.classList.toggle('active', !isActive);
-      if (dest === 'friends') {
-        if (!isActive) { btn.style.background='rgba(255,255,255,0.15)'; btn.style.color='white'; btn.style.borderColor='rgba(255,255,255,0.3)'; }
-        else { btn.style.background=''; btn.style.color='rgba(255,255,255,0.25)'; btn.style.borderColor='rgba(255,255,255,0.1)'; }
-      } else {
-        const comm = communityById(dest);
-        if (comm) {
-          if (!isActive) { btn.style.background=comm.color+'33'; btn.style.color=comm.color; btn.style.borderColor=comm.color+'66'; }
-          else { btn.style.background=comm.color+'11'; btn.style.color=comm.color+'88'; btn.style.borderColor=comm.color+'22'; }
-        }
-      }
-    });
-  });
-
-  document.getElementById('ps-post-btn').addEventListener('click', () => {
-    const task    = document.getElementById('ps-task')?.value.trim() || null;
-    const comment = document.getElementById('ps-comment')?.value.trim() || null;
-    const dur     = S.lastSession?.duration || 0;
-    const u       = getUser();
-
-    // Collect selected destinations
-    const selected = [...document.querySelectorAll('.ps-dest-btn.active')].map(b => b.dataset.dest);
-
-    // Post to friends feed
-    if (selected.includes('friends')) {
-      const newPost = {
-        id: Date.now(), userId: u?.handle?.replace('@','') || 'me',
-        duration: dur, task, comment,
-        time: t('今','Now'), likes: 0, liked: false, img: null
-      };
-      MOCK_POSTS.unshift(newPost);
-      if (!MOCK_COMMENTS[newPost.id]) MOCK_COMMENTS[newPost.id] = [];
-    }
-
-    // Post to selected communities (anonymous)
-    selected.filter(d => d !== 'friends').forEach(commId => {
-      const text = [comment, task].filter(Boolean).join(' / ') || t(`${fmtDuration(dur)} のデトックスを達成！`, `Completed a ${fmtDuration(dur)} detox!`);
-      const newCommPost = {
-        id: 'cp_' + Date.now() + '_' + commId,
-        text, time: t('今','Now'),
-        upvotes: 0, downvotes: 0, upvoted: false, downvoted: false
-      };
-      if (!MOCK_COMMUNITY_POSTS[commId]) MOCK_COMMUNITY_POSTS[commId] = [];
-      MOCK_COMMUNITY_POSTS[commId].unshift(newCommPost);
-    });
-
-    goto('home');
-  });
+  document.getElementById('ps-post-btn').addEventListener('click', () => goto('home'));
   document.getElementById('ps-skip-btn').addEventListener('click', () => goto('home'));
 }
 
@@ -1872,10 +1704,9 @@ function renderFriends() {
     <div class="flex-shrink-0 px-4 pt-6 pb-3">
       <h1 class="text-3xl font-black text-white">Friends</h1>
     </div>
-    <div class="flex-shrink-0 px-4 pb-3 flex gap-1.5">
-      <button id="tab-friends-btn" class="flex-1 py-2 rounded-full text-xs font-bold transition bg-white text-black">${t('フレンド','Friends')}</button>
-      <button id="tab-groups-btn" class="flex-1 py-2 rounded-full text-xs font-bold transition bg-[#2C2C2E] text-gray-400">${t('グループ','Groups')}</button>
-      <button id="tab-community-btn" class="flex-1 py-2 rounded-full text-xs font-bold transition bg-[#2C2C2E] text-gray-400">${t('コミュニティ','Community')}</button>
+    <div class="flex-shrink-0 px-4 pb-3 flex gap-2">
+      <button id="tab-friends-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black">${t('フレンド','Friends')}</button>
+      <button id="tab-groups-btn" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400">${t('グループ','Groups')}</button>
     </div>
     <div id="friends-tab-content" class="flex-grow overflow-y-auto no-scrollbar pb-28">
       <div id="friends-panel">
@@ -1888,7 +1719,6 @@ function renderFriends() {
         <div id="friends-list" class="px-4 space-y-2"></div>
       </div>
       <div id="groups-panel" class="hidden px-4 space-y-3"></div>
-      <div id="community-panel" class="hidden"></div>
     </div>
   `;
 
@@ -1896,22 +1726,17 @@ function renderFriends() {
   renderFriendsList('');
   renderGroupsList();
 
-  function setFriendsTab(active) {
-    const tabs = ['friends','groups','community'];
-    tabs.forEach(name => {
-      const btn = document.getElementById(`tab-${name}-btn`);
-      const panel = document.getElementById(`${name}-panel`);
-      if (!btn || !panel) return;
-      const isActive = name === active;
-      btn.className = `flex-1 py-2 rounded-full text-xs font-bold transition ${isActive ? 'bg-white text-black' : 'bg-[#2C2C2E] text-gray-400'}`;
-      panel.classList.toggle('hidden', !isActive);
-    });
-  }
-  document.getElementById('tab-friends-btn').addEventListener('click', () => setFriendsTab('friends'));
-  document.getElementById('tab-groups-btn').addEventListener('click', () => setFriendsTab('groups'));
-  document.getElementById('tab-community-btn').addEventListener('click', () => {
-    setFriendsTab('community');
-    renderCommunitiesTab();
+  document.getElementById('tab-friends-btn').addEventListener('click', () => {
+    document.getElementById('tab-friends-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-groups-btn').className  = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    document.getElementById('friends-panel').classList.remove('hidden');
+    document.getElementById('groups-panel').classList.add('hidden');
+  });
+  document.getElementById('tab-groups-btn').addEventListener('click', () => {
+    document.getElementById('tab-groups-btn').className  = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
+    document.getElementById('tab-friends-btn').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
+    document.getElementById('groups-panel').classList.remove('hidden');
+    document.getElementById('friends-panel').classList.add('hidden');
   });
 
   // Start live timer for active friends
@@ -2579,281 +2404,6 @@ function renderGroupDetail(groupId) {
   }
 
   goto('group-detail');
-}
-
-// ================================================================
-// COMMUNITY FUNCTIONS
-// ================================================================
-function renderCommunitiesTab() {
-  const panel = document.getElementById('community-panel');
-  if (!panel) return;
-  const joined = MOCK_COMMUNITIES.filter(c => c.joined);
-  const limit = isPremium() ? 5 : 1;
-  const count = joined.length;
-
-  panel.innerHTML = `
-    <div class="px-4 pt-2 pb-3 flex items-center justify-between">
-      <p class="text-xs text-gray-500">${t('参加中','Joined')} <span class="font-bold text-white">${count}</span>/<span class="${count >= limit ? 'text-amber-400' : ''}">${limit}</span></p>
-      <button id="community-search-btn" class="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white" style="background:#6366f122;border:1px solid #6366f144;">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        ${t('コミュニティを探す','Explore')}
-      </button>
-    </div>
-    ${count === 0 ? `
-      <div class="px-4 py-10 text-center">
-        <div class="text-5xl mb-3">🌐</div>
-        <p class="font-bold text-white mb-1">${t('コミュニティに参加しよう','Join a Community')}</p>
-        <p class="text-xs text-gray-500 mb-4">${t('同じ興味を持つ人たちと繋がれる','Connect with people who share your interests')}</p>
-      </div>
-    ` : `
-      <div class="px-4 space-y-2">
-        ${joined.map(c => `
-          <button class="community-item w-full card p-4 flex items-center gap-3 text-left" data-cid="${c.id}" style="border-color:${c.color}33;">
-            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:${c.color}22;border:1.5px solid ${c.color}44">${c.emoji}</div>
-            <div class="flex-grow min-w-0">
-              <p class="font-bold text-white text-sm">${c.name}</p>
-              <p class="text-xs text-gray-500 mt-0.5">${c.members.toLocaleString()} ${t('メンバー','members')}</p>
-            </div>
-            <svg class="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        `).join('')}
-      </div>
-    `}
-    ${!isPremium() ? `
-      <div class="mx-4 mt-4 rounded-2xl p-4 flex items-center gap-3" style="background:#f59e0b11;border:1px solid #f59e0b33;">
-        <span class="text-2xl">👑</span>
-        <div class="flex-grow">
-          <p class="text-xs font-bold text-amber-400">${t('プレミアムで5つまで参加可能','Join up to 5 communities with Premium')}</p>
-          <p class="text-xs text-gray-600">${t('無料版は1コミュニティのみ','Free plan: 1 community only')}</p>
-        </div>
-        <button id="community-premium-btn" class="px-3 py-1.5 rounded-full text-xs font-bold text-black" style="background:linear-gradient(135deg,#f59e0b,#f97316);">${t('見る','View')}</button>
-      </div>
-    ` : ''}
-  `;
-
-  panel.querySelectorAll('.community-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      S._communityId = btn.dataset.cid;
-      renderCommunityDetail(btn.dataset.cid);
-      goto('community-detail');
-    });
-  });
-  const searchBtn = panel.querySelector('#community-search-btn');
-  if (searchBtn) searchBtn.addEventListener('click', () => { S._prevPage = 'friends'; goto('community-search'); });
-  const premBtn = panel.querySelector('#community-premium-btn');
-  if (premBtn) premBtn.addEventListener('click', () => renderPremium());
-}
-
-function renderCommunitySearch() {
-  const page = document.getElementById('page-community-search');
-  const limit = isPremium() ? 5 : 1;
-  const joinedCount = getJoinedCommunityCount();
-
-  page.innerHTML = `
-    <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3 gap-3">
-      <button id="cs-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-2xl font-black text-white">${t('コミュニティを探す','Explore Communities')}</h1>
-    </div>
-    <div class="flex-shrink-0 px-4 pb-3 relative">
-      <input id="cs-search" class="input-field rounded-full pl-10" placeholder="${t('興味で検索...','Search by interest...')}">
-      <svg class="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-      </svg>
-    </div>
-    <div id="cs-list" class="flex-grow overflow-y-auto no-scrollbar px-4 space-y-2 pb-10"></div>
-  `;
-
-  function renderCSList(filter) {
-    const list = document.getElementById('cs-list');
-    if (!list) return;
-    const filtered = MOCK_COMMUNITIES.filter(c => !filter || c.name.toLowerCase().includes(filter.toLowerCase()) || c.desc.toLowerCase().includes(filter.toLowerCase()));
-    list.innerHTML = filtered.map(c => {
-      const atLimit = !c.joined && joinedCount >= limit;
-      return `
-        <div class="card p-4" style="border-color:${c.color}33;">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background:${c.color}22;border:1.5px solid ${c.color}44">${c.emoji}</div>
-            <div class="flex-grow min-w-0">
-              <p class="font-bold text-white text-sm">${c.name}</p>
-              <p class="text-xs text-gray-500">${c.members.toLocaleString()} ${t('メンバー','members')}</p>
-            </div>
-            ${c.joined
-              ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:${c.color}22;color:${c.color};">${t('参加中','Joined')}</span>`
-              : atLimit
-                ? `<button class="cs-join-btn px-3 py-1.5 rounded-full text-xs font-bold text-amber-400 community-upgrade-btn" style="background:#f59e0b11;border:1px solid #f59e0b33;" data-cid="${c.id}">👑 ${t('上限','Limit')}</button>`
-                : `<button class="cs-join-btn px-3 py-1.5 rounded-full text-xs font-bold text-white community-join-btn" style="background:${c.color}22;border:1px solid ${c.color}44;color:${c.color};" data-cid="${c.id}">${t('参加','Join')}</button>`
-            }
-          </div>
-          <p class="text-xs text-gray-500 pl-15">${c.desc}</p>
-        </div>
-      `;
-    }).join('');
-
-    list.querySelectorAll('.community-join-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const comm = communityById(btn.dataset.cid);
-        if (comm) { comm.joined = true; renderCSList(document.getElementById('cs-search')?.value || ''); }
-      });
-    });
-    list.querySelectorAll('.community-upgrade-btn').forEach(btn => {
-      btn.addEventListener('click', () => renderPremium());
-    });
-  }
-
-  renderCSList('');
-  document.getElementById('cs-back').addEventListener('click', () => { goto('friends'); });
-  document.getElementById('cs-search').addEventListener('input', e => renderCSList(e.target.value));
-}
-
-function renderCommunityDetail(commId) {
-  const comm = communityById(commId);
-  if (!comm) return;
-  const page = document.getElementById('page-community-detail');
-  const posts = (MOCK_COMMUNITY_POSTS[commId] || []).slice();
-  const chats = (MOCK_COMMUNITY_CHATS[commId] || []).slice();
-
-  page.innerHTML = `
-    <div class="flex-shrink-0 flex items-center px-4 pt-6 pb-3 gap-3">
-      <button id="cd-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:${comm.color}22;border:1.5px solid ${comm.color}44">${comm.emoji}</div>
-      <div class="flex-grow min-w-0">
-        <h1 class="text-lg font-black text-white leading-tight">${comm.name}</h1>
-        <p class="text-xs text-gray-500">${comm.members.toLocaleString()} ${t('メンバー','members')}</p>
-      </div>
-    </div>
-
-    <div class="flex-shrink-0 px-4 pb-3 flex gap-2">
-      <button id="cd-tab-feed" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black">${t('フィード','Feed')}</button>
-      <button id="cd-tab-chat" class="flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400">${t('チャット','Chat')}</button>
-    </div>
-
-    <!-- Feed panel -->
-    <div id="cd-feed-panel" class="flex-grow overflow-y-auto no-scrollbar pb-28">
-      <!-- Post input -->
-      <div class="px-4 pb-3">
-        <div class="card p-3 flex gap-3 items-start">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0" style="background:${comm.color}22;border:1px solid ${comm.color}44">
-            <svg class="w-4 h-4" fill="none" stroke="${comm.color}" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-          </div>
-          <input id="cd-new-post" class="flex-grow bg-transparent text-sm text-gray-400 outline-none" placeholder="${t('匿名で投稿する...','Post anonymously...')}">
-          <button id="cd-post-btn" class="text-xs font-bold px-3 py-1.5 rounded-full flex-shrink-0" style="background:${comm.color};color:white;">${t('投稿','Post')}</button>
-        </div>
-      </div>
-      <!-- Posts list -->
-      <div id="cd-posts-list" class="px-4 space-y-3">
-        ${posts.map(p => `
-          <div class="card p-4" data-pid="${p.id}">
-            <p class="text-sm text-gray-200 mb-3 leading-relaxed">${p.text}</p>
-            <div class="flex items-center gap-3">
-              <p class="text-xs text-gray-600 flex-grow">${p.time}</p>
-              <button class="cd-upvote flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${p.upvoted ? 'text-white' : 'text-gray-500'}" style="${p.upvoted ? `background:${comm.color}22;color:${comm.color};` : 'background:#2C2C2E;'}" data-pid="${p.id}">
-                <svg class="w-3.5 h-3.5" fill="${p.upvoted ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                ${p.upvotes}
-              </button>
-              <button class="cd-downvote flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${p.downvoted ? 'text-red-400' : 'text-gray-500'}" style="${p.downvoted ? 'background:#ef444422;color:#ef4444;' : 'background:#2C2C2E;'}" data-pid="${p.id}">
-                <svg class="w-3.5 h-3.5" fill="${p.downvoted ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                ${p.downvotes}
-              </button>
-            </div>
-          </div>
-        `).join('')}
-        ${posts.length === 0 ? `<div class="text-center py-10 text-gray-600 text-sm">${t('まだ投稿がありません','No posts yet')}</div>` : ''}
-      </div>
-    </div>
-
-    <!-- Chat panel -->
-    <div id="cd-chat-panel" class="hidden flex-col flex-grow overflow-hidden">
-      <div id="cd-chat-msgs" class="flex-grow overflow-y-auto no-scrollbar px-4 py-3 space-y-3 pb-4">
-        ${chats.map(msg => `
-          <div class="flex gap-3">
-            <div class="w-8 h-8 rounded-full bg-[#2C2C2E] flex items-center justify-center text-xs flex-shrink-0">${msg.anon.split(' ').pop()}</div>
-            <div>
-              <p class="text-xs text-gray-500 mb-0.5">${msg.anon}</p>
-              <div class="card px-3 py-2 inline-block max-w-xs"><p class="text-sm text-gray-200">${msg.text}</p></div>
-              <p class="text-xs text-gray-700 mt-0.5">${msg.time}</p>
-            </div>
-          </div>
-        `).join('')}
-        ${chats.length === 0 ? `<div class="text-center py-10 text-gray-600 text-sm">${t('まだメッセージがありません','No messages yet')}</div>` : ''}
-      </div>
-      <div class="flex-shrink-0 px-4 py-3 border-t border-gray-900 flex gap-2">
-        <input id="cd-chat-input" class="input-field flex-grow rounded-full py-2.5 text-sm" placeholder="${t('匿名でメッセージを送る...','Send anonymous message...')}">
-        <button id="cd-chat-send" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:${comm.color};">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-        </button>
-      </div>
-    </div>
-  `;
-
-  // Tab switching
-  document.getElementById('cd-tab-feed').addEventListener('click', () => {
-    document.getElementById('cd-tab-feed').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
-    document.getElementById('cd-tab-chat').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
-    document.getElementById('cd-feed-panel').classList.remove('hidden');
-    document.getElementById('cd-chat-panel').classList.remove('flex');
-    document.getElementById('cd-chat-panel').classList.add('hidden');
-  });
-  document.getElementById('cd-tab-chat').addEventListener('click', () => {
-    document.getElementById('cd-tab-chat').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-white text-black';
-    document.getElementById('cd-tab-feed').className = 'flex-1 py-2 rounded-full text-sm font-bold transition bg-[#2C2C2E] text-gray-400';
-    document.getElementById('cd-feed-panel').classList.add('hidden');
-    document.getElementById('cd-chat-panel').classList.remove('hidden');
-    document.getElementById('cd-chat-panel').classList.add('flex');
-    const chatMsgs = document.getElementById('cd-chat-msgs');
-    if (chatMsgs) chatMsgs.scrollTop = chatMsgs.scrollHeight;
-  });
-
-  // Upvote / downvote
-  document.getElementById('cd-posts-list').addEventListener('click', e => {
-    const upBtn = e.target.closest('.cd-upvote');
-    const downBtn = e.target.closest('.cd-downvote');
-    const pid = (upBtn || downBtn)?.dataset.pid;
-    if (!pid) return;
-    const post = posts.find(p => p.id === pid);
-    if (!post) return;
-    if (upBtn) {
-      if (post.upvoted) { post.upvoted = false; post.upvotes--; }
-      else { if (post.downvoted) { post.downvoted = false; post.downvotes--; } post.upvoted = true; post.upvotes++; }
-    } else {
-      if (post.downvoted) { post.downvoted = false; post.downvotes--; }
-      else { if (post.upvoted) { post.upvoted = false; post.upvotes--; } post.downvoted = true; post.downvotes++; }
-    }
-    renderCommunityDetail(commId);
-    // Re-switch to current panel
-    goto('community-detail');
-  });
-
-  // New post
-  document.getElementById('cd-post-btn').addEventListener('click', () => {
-    const input = document.getElementById('cd-new-post');
-    const text = input?.value.trim();
-    if (!text) return;
-    const newPost = { id: 'cp_new_' + Date.now(), text, time: t('今','Now'), upvotes: 0, downvotes: 0, upvoted: false, downvoted: false };
-    if (!MOCK_COMMUNITY_POSTS[commId]) MOCK_COMMUNITY_POSTS[commId] = [];
-    MOCK_COMMUNITY_POSTS[commId].unshift(newPost);
-    renderCommunityDetail(commId);
-    goto('community-detail');
-  });
-
-  // Chat send
-  document.getElementById('cd-chat-send').addEventListener('click', () => {
-    const input = document.getElementById('cd-chat-input');
-    const text = input?.value.trim();
-    if (!text) return;
-    const ANON_NAMES = [t('紫の蝶🦋','Purple Butterfly 🦋'), t('橙の猿🐵','Orange Monkey 🐵'), t('黒い熊🐻','Black Bear 🐻'), t('青い鳥🐦','Blue Bird 🐦')];
-    const anon = ANON_NAMES[Math.floor(Math.random() * ANON_NAMES.length)];
-    const newMsg = { id: 'cm_' + Date.now(), anon, text, time: t('今','Now') };
-    if (!MOCK_COMMUNITY_CHATS[commId]) MOCK_COMMUNITY_CHATS[commId] = [];
-    MOCK_COMMUNITY_CHATS[commId].push(newMsg);
-    renderCommunityDetail(commId);
-    document.getElementById('cd-tab-chat').click();
-  });
-
-  document.getElementById('cd-back').addEventListener('click', () => goto('friends'));
 }
 
 function renderFriendsList(filter = '') {
@@ -4564,7 +4114,6 @@ function renderPrivacy() {
 function renderPremium() {
   const page = document.getElementById('page-premium');
   const FEATURES = [
-    { icon: '🌐', title: t('コミュニティ5つ参加','Join up to 5 Communities'), desc: t('同じ興味を持つ人たちのコミュニティに最大5つ参加できる。無料は1つのみ。','Join up to 5 interest communities. Free plan is limited to 1.'), locked: true },
     { icon: '🔥', title: t('ストリークバッジ','Streak Badges'), desc: t('連続記録を特別なバッジでアピール','Show off your streaks with special badges'), locked: true },
     { icon: '📊', title: t('詳細アナリティクス','Detailed Analytics'), desc: t('月次・年次の統計データを表示','View monthly and yearly stats'), locked: true },
     { icon: '👥', title: t('グループ無制限作成','Unlimited Groups'), desc: t('複数グループを自由に作成・管理','Create and manage multiple groups freely'), locked: true },
