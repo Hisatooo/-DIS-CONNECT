@@ -320,6 +320,54 @@
 
     /* ===== PADDING FOR NAV ===== */
     .pb-nav { padding-bottom: 7rem; }
+
+    /* ===== ONBOARDING ANIMATIONS ===== */
+    .ob-phone {
+      width: 150px; height: 260px;
+      background: #111; border-radius: 24px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    @keyframes ob-swipe {
+      0%   { transform: translateX(0); opacity:1; }
+      60%  { transform: translateX(94px); opacity:1; }
+      80%  { transform: translateX(94px); opacity:0; }
+      81%  { transform: translateX(0); opacity:0; }
+      100% { transform: translateX(0); opacity:1; }
+    }
+    @keyframes ob-pulse-ring {
+      0%   { transform: scale(1); opacity:0.6; }
+      100% { transform: scale(1.6); opacity:0; }
+    }
+    @keyframes ob-status-cycle {
+      0%,40%  { opacity:1; }
+      50%,90% { opacity:0; }
+      100%    { opacity:1; }
+    }
+    @keyframes ob-checkin {
+      0%,100% { opacity:0; transform:scale(0.5); }
+      20%,80% { opacity:1; transform:scale(1); }
+    }
+    @keyframes ob-heart-pop {
+      0%   { transform:scale(1); }
+      30%  { transform:scale(1.5); }
+      60%  { transform:scale(0.9); }
+      100% { transform:scale(1); }
+    }
+    @keyframes ob-count-up {
+      0%   { opacity:1; } 49% { opacity:1; }
+      50%  { opacity:0; } 99% { opacity:0; }
+      100% { opacity:1; }
+    }
+    @keyframes ob-fadein-up {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes ob-timer-tick {
+      0%   { content:"03:00"; }
+      100% { content:"02:47"; }
+    }
   </style>
 </head>
 <body class="antialiased overflow-hidden h-screen w-screen">
@@ -4119,71 +4167,160 @@ function renderPremium() {
 // ONBOARDING
 // ================================================================
 function renderOnboarding(fromSettings = false) {
-  const slides = [
-    {
-      icon: '📵',
-      title: t('デジタルデトックスを始めよう', 'Start Your Digital Detox'),
-      desc: t('スマホから離れる時間を作ることで、集中力・睡眠・メンタルが改善します。', 'Taking breaks from your phone improves focus, sleep, and mental health.'),
-    },
-    {
-      icon: '👥',
-      title: t('フレンドと一緒に', 'Detox With Friends'),
-      desc: t('フレンドのデトックス状況をリアルタイムで確認。お互いに励まし合えます。', "See your friends' detox status in real time and motivate each other."),
-    },
-    {
-      icon: '🏆',
-      title: t('グループデトックス', 'Group Detox'),
-      desc: t('グループを作成して、メンバー全員で同時にデトックスに挑戦しましょう。', 'Create a group and challenge all members to detox at the same time.'),
-    },
-    {
-      icon: '🌍',
-      title: t('一斉デトックス', 'Global Detox'),
-      desc: t('毎日決まった時間に全ユーザーが一斉にデトックス。世界中の人と繋がれます。', 'Every day, all users detox together at the same time. Connect with the world.'),
-    },
-    {
-      icon: '🔥',
-      title: t('フィードでシェア', 'Share on Feed'),
-      desc: t('デトックス完了後に達成を投稿。フレンドからいいね・コメントをもらいましょう。', 'Post your achievements after detox. Get likes and comments from friends.'),
-    },
-  ];
   let current = 0;
+  let _ob_timer = null;
+  function _clearOb() { if (_ob_timer) { clearInterval(_ob_timer); _ob_timer = null; } }
+
+  // ── Slide UIs ──────────────────────────────────────────
+  function slide1() { return `
+    <div class="ob-phone">
+      <div style="padding:14px 12px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+        <div style="width:38px;height:38px;border-radius:12px;background:#1C1C1E;display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/></svg>
+        </div>
+        <div style="font-size:20px;font-weight:900;color:white;font-family:sans-serif;letter-spacing:1px;">01:00:00</div>
+        <div style="font-size:8px;color:#6b7280;font-family:sans-serif;">YouTube · Instagram · X</div>
+        <div style="width:126px;height:34px;background:#1C1C1E;border-radius:17px;position:relative;margin-top:6px;overflow:hidden;">
+          <div style="position:absolute;left:3px;top:3px;width:28px;height:28px;background:white;border-radius:50%;animation:ob-swipe 2.2s ease-in-out infinite;"></div>
+          <span style="position:absolute;width:100%;text-align:center;line-height:34px;font-size:8px;font-weight:700;color:#6b7280;font-family:sans-serif;">${t('スワイプして開始','Swipe to Start')}</span>
+        </div>
+      </div>
+    </div>`; }
+
+  function slide2() { return `
+    <div class="ob-phone">
+      <div style="padding:12px 10px;height:100%;display:flex;flex-direction:column;gap:7px;justify-content:center;">
+        ${[
+          {n:'Alice', c:'#3b82f6', s0:t('デトックス中','Detoxing'), s1:t('オンライン','Online'), d:'0'},
+          {n:'Ben',   c:'#f97316', s0:t('オンライン','Online'), s1:t('デトックス中','Detoxing'), d:'0.6s'},
+          {n:'Chloe', c:'#ec4899', s0:t('デトックス中','Detoxing'), s1:t('オンライン','Online'), d:'1.2s'},
+        ].map(f => `
+          <div style="display:flex;align-items:center;gap:8px;background:#1C1C1E;border-radius:12px;padding:7px 8px;">
+            <div style="width:26px;height:26px;border-radius:50%;background:${f.c};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;">${f.n[0]}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:10px;font-weight:700;color:white;font-family:sans-serif;">${f.n}</div>
+              <div style="font-size:8px;font-family:sans-serif;animation:ob-status-cycle 3s ${f.d} infinite;">
+                <span style="color:#22c55e;">● ${f.s0}</span>
+              </div>
+            </div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:ob-pulse-ring 1.5s ${f.d} infinite;"></div>
+          </div>`).join('')}
+      </div>
+    </div>`; }
+
+  function slide3() { return `
+    <div class="ob-phone">
+      <div style="padding:12px 10px;height:100%;display:flex;flex-direction:column;gap:6px;justify-content:center;">
+        <div style="font-size:10px;font-weight:700;color:white;font-family:sans-serif;margin-bottom:2px;">🌅 ${t('朝活デトックス部','Morning Detox')}</div>
+        ${[
+          {n:'Alice',c:'#3b82f6',d:'0s'},
+          {n:'Ben',  c:'#f97316',d:'0.7s'},
+          {n:'Chloe',c:'#ec4899',d:'1.4s'},
+          {n:'You',  c:'#6366f1',d:'2.1s'},
+        ].map(f=>`
+          <div style="display:flex;align-items:center;gap:7px;background:#1C1C1E;border-radius:10px;padding:6px 8px;animation:ob-fadein-up 0.5s ${f.d} both;">
+            <div style="width:22px;height:22px;border-radius:50%;background:${f.c};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;">${f.n[0]}</div>
+            <div style="font-size:9px;color:white;font-family:sans-serif;flex:1;">${f.n}</div>
+            <div style="font-size:8px;color:#22c55e;font-family:sans-serif;animation:ob-checkin 4s ${f.d} infinite;">✓ ${t('準備完了','Ready')}</div>
+          </div>`).join('')}
+      </div>
+    </div>`; }
+
+  function slide4() {
+    return `
+    <div class="ob-phone">
+      <div style="padding:14px 12px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+        <div style="font-size:9px;color:#f59e0b;font-weight:700;font-family:sans-serif;letter-spacing:1px;">🌍 ${t('本日の一斉デトックス','TODAY\'S GLOBAL DETOX')}</div>
+        <div style="font-size:11px;color:#6b7280;font-family:sans-serif;">19:00 〜</div>
+        <div id="ob-clock" style="font-size:26px;font-weight:900;color:white;font-family:monospace;letter-spacing:2px;">00:59</div>
+        <div style="font-size:8px;color:#6b7280;font-family:sans-serif;">${t('参加者','Participants')} <span style="color:white;font-weight:700;">1,247</span></div>
+        <div style="display:flex;gap:-6px;">
+          ${['#3b82f6','#f97316','#ec4899','#22c55e','#6366f1'].map((c,i)=>`<div style="width:18px;height:18px;border-radius:50%;background:${c};border:1.5px solid black;margin-left:${i?-4:0}px;"></div>`).join('')}
+        </div>
+      </div>
+    </div>`; }
+
+  function slide5() { return `
+    <div class="ob-phone">
+      <div style="padding:12px 10px;height:100%;display:flex;flex-direction:column;gap:0;justify-content:center;">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;">A</div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:white;font-family:sans-serif;">Alice</div>
+            <div style="font-size:7px;color:#6b7280;font-family:sans-serif;">2${t('時間前','h ago')}</div>
+          </div>
+        </div>
+        <div style="background:#1C1C1E;border-radius:10px;padding:8px;margin-bottom:8px;display:flex;align-items:center;gap:7px;">
+          <div style="width:28px;height:28px;border-radius:8px;background:#2C2C2E;display:flex;align-items:center;justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:white;font-family:sans-serif;">2${t('時間','h')}</div>
+            <div style="font-size:7px;color:#6b7280;font-family:sans-serif;">${t('読書・英単語','Reading · Vocab')}</div>
+          </div>
+        </div>
+        <div style="font-size:8px;color:#d1d5db;font-family:sans-serif;margin-bottom:8px;">${t('久しぶりに集中できた！','Best focus session in a while!')}</div>
+        <div style="display:flex;gap:14px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="1.5" style="animation:ob-heart-pop 2s ease-in-out infinite;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <span id="ob-likes" style="font-size:9px;color:#ef4444;font-family:sans-serif;font-weight:700;">12</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <span style="font-size:9px;color:#6b7280;font-family:sans-serif;">2</span>
+          </div>
+        </div>
+      </div>
+    </div>`; }
+
+  const slideContent = [slide1, slide2, slide3, slide4, slide5];
+  const slideMeta = [
+    { title: t('スワイプしてデトックス開始','Swipe to Start Detox'),       desc: t('アプリを制限する時間をセットしてスワイプするだけ。','Set your apps and duration, then swipe to begin.') },
+    { title: t('フレンドのデトックスがわかる','See Friends Detoxing'),       desc: t('フレンドがデトックス中かリアルタイムで確認できます。','See who is currently in a detox session in real time.') },
+    { title: t('グループでデトックス','Group Detox Together'),               desc: t('グループを作ってメンバー全員でデトックスに挑戦。','Create a group and start a detox session together.') },
+    { title: t('毎日の一斉デトックス','Daily Global Detox'),                 desc: t('毎日決まった時間に全ユーザーと一緒にデトックス。','Join thousands of users in a daily detox at the same time.') },
+    { title: t('達成をフィードでシェア','Share Your Achievement'),            desc: t('デトックス完了後に投稿してフレンドと繋がろう。','Post your results and get likes and comments from friends.') },
+  ];
 
   function render() {
-    const s = slides[current];
-    const isLast = current === slides.length - 1;
+    _clearOb();
+    const s = slideMeta[current];
+    const isLast = current === slideContent.length - 1;
+    const dots = slideContent.map((_,i) => `<div style="height:5px;border-radius:3px;transition:all .3s;background:${i===current?'white':'#374151'};width:${i===current?'20px':'5px'};"></div>`).join('');
     document.getElementById('page-onboarding').innerHTML = `
-      <div class="flex-1 flex flex-col items-center justify-center w-full">
-        <!-- Progress dots -->
-        <div class="flex gap-2 mb-10">
-          ${slides.map((_,i) => `<div class="h-1.5 rounded-full transition-all duration-300 ${i===current?'w-6 bg-white':'w-1.5 bg-gray-700'}"></div>`).join('')}
-        </div>
-
-        <!-- Icon -->
-        <div class="w-28 h-28 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-6xl mb-8">
-          ${s.icon}
-        </div>
-
-        <!-- Text -->
-        <div class="text-center space-y-3 px-2">
-          <h2 class="text-2xl font-black text-white leading-tight">${s.title}</h2>
-          <p class="text-gray-400 text-sm leading-relaxed">${s.desc}</p>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;gap:20px;">
+        <div style="display:flex;gap:6px;">${dots}</div>
+        ${slideContent[current]()}
+        <div style="text-align:center;padding:0 8px;">
+          <h2 style="font-size:1.2rem;font-weight:900;color:white;margin-bottom:6px;line-height:1.3;">${s.title}</h2>
+          <p style="font-size:0.8rem;color:#9ca3af;line-height:1.5;">${s.desc}</p>
         </div>
       </div>
-
-      <!-- Buttons -->
-      <div class="w-full space-y-3">
+      <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
         <button id="ob-next" class="w-full bg-white text-black font-bold py-4 rounded-full text-base active:bg-gray-200 transition">
-          ${isLast ? t('始める', "Let's Go") : t('次へ', 'Next')}
+          ${isLast ? t('始める',"Let's Go") : t('次へ','Next')}
         </button>
-        ${!isLast ? `<button id="ob-skip" class="w-full text-gray-600 font-semibold py-3 text-sm">${t('スキップ', 'Skip')}</button>` : ''}
+        ${!isLast ? `<button id="ob-skip" style="width:100%;color:#6b7280;font-weight:600;padding:10px;font-size:0.85rem;background:none;border:none;cursor:pointer;">${t('スキップ','Skip')}</button>` : ''}
       </div>
     `;
+    // slide4: live countdown
+    if (current === 3) {
+      let sec = 59;
+      const el = document.getElementById('ob-clock');
+      if (el) _ob_timer = setInterval(() => {
+        sec = sec > 0 ? sec - 1 : 59;
+        const e = document.getElementById('ob-clock');
+        if (e) e.textContent = `00:${String(sec).padStart(2,'0')}`;
+      }, 1000);
+    }
     document.getElementById('ob-next').addEventListener('click', () => {
-      if (isLast) { if (fromSettings) { renderSettings(); } else { goto('home'); } }
+      _clearOb();
+      if (isLast) { if (fromSettings) { renderSettings(); goto('settings'); } else { goto('home'); } }
       else { current++; render(); }
     });
     document.getElementById('ob-skip')?.addEventListener('click', () => {
-      if (fromSettings) { renderSettings(); } else { goto('home'); }
+      _clearOb();
+      if (fromSettings) { renderSettings(); goto('settings'); } else { goto('home'); }
     });
   }
 
