@@ -4000,179 +4000,208 @@ function renderTerms() {
 function renderPrivacy() {
   const isEn = S.lang === 'en';
   const page = document.getElementById('page-privacy');
-  page.innerHTML = isEn ? `
-    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
-      <button id="privacy-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-xl font-black text-white">Privacy Policy</h1>
-    </div>
-    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
-      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
-      <p class="text-sm text-gray-400 leading-relaxed">The Operator of (DIS)CONNECT respects your privacy. This Policy explains how personal information is handled in this individually operated app.</p>
+  const BACK_PP = '<button id="privacy-back" class="text-gray-400 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>';
+  const headerPP = '<div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">' + BACK_PP + '<h1 class="text-xl font-black text-white">' + (isEn ? 'Privacy Policy' : 'プライバシーポリシー') + '</h1></div>';
+  const sp = (title, body) => '<div class="space-y-2"><h2 class="text-sm font-black text-white uppercase tracking-wide border-l-2 border-gray-600 pl-3">' + title + '</h2><div class="space-y-2 text-xs text-gray-400 leading-relaxed">' + body + '</div></div>';
+  const pp = (t) => '<p>' + t + '</p>';
+  const pb = (t) => '<span class="text-white font-semibold">' + t + '</span>';
+  const pli = (items) => '<ul class="space-y-1 pl-3">' + items.map(i => '<li class="flex gap-2"><span class="text-gray-600 flex-shrink-0">・</span><span>' + i + '</span></li>').join('') + '</ul>';
+  const ptbl = (rows) => '<div class="card p-3 space-y-2">' + rows.map(r => '<div class="flex gap-3"><span class="text-gray-500 flex-shrink-0 w-24">' + r[0] + '</span><span>' + r[1] + '</span></div>').join('') + '</div>';
 
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">1. Information We Collect</h2>
-        <div class="card p-4 space-y-3">
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">Information you provide</p>
-            <p class="text-xs text-gray-400 leading-relaxed">Account details (name, email, profile image, etc.), campus verification credentials, user-generated content (posts, messages)</p>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">Automatically collected information</p>
-            <p class="text-xs text-gray-400 leading-relaxed">Usage data (detox duration, status), device information (model, OS), push notification tokens</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <p class="text-sm font-semibold text-white mb-1">App usage detection</p>
-            <p class="text-xs text-gray-400 leading-relaxed">The App detects which apps you attempt to open during a session. However, we <span class="text-white">never collect or store the content of messages</span> from LINE, messaging apps, or similar services.</p>
-          </div>
-        </div>
-      </div>
+  const privacyEN = [
+    '<p class="text-xs text-gray-500">Effective Date: January 4, 2026 | Last Updated: March 26, 2026</p>',
+    '<p class="text-xs text-gray-400 leading-relaxed">This Privacy Policy explains how the individual operator of <strong class="text-white">(DIS)CONNECT</strong> (the "Operator") collects, uses, stores, and protects your personal information. By using the App, you agree to the practices described in this Policy.</p>',
+    sp('1. Operator Information',
+      ptbl([
+        ['Service name', '(DIS)CONNECT'],
+        ['Operator type', 'Individual developer'],
+        ['Contact', 'disconnect2026.official@gmail.com'],
+        ['Jurisdiction', 'Japan']
+      ])
+    ),
+    sp('2. Information We Collect',
+      pp(pb('Information you provide directly:')) +
+      pli([
+        'Account information: display name, username (handle), email address',
+        'Profile information: bio text, profile image URL',
+        'User-generated content: posts, comments, direct messages',
+        'Session data: detox goals, duration, completion status'
+      ]) +
+      pp(pb('Information collected automatically:')) +
+      pli([
+        'App interaction data: features used, session frequency and duration',
+        'Device identifiers and OS information (via Firebase)',
+        'Push notification tokens (for opt-in notifications only)',
+        'Browser/localStorage data for session continuity'
+      ]) +
+      pp(pb('What we do NOT collect:')) +
+      pli([
+        'Contents of your messages in any other application (LINE, Messages, etc.)',
+        'Location data or GPS coordinates',
+        'Contacts, photos, or files from your device (unless explicitly uploaded by you)',
+        'Financial or payment data (handled solely by Apple/Google)'
+      ])
+    ),
+    sp('3. Legal Basis & Purpose of Processing',
+      ptbl([
+        ['Contract', 'Providing and maintaining App features you registered for'],
+        ['Legitimate interest', 'Improving the App, preventing abuse, ensuring security'],
+        ['Consent', 'Sending push notifications (opt-in only)'],
+        ['Legal obligation', 'Responding to lawful requests from authorities']
+      ]) +
+      pp('We will NEVER sell, rent, or trade your personal information to third parties for marketing purposes.')
+    ),
+    sp('4. Data Sharing & Third-Party Services',
+      pp(pb('Google Firebase (Google LLC):')) +
+      pp('The App uses Firebase for authentication, database storage (Firestore), and optionally analytics. Your data is processed by Google and may be stored on servers outside Japan. Google LLC participates in the EU-U.S. Data Privacy Framework and applies Standard Contractual Clauses for international transfers.') +
+      pp('<a href="https://policies.google.com/privacy" class="text-gray-500 underline">Google Privacy Policy</a>') +
+      pp(pb('Between users:')) +
+      pp('Your public profile, posts, and detox status may be visible to other users based on your privacy settings within the App.') +
+      pp(pb('Legal disclosure:')) +
+      pp('We may disclose information to comply with applicable laws, court orders, or lawful government requests. We will notify you of such requests to the extent permitted by law.')
+    ),
+    sp('5. International Data Transfers',
+      pp('By using the App, you acknowledge that your data may be transferred to and processed in countries outside Japan, including the United States, where Google Firebase servers are located. Such transfers are made subject to appropriate safeguards including Standard Contractual Clauses or equivalent mechanisms.')
+    ),
+    sp('6. Data Retention',
+      ptbl([
+        ['Account data', 'Until account deletion request'],
+        ['Posts & content', 'Until deleted by user or account termination'],
+        ['Session logs', '12 months from creation'],
+        ['Firebase Auth tokens', 'Managed by Google per their retention policy'],
+        ['Backup/logs', 'Up to 90 days after deletion']
+      ])
+    ),
+    sp('7. Your Rights',
+      pp('Subject to applicable law, you have the following rights:') +
+      pli([
+        pb('Access: ') + 'Request a copy of personal data we hold about you',
+        pb('Correction: ') + 'Request correction of inaccurate data',
+        pb('Deletion: ') + 'Request deletion of your account and associated data (available in App Settings)',
+        pb('Portability: ') + 'Request a machine-readable copy of your data',
+        pb('Objection: ') + 'Object to processing based on legitimate interests',
+        pb('Withdraw consent: ') + 'Disable push notifications at any time in device settings'
+      ]) +
+      pp('To exercise these rights, contact: <span class="text-white font-semibold">disconnect2026.official@gmail.com</span>. We will respond within 30 days.')
+    ),
+    sp('8. Security',
+      pp('The Operator implements reasonable technical and organizational measures to protect your personal information, including use of Firebase security rules and encrypted data transmission (HTTPS/TLS).') +
+      pp('As this is an individually operated service, we cannot guarantee absolute security. In the event of a data breach that poses a significant risk to you, we will notify affected users as required by applicable law.')
+    ),
+    sp('9. Cookies & Local Storage',
+      pp('The App uses browser localStorage (not cookies) to store session preferences and user state locally on your device. This data does not leave your device unless explicitly synced with Firebase. You can clear this data by clearing your browser data or uninstalling the App.')
+    ),
+    sp('10. Children\'s Privacy',
+      pp('The App is not directed at children under 13. We do not knowingly collect personal information from children under 13. If we become aware that we have collected data from a child under 13 without parental consent, we will delete it promptly. If you believe we have collected such data, please contact us immediately.')
+    ),
+    sp('11. Changes to This Policy',
+      pp('We may update this Privacy Policy at any time. We will post the updated Policy within the App. Continued use of the App after the updated Policy is posted constitutes your acceptance of the revised Policy.')
+    ),
+    sp('12. Contact & Privacy Requests',
+      pp('For any privacy-related inquiries, data access requests, or complaints:') +
+      pp('<span class="text-white font-semibold">disconnect2026.official@gmail.com</span>') +
+      pp('Response time: within 30 days of receipt.')
+    ),
+    '<div class="card p-4 mt-2 text-center"><p class="text-xs text-gray-700">Privacy Policy — (DIS)CONNECT | Effective January 4, 2026</p></div>'
+  ].join('\n');
 
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">2. How We Use Your Information</h2>
-        <div class="space-y-1">
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To provide, maintain, and improve the App</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To enable social features between users</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To verify student status</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To send important notices and event notifications</p></div>
-        </div>
-        <div class="card p-3 flex items-center gap-3 mt-2">
-          <span class="text-xl">🚫</span>
-          <p class="text-sm text-gray-300 font-semibold">We will <span class="text-white">never sell</span> your personal data to third parties</p>
-        </div>
-      </div>
+  const privacyJA = [
+    '<p class="text-xs text-gray-500">制定日: 2026年1月4日 | 最終更新: 2026年3月26日</p>',
+    '<p class="text-xs text-gray-400 leading-relaxed"><strong class="text-white">(DIS)CONNECT</strong>（以下「本アプリ」）の運営者（個人）は、ユーザーの個人情報を適切に取り扱うことを重視します。本プライバシーポリシーは、個人情報保護法（以下「法」）その他関連法令を遵守し、個人情報の収集・利用・管理・第三者提供に関する方針を定めるものです。本アプリを利用することにより、本ポリシーに同意したものとみなします。</p>',
+    sp('第1条（運営者情報）',
+      ptbl([
+        ['サービス名', '(DIS)CONNECT'],
+        ['運営形態', '個人事業主'],
+        ['お問い合わせ', 'disconnect2026.official@gmail.com'],
+        ['所在地', '日本']
+      ])
+    ),
+    sp('第2条（収集する個人情報）',
+      pp(pb('ユーザーが直接提供する情報:')) +
+      pli([
+        'アカウント情報: 表示名、ユーザー名（ハンドル）、メールアドレス',
+        'プロフィール情報: 自己紹介文、プロフィール画像のURL',
+        'ユーザーコンテンツ: 投稿、コメント、ダイレクトメッセージ',
+        'セッションデータ: デトックス目標・時間・完了状況'
+      ]) +
+      pp(pb('自動的に収集される情報:')) +
+      pli([
+        'アプリ利用データ: 使用機能、セッション頻度・時間',
+        '端末識別情報およびOS情報（Firebase経由）',
+        'プッシュ通知用トークン（オプトイン時のみ）',
+        'セッション継続のためのブラウザ/ローカルストレージデータ'
+      ]) +
+      pp(pb('収集しない情報:')) +
+      pli([
+        '他のアプリ（LINE・メッセージ等）のメッセージ内容',
+        '位置情報・GPS座標',
+        '端末内の連絡先・写真・ファイル（ユーザーが明示的にアップロードした場合を除く）',
+        '支払い情報・クレジットカード情報（Apple/Googleが管理）'
+      ])
+    ),
+    sp('第3条（利用目的）',
+      ptbl([
+        ['契約の履行', '登録機能の提供・維持'],
+        ['正当な利益', '品質改善・不正防止・セキュリティ確保'],
+        ['同意', 'プッシュ通知の送信（オプトイン時のみ）'],
+        ['法的義務', '行政機関・裁判所等からの適法な要請への対応']
+      ]) +
+      pp('取得した個人情報を、ユーザーの同意なく第三者にマーケティング目的で販売・賃貸・提供することはありません。')
+    ),
+    sp('第4条（第三者提供・外部サービス）',
+      pp(pb('Google Firebase（Google LLC）:')) +
+      pp('本アプリは認証・データベース（Firestore）・分析のためにFirebaseを利用しています。データはGoogleにより処理され、日本国外（米国等）のサーバーに保存される場合があります。Google LLCはEU-米国データプライバシーフレームワークに参加しており、標準契約条項（SCC）等の適切な保護措置を適用しています。') +
+      pp('<span class="text-gray-500">Google プライバシーポリシー: https://policies.google.com/privacy</span>') +
+      pp(pb('ユーザー間:')) +
+      pp('公開設定に基づき、プロフィール・投稿・デトックスステータスが他のユーザーに表示される場合があります。') +
+      pp(pb('法令に基づく開示:')) +
+      pp('法令・裁判所命令・適法な行政機関の要請に基づく場合、個人情報を開示することがあります。法令が許容する範囲でユーザーに通知します。')
+    ),
+    sp('第5条（海外への個人情報の移転）',
+      pp('本アプリの利用により、ユーザーの個人情報がGoogle FirebaseのサーバーがあるアメリカなどのFirebase運営国に転送・処理される場合があることを承諾するものとします。かかる移転は、標準契約条項等の適切な保護措置のもとに行われます。')
+    ),
+    sp('第6条（保管期間）',
+      ptbl([
+        ['アカウントデータ', 'アカウント削除申請まで'],
+        ['投稿・コンテンツ', 'ユーザーによる削除またはアカウント停止まで'],
+        ['セッションログ', '作成から12ヶ月'],
+        ['Firebase Authトークン', 'Googleのポリシーに従い管理'],
+        ['バックアップ・ログ', '削除後最大90日']
+      ])
+    ),
+    sp('第7条（ユーザーの権利）',
+      pp('適用法令の範囲内で、以下の権利を有します。') +
+      pli([
+        pb('開示: ') + '保有する個人情報の開示請求',
+        pb('訂正: ') + '不正確な情報の訂正請求',
+        pb('削除: ') + 'アカウントおよびデータの削除（アプリ内設定から可能）',
+        pb('利用停止: ') + '個人情報の利用停止・第三者提供停止請求',
+        pb('同意の撤回: ') + 'プッシュ通知はいつでも端末設定から無効化可能'
+      ]) +
+      pp('権利行使は <span class="text-white font-semibold">disconnect2026.official@gmail.com</span> へご連絡ください。受領後30日以内に対応します。')
+    ),
+    sp('第8条（安全管理措置）',
+      pp('運営者は、個人情報の漏洩・滅失・毀損を防止するため、Firebase セキュリティルールおよびHTTPS/TLSによる暗号化通信等の合理的な技術的・組織的措置を講じます。') +
+      pp('個人運営のサービスであるため、企業と同等の完全なセキュリティを保証するものではありません。重大なリスクをもたらす情報漏洩が発生した場合、法令に従い影響を受けるユーザーに通知します。')
+    ),
+    sp('第9条（Cookie・ローカルストレージ）',
+      pp('本アプリはCookieを使用せず、ブラウザのlocalStorageを使用してセッション設定・ユーザー状態をお使いの端末上に保存します。このデータはFirebaseと明示的に同期されない限り端末外に送信されません。ブラウザデータの消去またはアプリのアンインストールにより削除できます。')
+    ),
+    sp('第10条（未成年者のプライバシー）',
+      pp('本アプリは13歳未満の方を対象としていません。13歳未満の方から保護者の同意なく個人情報を収集した事実が判明した場合、速やかに削除します。該当すると思われる場合は直ちにご連絡ください。')
+    ),
+    sp('第11条（プライバシーポリシーの変更）',
+      pp('本ポリシーはいつでも変更することがあります。変更後のポリシーは本アプリ内に掲載します。変更後も本アプリを継続して利用することにより、変更後のポリシーに同意したものとみなされます。')
+    ),
+    sp('第12条（個人情報に関するお問い合わせ・苦情窓口）',
+      pp('個人情報の取り扱いに関するご質問・開示請求・苦情等は以下にご連絡ください。') +
+      pp('<span class="text-white font-semibold">disconnect2026.official@gmail.com</span>') +
+      pp('受領後30日以内に回答します。')
+    ),
+    '<div class="card p-4 mt-2 text-center"><p class="text-xs text-gray-700">プライバシーポリシー — (DIS)CONNECT | 2026年1月4日 制定</p></div>'
+  ].join('\n');
 
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">3. Information Sharing & Third-Party Services</h2>
-        <div class="card p-4 space-y-3">
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">Between users</p>
-            <p class="text-xs text-gray-400 leading-relaxed">Your profile and posts may be visible to other users based on app settings.</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-base">🔥</span>
-              <p class="text-sm font-semibold text-white">Google Firebase</p>
-            </div>
-            <p class="text-xs text-gray-400 leading-relaxed">The App uses Google Firebase for data storage, authentication, and analytics. Your data may be stored and processed on Firebase servers, including servers outside Japan.</p>
-            <p class="text-xs text-gray-600 mt-1">Google Privacy Policy: https://policies.google.com/privacy</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <p class="text-sm font-semibold text-white mb-1">Legal requirements</p>
-            <p class="text-xs text-gray-400">We may disclose information when required to do so by law.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">4. Data Security</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">The Operator strives to implement appropriate security measures to prevent data breaches or loss. Please note that, as an individually operated service, we cannot guarantee the same level of security as a corporation.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">5. Data Deletion</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">You may delete your account and associated data at any time through the App settings.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">6. Contact</h2>
-        <p class="text-sm text-gray-400">For questions about this Privacy Policy, please contact us at:</p>
-        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
-      </div>
-
-      <div class="card p-4 mt-4">
-        <p class="text-xs text-gray-600 text-center">Privacy Policy / Effective Date: January 4, 2026</p>
-        <p class="text-xs text-gray-700 leading-relaxed mt-2">We use Google Firebase to host data, manage authentication, and analyze app usage. We do NOT sell your personal data. You may request deletion of your account and data at any time through the App settings.</p>
-      </div>
-    </div>
-  ` : `
-    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
-      <button id="privacy-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-xl font-black text-white">プライバシーポリシー</h1>
-    </div>
-    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
-      <p class="text-xs text-gray-500">制定日: 2026年1月4日</p>
-      <p class="text-sm text-gray-400 leading-relaxed">(DIS)CONNECTの運営者は、ユーザーのプライバシーを尊重します。本ポリシーは、個人運営のアプリにおける個人情報の取り扱いについて説明するものです。</p>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">1. 収集する情報</h2>
-        <div class="card p-4 space-y-3">
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">提供される情報</p>
-            <p class="text-xs text-gray-400 leading-relaxed">アカウント情報（名前、メールアドレス、プロフィール画像等）、キャンパス機能用の認証情報、ユーザーコンテンツ（投稿、メッセージ）</p>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">自動収集される情報</p>
-            <p class="text-xs text-gray-400 leading-relaxed">利用データ（デトックス時間、ステータス）、端末情報（機種、OS）、プッシュ通知用トークン</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <p class="text-sm font-semibold text-white mb-1">アプリ利用状況の検知について</p>
-            <p class="text-xs text-gray-400 leading-relaxed">本アプリは機能上、セッション中にユーザーがどのアプリを起動しようとしたかを検知します。ただし、LINEやメッセージアプリ等の<span class="text-white">「内容（トーク内容）」を収集・保存することは一切ありません。</span></p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">2. 利用目的</h2>
-        <div class="space-y-1">
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">本アプリの機能提供、維持、改善のため</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">ユーザー間のソーシャル機能の提供のため</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">学生認証の確認のため</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">重要なお知らせやイベント通知の配信のため</p></div>
-        </div>
-        <div class="card p-3 flex items-center gap-3 mt-2">
-          <span class="text-xl">🚫</span>
-          <p class="text-sm text-gray-300 font-semibold">ユーザーの個人情報を第三者に<span class="text-white">販売することはありません</span></p>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">3. 情報の共有と外部サービス</h2>
-        <div class="card p-4 space-y-3">
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">ユーザー間</p>
-            <p class="text-xs text-gray-400 leading-relaxed">プロフィールや投稿は、アプリの仕様に基づき他のユーザーに公開されます。</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-base">🔥</span>
-              <p class="text-sm font-semibold text-white">Google Firebase</p>
-            </div>
-            <p class="text-xs text-gray-400 leading-relaxed">本アプリは、データの保管、認証、分析のためにGoogle社が提供する「Firebase」を使用しています。ユーザーの情報はFirebaseのサーバー（海外を含む）に保存・処理される場合があります。</p>
-            <p class="text-xs text-gray-600 mt-1">Google Privacy Policy: https://policies.google.com/privacy</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <p class="text-sm font-semibold text-white mb-1">法令</p>
-            <p class="text-xs text-gray-400">法令に基づき開示が必要な場合、情報を開示することがあります。</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">4. 個人情報の管理</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">運営者は、個人情報の漏洩や滅失を防ぐために適切なセキュリティ対策を講じるよう努めます。ただし、個人運営であるため、企業と同等の完全なセキュリティ体制を保証するものではないことをご了承ください。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">5. データの削除</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">ユーザーは、アプリ内の設定からいつでもアカウントおよびデータを削除することができます。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">6. お問い合わせ</h2>
-        <p class="text-sm text-gray-400">プライバシーポリシーに関するご質問は、以下までご連絡ください。</p>
-        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
-      </div>
-
-      <div class="card p-4 mt-4">
-        <p class="text-xs text-gray-600 text-center">Privacy Policy / Effective Date: January 4, 2026</p>
-        <p class="text-xs text-gray-700 leading-relaxed mt-2">We use Google Firebase to host data, manage authentication, and analyze app usage. We do NOT sell your personal data. You may request deletion of your account and data at any time through the App settings.</p>
-      </div>
-    </div>
-  `;
+  page.innerHTML = headerPP + '<div class="px-5 pb-10 space-y-5 overflow-y-auto no-scrollbar flex-1">' + (isEn ? privacyEN : privacyJA) + '</div>';
   document.getElementById('privacy-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); else if (p === 'profile') renderProfile(); goto(p); });
 }
 
