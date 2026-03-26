@@ -1076,6 +1076,7 @@ function renderRegister() {
         };
         await db.collection('users').doc(cred.user.uid).set(u);
         saveUser({ ...u, uid: cred.user.uid });
+        S._justRegistered = true;
         renderOnboarding();
       })
       .catch(err => {
@@ -4370,6 +4371,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       if (u) {
+        if (S._justRegistered) {
+          S._justRegistered = false;
+          return; // onboarding is already showing for new user
+        }
         if (!maybeRestoreSession()) {
           goto('home');
         }
