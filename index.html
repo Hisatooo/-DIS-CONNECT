@@ -956,7 +956,7 @@ function goto(page) {
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     const match = btn.dataset.page === page ||
                   (btn.dataset.page === 'home' && page === 'home') ||
-                  (btn.dataset.page === 'friends' && page === 'group-detail');
+                  (btn.dataset.page === 'friends' && (page === 'group-detail' || page === 'community-detail' || page === 'community-search'));
     btn.classList.toggle('active-nav', match);
     btn.classList.toggle('text-white',  match);
     btn.classList.toggle('text-gray-500', !match);
@@ -4447,6 +4447,7 @@ function renderPrivacy() {
 function renderPremium() {
   const page = document.getElementById('page-premium');
   const FEATURES = [
+    { icon: '🌐', title: t('コミュニティ5つ参加','Join up to 5 Communities'), desc: t('同じ興味を持つ人たちのコミュニティに最大5つ参加できる。無料は1つのみ。','Join up to 5 interest communities. Free plan is limited to 1.'), locked: true },
     { icon: '🔥', title: t('ストリークバッジ','Streak Badges'), desc: t('連続記録を特別なバッジでアピール','Show off your streaks with special badges'), locked: true },
     { icon: '📊', title: t('詳細アナリティクス','Detailed Analytics'), desc: t('月次・年次の統計データを表示','View monthly and yearly stats'), locked: true },
     { icon: '👥', title: t('グループ無制限作成','Unlimited Groups'), desc: t('複数グループを自由に作成・管理','Create and manage multiple groups freely'), locked: true },
