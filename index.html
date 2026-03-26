@@ -520,7 +520,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
         </div>
-        <span id="manual-slider-label" class="slider-label">スワイプして開始</span>
+        <span id="manual-slider-label" class="slider-label">スワイプして(DIS)CONNECT</span>
       </div>
 
       <button id="manual-cancel-btn" class="w-full text-gray-600 font-semibold py-3 mt-1 text-sm">キャンセル</button>
@@ -763,7 +763,7 @@ function renderStaticLabels() {
   set('manual-sheet-sub', t('制限するアプリと時間をセット','Set apps to block and duration'));
   set('manual-apps-label', t('制限するアプリ','Apps to Block'));
   set('manual-time-label', t('時間','Duration'));
-  set('manual-slider-label', t('スワイプして開始','Swipe to Start'));
+  set('manual-slider-label', t('スワイプして(DIS)CONNECT','Swipe to (DIS)CONNECT'));
   set('manual-cancel-btn', t('キャンセル','Cancel'));
   set('confirm-cancel-btn', t('キャンセル','Cancel'));
   set('comment-panel-title', t('投稿','Post'));
@@ -3237,7 +3237,6 @@ function renderNotifications() {
   `;
   S.unreadNotif = false;
   updateUnreadDots();
-  goto('notifications');
   document.getElementById('notif-back').addEventListener('click', () => goto(S._prevPage || 'home'));
 }
 
@@ -4182,7 +4181,7 @@ function renderOnboarding(fromSettings = false) {
         <div style="font-size:8px;color:#6b7280;font-family:sans-serif;">YouTube · Instagram · X</div>
         <div style="width:126px;height:34px;background:#1C1C1E;border-radius:17px;position:relative;margin-top:6px;overflow:hidden;">
           <div style="position:absolute;left:3px;top:3px;width:28px;height:28px;background:white;border-radius:50%;animation:ob-swipe 2.2s ease-in-out infinite;"></div>
-          <span style="position:absolute;width:100%;text-align:center;line-height:34px;font-size:8px;font-weight:700;color:#6b7280;font-family:sans-serif;">${t('スワイプして開始','Swipe to Start')}</span>
+          <span style="position:absolute;width:100%;text-align:center;line-height:34px;font-size:8px;font-weight:700;color:#6b7280;font-family:sans-serif;">${t('スワイプして(DIS)CONNECT','Swipe to (DIS)CONNECT')}</span>
         </div>
       </div>
     </div>`; }
