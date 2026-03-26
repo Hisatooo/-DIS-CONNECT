@@ -2486,7 +2486,8 @@ function buildFriendCard(f, isActive) {
   el.className = 'card p-4 flex items-center justify-between cursor-pointer hover:bg-[#2C2C2E] transition';
   el.dataset.uid = f.id;
 
-  const elapsed = isActive ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
+  const elapsed   = isActive ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
+  const remaining = isActive ? Math.max(0, f.sessionDuration - elapsed) : 0;
   const blockText = (isActive && f.isPublic && f.blockPublic)
     ? `<p class="text-xs text-gray-500 mt-0.5">${t('YouTube, Instagram をブロック中','Blocking YouTube, Instagram')}</p>`
     : '';
@@ -2505,8 +2506,8 @@ function buildFriendCard(f, isActive) {
     </div>
     <div class="text-right flex-shrink-0 ml-2">
       ${isActive
-        ? `<p class="font-bold text-white text-sm friend-elapsed" data-start="${f.sessionStart}">${fmtCountdown(elapsed)}</p>
-           <p class="text-xs text-gray-700">${t('経過','Elapsed')}</p>`
+        ? `<p class="font-bold text-white text-sm friend-remaining" data-start="${f.sessionStart}" data-duration="${f.sessionDuration}">${fmtCountdown(remaining)}</p>
+           <p class="text-xs text-gray-700">${t('残り','Remaining')}</p>`
         : `<svg class="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
            </svg>`
@@ -2518,10 +2519,12 @@ function buildFriendCard(f, isActive) {
 }
 
 function updateFriendTimers() {
-  document.querySelectorAll('.friend-elapsed').forEach(el => {
-    const start   = parseInt(el.dataset.start);
-    const elapsed = Math.floor((Date.now() - start) / 1000);
-    el.textContent = fmtCountdown(elapsed);
+  document.querySelectorAll('.friend-remaining').forEach(el => {
+    const start     = parseInt(el.dataset.start);
+    const duration  = parseInt(el.dataset.duration);
+    const elapsed   = Math.floor((Date.now() - start) / 1000);
+    const remaining = Math.max(0, duration - elapsed);
+    el.textContent  = fmtCountdown(remaining);
   });
 }
 
@@ -2915,34 +2918,51 @@ function renderNotifSettings() {
   const friends = MOCK_FRIENDS.filter(f => f.isFriend);
   const detoxEnabled = p.friendDetoxStart || p.friendDetoxEnd;
 
+  const SHOW_LIMIT = 3;
+
+  function friendRow(f, i, total) {
+    const ff = p.friendFilter[f.id] || {};
+    const onStart = ff.start !== false;
+    const onEnd   = ff.end   !== false;
+    const border  = i < total - 1 ? 'border-b border-gray-900' : '';
+    return `
+      <div class="flex justify-between items-center py-3 ${border}">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <img src="${f.avatar}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
+          <span class="text-white text-sm truncate">${f.name}</span>
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-xs text-gray-600">${t('開始','Start')}</span>
+            <div id="nspref-friend-${f.id}-start" class="toggle ${onStart ? 'on' : ''}">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-xs text-gray-600">${t('終了','End')}</span>
+            <div id="nspref-friend-${f.id}-end" class="toggle ${onEnd ? 'on' : ''}">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
   function friendRows() {
-    return friends.map((f, i) => {
-      const ff = p.friendFilter[f.id] || {};
-      const onStart = ff.start !== false;
-      const onEnd   = ff.end   !== false;
-      const border  = i < friends.length - 1 ? 'border-b border-gray-900' : '';
-      return `
-        <div class="flex justify-between items-center py-3 ${border}">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <img src="${f.avatar}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
-            <span class="text-white text-sm truncate">${f.name}</span>
-          </div>
-          <div class="flex items-center gap-3 flex-shrink-0">
-            <div class="flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-600">${t('開始','Start')}</span>
-              <div id="nspref-friend-${f.id}-start" class="toggle ${onStart ? 'on' : ''}">
-                <div class="toggle-knob"></div>
-              </div>
-            </div>
-            <div class="flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-600">${t('終了','End')}</span>
-              <div id="nspref-friend-${f.id}-end" class="toggle ${onEnd ? 'on' : ''}">
-                <div class="toggle-knob"></div>
-              </div>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
+    const visible = friends.slice(0, SHOW_LIMIT);
+    const hidden  = friends.slice(SHOW_LIMIT);
+    let html = visible.map((f, i) => friendRow(f, i, friends.length)).join('');
+    if (hidden.length > 0) {
+      html += `
+        <div id="ns-others-wrap" class="hidden border-t border-gray-900">
+          ${hidden.map((f, i) => friendRow(f, SHOW_LIMIT + i, friends.length)).join('')}
+        </div>
+        <button id="ns-others-btn" class="w-full py-2.5 text-xs text-gray-500 font-semibold flex items-center justify-center gap-1 border-t border-gray-900">
+          <span id="ns-others-label">${t(`その他 ${hidden.length}人を表示`, `Show ${hidden.length} more`)}</span>
+          <svg id="ns-others-arrow" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>`;
+    }
+    return html;
   }
 
   page.innerHTML = `
@@ -3021,6 +3041,24 @@ function renderNotifSettings() {
       });
     });
   });
+
+  // その他 expand/collapse
+  const othersBtn  = document.getElementById('ns-others-btn');
+  const othersWrap = document.getElementById('ns-others-wrap');
+  const othersLbl  = document.getElementById('ns-others-label');
+  const othersArr  = document.getElementById('ns-others-arrow');
+  if (othersBtn) {
+    let expanded = false;
+    othersBtn.addEventListener('click', () => {
+      expanded = !expanded;
+      othersWrap.classList.toggle('hidden', !expanded);
+      othersArr.style.transform = expanded ? 'rotate(180deg)' : '';
+      const hidden = friends.length - SHOW_LIMIT;
+      othersLbl.textContent = expanded
+        ? t('折りたたむ', 'Show less')
+        : t(`その他 ${hidden}人を表示`, `Show ${hidden} more`);
+    });
+  }
 }
 
 // ================================================================
