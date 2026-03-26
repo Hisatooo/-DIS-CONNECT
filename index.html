@@ -1174,9 +1174,14 @@ function renderHome() {
         </svg>
       </button>
     </div>
-    <div class="flex-shrink-0 flex space-x-6 px-4 border-b border-gray-900 pb-3">
-      <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">Following</button>
-      <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
+    <div class="flex-shrink-0 overflow-x-auto no-scrollbar border-b border-gray-900">
+      <div class="flex px-4 gap-6 pb-3 whitespace-nowrap">
+        <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">${t('フォロー中','Following')}</button>
+        <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">${t('ワールド','World')}</button>
+        ${MOCK_COMMUNITIES.filter(c=>c.joined).map(c=>`
+          <button class="feed-tab ${S.feedTab===c.id?'active-tab':''}" data-tab="${c.id}" style="${S.feedTab===c.id?`color:${c.color};border-color:${c.color};`:''}">${c.emoji} ${c.name}</button>
+        `).join('')}
+      </div>
     </div>
     <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
   `;
@@ -1194,6 +1199,49 @@ function renderFeedList() {
   const list = document.getElementById('feed-list');
   if (!list) return;
   list.innerHTML = '';
+
+  // Community tab
+  const comm = communityById(S.feedTab);
+  if (comm) {
+    const commPosts = MOCK_COMMUNITY_POSTS[comm.id] || [];
+    if (commPosts.length === 0) {
+      list.innerHTML = `<div class="py-12 text-center text-gray-600 text-sm">${t('まだ投稿がありません。最初に投稿してみよう！','No posts yet. Be the first to post!')}</div>`;
+      return;
+    }
+    commPosts.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'py-4 border-b border-gray-900';
+      el.innerHTML = `
+        <div class="flex gap-1 items-center mb-2">
+          <span class="text-xs px-2 py-0.5 rounded-full font-bold" style="background:${comm.color}22;color:${comm.color};">${comm.emoji} ${comm.name}</span>
+          <span class="text-xs text-gray-700">${t('匿名','Anonymous')} · ${p.time}</span>
+        </div>
+        <p class="text-gray-200 text-sm mb-3 leading-relaxed">${p.text}</p>
+        <div class="flex items-center gap-3">
+          <button class="cf-upvote flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${p.upvoted?'':'bg-[#2C2C2E] text-gray-500'}" style="${p.upvoted?`background:${comm.color}22;color:${comm.color};`:''}" data-cid="${comm.id}" data-pid="${p.id}">
+            <svg class="w-3.5 h-3.5" fill="${p.upvoted?'currentColor':'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+            ${p.upvotes}
+          </button>
+          <button class="cf-downvote flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${p.downvoted?'bg-red-900/30 text-red-400':'bg-[#2C2C2E] text-gray-500'}" data-cid="${comm.id}" data-pid="${p.id}">
+            <svg class="w-3.5 h-3.5" fill="${p.downvoted?'currentColor':'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            ${p.downvotes}
+          </button>
+        </div>
+      `;
+      el.querySelector('.cf-upvote').addEventListener('click', () => {
+        if (p.upvoted) { p.upvoted = false; p.upvotes--; }
+        else { if (p.downvoted) { p.downvoted = false; p.downvotes--; } p.upvoted = true; p.upvotes++; }
+        renderFeedList();
+      });
+      el.querySelector('.cf-downvote').addEventListener('click', () => {
+        if (p.downvoted) { p.downvoted = false; p.downvotes--; }
+        else { if (p.upvoted) { p.upvoted = false; p.upvotes--; } p.downvoted = true; p.downvotes++; }
+        renderFeedList();
+      });
+      list.appendChild(el);
+    });
+    return;
+  }
 
   const posts = S.feedTab === 'following'
     ? MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isFriend)
@@ -1661,6 +1709,20 @@ function renderPostSession(duration, completed, groupResult = null) {
       <div id="ps-img-preview" class="hidden rounded-2xl overflow-hidden">
         <img id="ps-img-preview-src" class="w-full max-h-48 object-cover" alt="">
       </div>
+      <!-- Destination picker -->
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-2 ml-1">${t('投稿先を選択（複数可）','Post to (multiple allowed)')}</label>
+        <div id="ps-dest-list" class="flex flex-wrap gap-2">
+          <button class="ps-dest-btn active px-3 py-2 rounded-full text-xs font-bold transition" data-dest="friends" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.3);">
+            👥 ${t('フレンドフィード','Friends Feed')}
+          </button>
+          ${MOCK_COMMUNITIES.filter(c=>c.joined).map(c=>`
+            <button class="ps-dest-btn px-3 py-2 rounded-full text-xs font-bold transition" data-dest="${c.id}" style="background:${c.color}11;color:${c.color}88;border:1px solid ${c.color}22;">
+              ${c.emoji} ${c.name}
+            </button>
+          `).join('')}
+        </div>
+      </div>
       <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">${t('投稿する','Post')}</button>
       <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">${t('スキップ','Skip')}</button>
     </div>
@@ -1679,7 +1741,62 @@ function renderPostSession(duration, completed, groupResult = null) {
     };
     reader.readAsDataURL(file);
   });
-  document.getElementById('ps-post-btn').addEventListener('click', () => goto('home'));
+  // Destination toggle buttons
+  document.querySelectorAll('.ps-dest-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const isActive = btn.classList.contains('active');
+      const dest = btn.dataset.dest;
+      if (dest === 'friends') {
+        if (isActive) return; // friends feed always stays toggleable but keep at least one
+      }
+      btn.classList.toggle('active', !isActive);
+      if (dest === 'friends') {
+        if (!isActive) { btn.style.background='rgba(255,255,255,0.15)'; btn.style.color='white'; btn.style.borderColor='rgba(255,255,255,0.3)'; }
+        else { btn.style.background=''; btn.style.color='rgba(255,255,255,0.25)'; btn.style.borderColor='rgba(255,255,255,0.1)'; }
+      } else {
+        const comm = communityById(dest);
+        if (comm) {
+          if (!isActive) { btn.style.background=comm.color+'33'; btn.style.color=comm.color; btn.style.borderColor=comm.color+'66'; }
+          else { btn.style.background=comm.color+'11'; btn.style.color=comm.color+'88'; btn.style.borderColor=comm.color+'22'; }
+        }
+      }
+    });
+  });
+
+  document.getElementById('ps-post-btn').addEventListener('click', () => {
+    const task    = document.getElementById('ps-task')?.value.trim() || null;
+    const comment = document.getElementById('ps-comment')?.value.trim() || null;
+    const dur     = S.lastSession?.duration || 0;
+    const u       = getUser();
+
+    // Collect selected destinations
+    const selected = [...document.querySelectorAll('.ps-dest-btn.active')].map(b => b.dataset.dest);
+
+    // Post to friends feed
+    if (selected.includes('friends')) {
+      const newPost = {
+        id: Date.now(), userId: u?.handle?.replace('@','') || 'me',
+        duration: dur, task, comment,
+        time: t('今','Now'), likes: 0, liked: false, img: null
+      };
+      MOCK_POSTS.unshift(newPost);
+      if (!MOCK_COMMENTS[newPost.id]) MOCK_COMMENTS[newPost.id] = [];
+    }
+
+    // Post to selected communities (anonymous)
+    selected.filter(d => d !== 'friends').forEach(commId => {
+      const text = [comment, task].filter(Boolean).join(' / ') || t(`${fmtDuration(dur)} のデトックスを達成！`, `Completed a ${fmtDuration(dur)} detox!`);
+      const newCommPost = {
+        id: 'cp_' + Date.now() + '_' + commId,
+        text, time: t('今','Now'),
+        upvotes: 0, downvotes: 0, upvoted: false, downvoted: false
+      };
+      if (!MOCK_COMMUNITY_POSTS[commId]) MOCK_COMMUNITY_POSTS[commId] = [];
+      MOCK_COMMUNITY_POSTS[commId].unshift(newCommPost);
+    });
+
+    goto('home');
+  });
   document.getElementById('ps-skip-btn').addEventListener('click', () => goto('home'));
 }
 
