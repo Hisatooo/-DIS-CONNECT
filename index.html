@@ -3780,149 +3780,217 @@ function renderCreateGroup() {
 function renderTerms() {
   const isEn = S.lang === 'en';
   const page = document.getElementById('page-terms');
-  page.innerHTML = isEn ? `
-    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
-      <button id="terms-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-xl font-black text-white">Terms of Service</h1>
-    </div>
-    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
-      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
-      <p class="text-sm text-gray-400 leading-relaxed">Welcome to (DIS)CONNECT (the "App"). By downloading, installing, or using the App, you agree to be bound by these Terms of Service with the Operator.</p>
+  const BACK_BTN = '<button id="terms-back" class="text-gray-400 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>';
+  const H1_EN = 'Terms of Service';
+  const H1_JA = '利用規約';
+  const sec = (title, body) => '<div class="space-y-2"><h2 class="text-sm font-black text-white uppercase tracking-wide border-l-2 border-gray-600 pl-3">' + title + '</h2><div class="space-y-2 text-xs text-gray-400 leading-relaxed">' + body + '</div></div>';
+  const warn = (title, body) => '<div class="rounded-2xl p-4 space-y-2" style="background:#f59e0b0d;border:1px solid #f59e0b33"><h2 class="text-sm font-black text-amber-400">' + title + '</h2><div class="space-y-2 text-xs text-gray-400 leading-relaxed">' + body + '</div></div>';
+  const p = (t) => '<p>' + t + '</p>';
+  const b = (t) => '<span class="text-white font-semibold">' + t + '</span>';
+  const li = (items) => '<ul class="space-y-1 pl-3">' + items.map(i => '<li class="flex gap-2"><span class="text-gray-600 flex-shrink-0">・</span><span>' + i + '</span></li>').join('') + '</ul>';
+  const headerHTML = '<div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">' + BACK_BTN + '<h1 class="text-xl font-black text-white">' + (isEn ? H1_EN : H1_JA) + '</h1></div>';
 
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 1 – Service Description</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">The App is a tool that helps users practice digital detox by temporarily restricting access to selected applications and sharing progress with friends and communities. The App is developed and operated by an individual.</p>
-      </div>
+  const bodyEN = [
+    '<p class="text-xs text-gray-500">Effective Date: January 4, 2026 &nbsp;|&nbsp; Last Updated: March 26, 2026</p>',
+    '<p class="text-xs text-gray-400 leading-relaxed">Welcome to <strong class="text-white">(DIS)CONNECT</strong> (the "App"), operated by an individual developer (the "Operator"). By accessing or using the App in any way, you unconditionally agree to these Terms of Service ("Terms"). If you do not agree, you must immediately stop using the App and delete all copies.</p>',
+    sec('Article 1 — Service Description',
+      p('The App provides tools for voluntary digital detox: timed blocking of selected apps, progress sharing, friend/group social features, and a premium subscription tier. The App is an individually operated service and is NOT operated by a corporation.')
+    ),
+    sec('Article 2 — Eligibility & Parental Consent',
+      p('1. You must be at least 13 years old to use this App.') +
+      p('2. Users aged 13–17 must have obtained express parental or guardian consent prior to use.') +
+      p('3. By registering, you represent and warrant that you meet these requirements. The Operator reserves the right to terminate accounts found to be in violation without notice.')
+    ),
+    sec('Article 3 — Account Registration & Security',
+      p('1. You agree to provide accurate and complete information at registration.') +
+      p('2. You are solely responsible for all activity that occurs under your account.') +
+      p('3. You must notify the Operator immediately of any unauthorized use of your account.') +
+      p('4. The Operator is NOT liable for any loss or damage arising from your failure to safeguard your credentials.')
+    ),
+    warn('Article 4 — Detox Feature: Assumption of Risk & Disclaimer ⚠️ IMPORTANT',
+      p(b('By enabling a Detox Session, you explicitly acknowledge, agree to, and assume full responsibility for ALL of the following:')) +
+      li([
+        b('Emergency alerts: ') + 'During an active session, you may fail to receive emergency broadcasts (J-Alert, earthquake warnings, tsunami alerts, Amber Alerts, etc.). The Operator bears ZERO liability for any injury, death, property damage, or loss resulting from a missed emergency alert.',
+        b('Missed communications: ') + 'You may miss phone calls, text messages, push notifications, or other communications from any person or service, including urgent or time-sensitive messages. The Operator bears ZERO liability for any consequence.',
+        b('Medical emergencies: ') + 'If you have a medical condition that may require urgent access to your device, you must NOT use the Detox blocking feature. Use of the feature is entirely at your own risk.',
+        b('No override guarantee: ') + 'The App uses standard OS-level features. The Operator does not guarantee that all notifications will be blocked, nor that all emergency systems will be suppressed.',
+        b('Your sole responsibility: ') + 'It is your sole responsibility to ensure access to alternative emergency communication means (e.g., a separate phone, notifying someone of your session) before activating a Detox Session.'
+      ]) +
+      p('<span class="text-amber-400 font-bold">TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE OPERATOR SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION PERSONAL INJURY OR DEATH, ARISING FROM OR RELATED TO YOUR USE OF THE DETOX FEATURE.</span>')
+    ),
+    sec('Article 5 — Premium Subscription',
+      p('1. Certain features require a paid subscription ("Premium").') +
+      p('2. Subscriptions are processed through Apple App Store or Google Play. Billing, refunds, and cancellations are governed solely by the respective platform\'s policies.') +
+      p('3. Subscriptions auto-renew unless cancelled at least 24 hours before the renewal date.') +
+      p('4. The Operator reserves the right to change pricing or features with reasonable notice.') +
+      p('5. No refunds will be issued by the Operator directly. All refund requests must be directed to the applicable platform.')
+    ),
+    sec('Article 6 — User Content',
+      p(b('License: ') + 'You retain ownership of content you post ("User Content"), but you grant the Operator a worldwide, royalty-free, perpetual, irrevocable, non-exclusive license to use, reproduce, display, distribute, modify, and create derivative works of your User Content for any purpose related to operating or improving the App.') +
+      p(b('Your warranties: ') + 'You represent that you own or have the right to post all User Content and that it does not infringe any third-party rights.') +
+      p(b('Indemnification: ') + 'You agree to indemnify, defend, and hold harmless the Operator from any claims, damages, or expenses arising from your User Content.')
+    ),
+    sec('Article 7 — Prohibited Conduct',
+      p('You must not, directly or indirectly:') +
+      li([
+        'Use the App for any unlawful purpose or in violation of any applicable laws',
+        'Post, transmit, or share content that is defamatory, obscene, harassing, threatening, or discriminatory',
+        'Impersonate any person or entity, or falsely represent your affiliation',
+        'Attempt to gain unauthorized access to any part of the App or its infrastructure',
+        'Use automated tools (bots, scrapers, crawlers) without prior written permission',
+        'Reverse-engineer, decompile, or disassemble any part of the App',
+        'Interfere with or disrupt the App or servers connected to it',
+        'Engage in any form of commercial solicitation without prior written consent',
+        'Attempt to circumvent any subscription or paywall mechanisms'
+      ]) +
+      p('Violation may result in immediate account suspension or termination, and may be reported to applicable law enforcement authorities.')
+    ),
+    sec('Article 8 — Intellectual Property',
+      p('All rights, title, and interest in and to the App, including but not limited to the name, logo, design, code, content, and branding of "(DIS)CONNECT," are and shall remain the exclusive property of the Operator. Nothing in these Terms grants you any right to use any of the Operator\'s intellectual property except as expressly permitted herein.')
+    ),
+    sec('Article 9 — Disclaimers & No Warranty',
+      p(b('THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.') + ' THE OPERATOR EXPRESSLY DISCLAIMS ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, ACCURACY, RELIABILITY, OR AVAILABILITY. THE OPERATOR DOES NOT WARRANT THAT THE APP WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS.')
+    ),
+    sec('Article 10 — Limitation of Liability',
+      p('TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:') +
+      li([
+        'The Operator\'s total aggregate liability to you for any claim arising out of or relating to the App shall not exceed JPY 1,000 (one thousand Japanese yen) or the amount you paid to the Operator in the 30 days preceding the claim, whichever is greater.',
+        'The Operator shall not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, loss of profits, loss of data, or loss of goodwill.',
+        'This limitation applies regardless of the legal theory (contract, tort, strict liability, or otherwise), even if the Operator has been advised of the possibility of such damages.'
+      ]) +
+      p('Some jurisdictions do not allow exclusion of certain warranties or limitation of liability. In such jurisdictions, liability is limited to the minimum extent permitted by law.')
+    ),
+    sec('Article 11 — Indemnification',
+      p('You agree to indemnify, defend, and hold harmless the Operator and any successors from and against any and all claims, liabilities, damages, losses, costs, and expenses (including reasonable attorneys\' fees) arising out of or in connection with: (a) your use of the App; (b) your User Content; (c) your violation of these Terms; or (d) your violation of any third-party rights.')
+    ),
+    sec('Article 12 — Service Modification & Termination',
+      p('The Operator reserves the right, at any time and without prior notice, to:') +
+      li([
+        'Modify, suspend, or discontinue any part of the App',
+        'Terminate or suspend your account for any reason, including violation of these Terms',
+        'Alter features included in the free or premium tiers'
+      ]) +
+      p('The Operator is not liable to you or any third party for any modification, suspension, or discontinuation of the App.')
+    ),
+    sec('Article 13 — Third-Party Services',
+      p('The App integrates with third-party services including Google Firebase. Your use of such services is subject to those services\' terms and privacy policies. The Operator is not responsible for the content, privacy practices, or availability of third-party services.')
+    ),
+    sec('Article 14 — Amendments to Terms',
+      p('The Operator may update these Terms at any time. Continued use of the App after updated Terms are posted constitutes your acceptance of the revised Terms. If you do not agree to the revised Terms, you must cease using the App.')
+    ),
+    sec('Article 15 — Severability & Entire Agreement',
+      p('If any provision of these Terms is found invalid or unenforceable, the remaining provisions shall continue in full force and effect. These Terms, together with the Privacy Policy, constitute the entire agreement between you and the Operator regarding the App and supersede all prior agreements.')
+    ),
+    sec('Article 16 — Governing Law & Jurisdiction',
+      p('These Terms shall be governed by and construed in accordance with the laws of Japan. All disputes arising out of or relating to the App shall be subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance.')
+    ),
+    sec('Article 17 — Contact',
+      p('For inquiries: <span class="text-white font-semibold">disconnect2026.official@gmail.com</span>')
+    ),
+    '<div class="card p-4 mt-2 text-center"><p class="text-xs text-gray-700">Terms of Service — (DIS)CONNECT &nbsp;|&nbsp; Effective January 4, 2026</p></div>'
+  ].join('\n');
 
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">Article 2 – Eligibility</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">1. The App is available only to users aged 13 or older. Users under 18 are assumed to have obtained parental consent.</p>
-        <p class="text-sm text-gray-400 leading-relaxed">2. Certain features (e.g., the "Campus" feed) may require verification via a method specified by the Operator (e.g., a university email address).</p>
-      </div>
+  const bodyJA = [
+    '<p class="text-xs text-gray-500">制定日: 2026年1月4日 &nbsp;|&nbsp; 最終更新: 2026年3月26日</p>',
+    '<p class="text-xs text-gray-400 leading-relaxed"><strong class="text-white">(DIS)CONNECT</strong>（以下「本アプリ」）は、個人の運営者（以下「運営者」）が提供するデジタルデトックス支援アプリケーションです。本アプリにアクセスまたは利用することにより、以下の利用規約（以下「本規約」）に無条件に同意したものとみなします。同意できない場合は、直ちに本アプリの利用を中止し、すべてのコピーを削除してください。</p>',
+    sec('第1条（サービスの内容）',
+      p('本アプリは、選択したアプリへのアクセスを一定時間遮断するデジタルデトックス機能、進捗の共有、フレンド・グループ機能、および有料プレミアム機能を提供します。本アプリは個人事業主が運営するサービスであり、法人ではありません。')
+    ),
+    sec('第2条（利用資格・年齢制限）',
+      p('1. 本アプリは13歳以上の方のみが利用できます。') +
+      p('2. 13歳以上18歳未満のユーザーは、保護者または法定代理人の明示的な同意を得た上で利用するものとします。') +
+      p('3. 登録することで、上記の要件を満たしていることを表明・保証したものとみなします。要件を満たさないと判明した場合、運営者は通知なくアカウントを停止・削除する権利を有します。')
+    ),
+    sec('第3条（アカウント登録・管理）',
+      p('1. ユーザーは正確かつ完全な情報を提供して登録するものとします。') +
+      p('2. ユーザーは自己のアカウントにおけるすべての活動について単独で責任を負います。') +
+      p('3. 不正アクセス等を発見した場合は直ちに運営者に通知するものとします。') +
+      p('4. 認証情報の管理を怠ったことによる損害について、運営者は一切の責任を負いません。')
+    ),
+    warn('第4条（デトックス機能・リスクの引受け・免責）⚠️ 重要',
+      p(b('デトックスセッションを有効にすることにより、ユーザーは以下のすべてを明示的に承認し、すべてのリスクを自己の責任として引き受けるものとします。')) +
+      li([
+        b('緊急速報・警報の不着: ') + 'セッション中は、緊急地震速報・Jアラート・津波警報・特別警報等を受信できない可能性があります。これにより生じた死亡・負傷・財産的損害・その他いかなる損失についても、運営者は一切の責任を負いません。',
+        b('通信の不達: ') + '電話・SMS・プッシュ通知・その他あらゆる通信を受信できない可能性があります。緊急・重要な連絡を含むあらゆる不達について、運営者は一切の責任を負いません。',
+        b('医療上のリスク: ') + '緊急時に端末へのアクセスが必要な医療的事情がある方は、遮断機能を使用してはなりません。使用は完全に自己の責任で行うものとします。',
+        b('完全な遮断の非保証: ') + '本アプリはOSの標準機能を利用しており、すべての通知が遮断されること、またはすべての緊急システムが抑制されることを保証しません。',
+        b('代替手段の確保: ') + 'セッション開始前に代替の緊急通信手段（別端末での連絡等）を確保することはユーザー自身の責任です。'
+      ]) +
+      p('<span class="text-amber-400 font-bold">適用法令が許容する最大限の範囲において、運営者はデトックス機能の利用に起因する死亡・身体的傷害を含む直接・間接・特別・偶発的・派生的・懲罰的損害について、一切の賠償責任を負いません。</span>')
+    ),
+    sec('第5条（有料サービス・プレミアム）',
+      p('1. 一部機能はプレミアムプラン（有料）のご利用が必要です。') +
+      p('2. 課金はApple App StoreまたはGoogle Playを通じて処理されます。課金・返金・解約はそれぞれのプラットフォームのポリシーに従います。') +
+      p('3. サブスクリプションは更新日の24時間前までにキャンセルされない限り自動更新されます。') +
+      p('4. 運営者は合理的な告知のもと、価格や機能を変更する権利を留保します。') +
+      p('5. 運営者への直接の返金要求には応じられません。返金はすべて各プラットフォームにお申し出ください。')
+    ),
+    sec('第6条（ユーザーコンテンツ）',
+      p(b('ライセンス: ') + 'ユーザーが投稿したコンテンツ（以下「ユーザーコンテンツ」）の著作権はユーザーに帰属します。ただし、ユーザーは運営者に対し、本アプリの運営・改善に関連するあらゆる目的のために、当該コンテンツを世界規模で、無償、非独占的、永続的、取消不能の方法で利用・複製・表示・配信・修正・二次著作物の作成ができるライセンスを付与するものとします。') +
+      p(b('ユーザーの保証: ') + 'ユーザーコンテンツの投稿権限を有すること、および第三者の権利を侵害しないことを表明・保証するものとします。') +
+      p(b('補償義務: ') + 'ユーザーコンテンツに関して生じたあらゆるクレーム・損害・費用について、ユーザーは運営者を補償・防御・免責する義務を負います。')
+    ),
+    sec('第7条（禁止事項）',
+      p('ユーザーは以下の行為を行ってはなりません。') +
+      li([
+        '法令または本規約に違反する目的での利用',
+        '誹謗中傷・わいせつ・差別・ハラスメント・脅迫に該当するコンテンツの投稿・送信',
+        '他者または他の組織になりすます行為',
+        '本アプリやそのインフラへの不正アクセスの試み',
+        '事前書面による許可なく自動化ツール（ボット・スクレイパー等）を使用する行為',
+        '本アプリのリバースエンジニアリング・逆コンパイル・逆アセンブル',
+        '本アプリやサーバーの運営を妨害する行為',
+        '事前書面による同意なく商業的勧誘を行う行為',
+        '有料機能の回避・迂回を試みる行為'
+      ]) +
+      p('違反した場合、予告なくアカウントを停止・削除することがあり、関係当局に通報する場合があります。')
+    ),
+    sec('第8条（知的財産権）',
+      p('本アプリに関するすべての権利（名称・ロゴ・デザイン・ソースコード・コンテンツ・ブランド等を含む）は運営者に帰属します。本規約はユーザーに対し、明示的に許可した範囲を超えて運営者の知的財産を使用する権利を一切付与しません。')
+    ),
+    sec('第9条（無保証・免責）',
+      p(b('本アプリは「現状のまま」「利用可能な状態で」提供されます。') + '運営者は、商品性・特定目的への適合性・非侵害性・正確性・信頼性・可用性に関するすべての保証（明示・黙示を問わず）を明示的に否認します。運営者は、本アプリが中断なく、エラーなく、またはウイルスその他の有害な要素なく提供されることを保証しません。')
+    ),
+    sec('第10条（損害賠償の制限）',
+      p('適用法令が許容する最大限の範囲において、以下を適用します。') +
+      li([
+        '運営者の総賠償責任は、請求の30日前に運営者に支払った金額または1,000円（千円）のいずれか大きい方を上限とします。',
+        '運営者は、間接損害・偶発的損害・特別損害・派生的損害・逸失利益・データ損失・信用損失について一切責任を負いません。',
+        '上記の制限は、法的根拠（契約・不法行為・厳格責任その他）の如何を問わず、かかる損害の可能性を通知されていた場合でも適用されます。'
+      ]) +
+      p('一部の法域では特定の免責事項または責任制限が認められない場合があります。そのような法域においては、法令が許容する最小限の範囲で責任を負います。')
+    ),
+    sec('第11条（ユーザーの補償義務）',
+      p('ユーザーは、(a)本アプリの利用、(b)ユーザーコンテンツ、(c)本規約の違反、(d)第三者の権利の侵害から生じるすべてのクレーム・責任・損害・損失・費用（合理的な弁護士費用を含む）について、運営者を補償・防御・免責するものとします。')
+    ),
+    sec('第12条（サービスの変更・停止・終了）',
+      p('運営者は、予告なく以下を行う権利を留保します。') +
+      li([
+        '本アプリの一部または全部の変更・一時停止・廃止',
+        '本規約違反その他の理由によるアカウントの停止・削除',
+        '無料・有料プランに含まれる機能の変更'
+      ]) +
+      p('これらの変更によりユーザーまたは第三者に生じた損害について、運営者は一切責任を負いません。')
+    ),
+    sec('第13条（第三者サービス）',
+      p('本アプリはGoogle Firebase等の第三者サービスを利用します。これらのサービスの利用は、各サービスの利用規約およびプライバシーポリシーに従います。運営者は第三者サービスのコンテンツ・プライバシー慣行・可用性について責任を負いません。')
+    ),
+    sec('第14条（規約の変更）',
+      p('運営者はいつでも本規約を変更することができます。変更後も本アプリを継続して利用することにより、変更後の規約に同意したものとみなされます。変更後の規約に同意できない場合は、本アプリの利用を中止してください。')
+    ),
+    sec('第15条（分離可能性・完全合意）',
+      p('本規約のいずれかの条項が無効または執行不能と判断された場合も、残りの条項は引き続き完全な効力を有します。本規約は、プライバシーポリシーとあわせて、本アプリに関するユーザーと運営者の完全な合意を構成し、従前のすべての合意に優先します。')
+    ),
+    sec('第16条（準拠法・管轄）',
+      p('本規約は日本法に準拠し、解釈されます。本アプリに関するすべての紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。')
+    ),
+    sec('第17条（お問い合わせ）',
+      p('本規約に関するお問い合わせ: <span class="text-white font-semibold">disconnect2026.official@gmail.com</span>')
+    ),
+    '<div class="card p-4 mt-2 text-center"><p class="text-xs text-gray-700">利用規約 — (DIS)CONNECT &nbsp;|&nbsp; 2026年1月4日 制定</p></div>'
+  ].join('\n');
 
-      <div class="space-y-2">
-        <div class="card p-4 border border-yellow-500/30 bg-yellow-500/5">
-          <h2 class="text-base font-bold text-yellow-400 mb-2">Article 3 – Detox Feature & Disclaimer ⚠️ Important</h2>
-          <p class="text-xs text-gray-400 leading-relaxed mb-3">The core feature of the App blocks or restricts access to other apps and notifications during a Detox Session. By using this feature, you acknowledge the following:</p>
-          <div class="space-y-2">
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">1. Missed communications:</span> During a session, you may miss important calls, messages, notifications, or emergency alerts.</p>
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">2. No liability:</span> The Operator is NOT liable for any damages resulting from your inability to access your device or other apps during a session.</p>
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">3. Your responsibility:</span> It is your responsibility to ensure access to emergency communication means.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 4 – Account Management</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">You are responsible for managing your account credentials. If false information is provided during registration, the Operator reserves the right to suspend or delete the account.</p>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">Article 5 – User Content</h2>
-        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">License:</span> You retain copyright over content you post, but grant the Operator a non-exclusive right to display and distribute such content within the App.</p>
-        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">Prohibited content:</span> Posting illegal, obscene, defamatory, or harassing content is strictly prohibited.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 6 – Service Changes & Termination</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">The Operator may modify, suspend, or discontinue the App at any time without prior notice. The Operator is not liable for any damages arising from such changes.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 7 – Limitation of Liability</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">Except in cases of intentional misconduct or gross negligence, the Operator is not liable for any damages incurred through use of the App. Any liability is limited to direct and ordinary damages.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 8 – Governing Law & Jurisdiction</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">These Terms are governed by the laws of Japan. All disputes relating to the App shall be subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 9 – Contact</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">For inquiries regarding these Terms, please contact us at:</p>
-        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
-      </div>
-
-      <div class="card p-4 mt-4">
-        <p class="text-xs text-gray-600 text-center">Terms of Service / Effective Date: January 4, 2026</p>
-        <p class="text-xs text-gray-700 leading-relaxed mt-2">(DIS)CONNECT is a social digital detox application. By using the App, you acknowledge that you may miss calls, messages, and emergency alerts during a Detox Session. The Operator is NOT liable for any resulting damages. These Terms are governed by the laws of Japan.</p>
-      </div>
-    </div>
-  ` : `
-    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
-      <button id="terms-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-xl font-black text-white">利用規約</h1>
-    </div>
-    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
-      <p class="text-xs text-gray-500">制定日: 2026年1月4日</p>
-      <p class="text-sm text-gray-400 leading-relaxed">(DIS)CONNECT（以下「本アプリ」）へようこそ。本アプリのダウンロード、インストール、または利用を開始することにより、運営者との間の本利用規約に同意したものとみなされます。</p>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第1条（サービスの内容）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">本アプリは、ユーザーが特定のアプリケーションへのアクセスを一時的に制限し、その進捗を友人やコミュニティと共有することで、デジタルデトックスを支援するツールです。本アプリは個人によって開発・運営されています。</p>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">第2条（利用資格）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">1. 本アプリは、13歳以上の方のみが利用できます。18歳未満のユーザーは、保護者の許可を得た上で本アプリを利用しているものとみなします。</p>
-        <p class="text-sm text-gray-400 leading-relaxed">2. 特定の機能（「キャンパス」フィードなど）を利用するために、運営者が指定する方法（大学メールアドレス等）での認証を求める場合があります。</p>
-      </div>
-
-      <div class="space-y-2">
-        <div class="card p-4 border border-yellow-500/30 bg-yellow-500/5">
-          <h2 class="text-base font-bold text-yellow-400 mb-2">第3条（デトックス機能と免責事項）⚠️ 重要</h2>
-          <p class="text-xs text-gray-400 leading-relaxed mb-3">本アプリの主要機能は、端末上の他のアプリや通知へのアクセスを遮断または制限すること（デトックスセッション）です。この機能を利用することにより、ユーザーは以下の事項を承諾したものとします。</p>
-          <div class="space-y-2">
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">1. 通信の不達:</span> セッション中は、重要な電話、メッセージ、通知、または緊急速報（Jアラート等）を見逃す可能性があります。</p>
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">2. 免責:</span> 運営者は、セッション中にユーザーが端末や他のアプリにアクセスできなかったことに起因するいかなる損害についても一切の責任を負いません。</p>
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">3. 自己責任:</span> 緊急時の連絡手段の確保は、ユーザー自身の責任において行ってください。</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第4条（アカウント管理）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">ユーザーは、自己の責任においてアカウント情報を管理するものとします。また、登録情報に虚偽があった場合、運営者はアカウントを停止または削除する権利を有します。</p>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">第5条（ユーザーコンテンツ）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">ライセンス:</span> ユーザーが投稿したコンテンツの著作権はユーザーに帰属しますが、ユーザーは運営者に対し、本アプリ内で当該コンテンツを表示・配信するための非独占的な権利を許諾するものとします。</p>
-        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">禁止事項:</span> 違法、公序良俗に反する内容、他者への誹謗中傷、ハラスメント行為を含むコンテンツの投稿は禁止します。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第6条（サービスの変更・停止）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">運営者は、個人の判断により、事前の通知なく本アプリの機能変更、一時停止、または提供終了を行うことができるものとします。これに起因してユーザーに生じた損害について、運営者は責任を負いません。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第7条（損害賠償の制限）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">運営者は、本アプリの利用に関連してユーザーに生じた損害について、運営者に故意または重大な過失がある場合を除き、一切の責任を負いません。また、賠償責任を負う場合であっても、その範囲は通常生ずべき直接の損害に限られるものとします。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第8条（準拠法・管轄）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">本規約は日本法に準拠し、解釈されるものとします。本アプリに関わる一切の紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第9条（お問い合わせ）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">本規約に関するお問い合わせは、以下のメールアドレスまでご連絡ください。</p>
-        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
-      </div>
-
-      <div class="card p-4 mt-4">
-        <p class="text-xs text-gray-600 text-center">Terms of Service / Effective Date: January 4, 2026</p>
-        <p class="text-xs text-gray-700 leading-relaxed mt-2">(DIS)CONNECT is a social digital detox application. By using the App, you acknowledge that you may miss calls, messages, and emergency alerts during a Detox Session. The Operator is NOT liable for any resulting damages. These Terms are governed by the laws of Japan.</p>
-      </div>
-    </div>
-  `;
+  page.innerHTML = headerHTML + '<div class="px-5 pb-10 space-y-5 overflow-y-auto no-scrollbar flex-1">' + (isEn ? bodyEN : bodyJA) + '</div>';
   document.getElementById('terms-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); else if (p === 'profile') renderProfile(); goto(p); });
 }
 
