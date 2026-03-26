@@ -632,7 +632,7 @@ async function registerFCMToken(uid) {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return;
     const token = await messaging.getToken({
-      vapidKey: 'BEd4nCOFU3FQqhGK2N8yQ5g2U3jE9zM7wP0xL6sR1kVtNhY4mXdAoWcJbIeZfD8uS5vT3qN2pK0lH9gE7jC'
+      vapidKey: 'BN7lEUdOjXotzGNLeu_LM_B8hvXSgmSLkquZzQtUx4P8BkzUZP-i_LdkvXic5q83hlY_Tk9I_66DGbio8eks3Ks'
     });
     if (token) {
       await db.collection('users').doc(uid).update({ fcmToken: token });
