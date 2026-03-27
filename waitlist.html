@@ -31,8 +31,8 @@
     .fade-up-3 { animation: fadeUp .7s .3s ease both; }
     .fade-up-4 { animation: fadeUp .7s .45s ease both; }
     #success-msg { display: none; }
-    .lang-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #111; border-top: 1px solid #1f1f1f; display: flex; padding: 12px 24px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); gap: 8px; }
-    .lang-btn { flex: 1; background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 12px; color: #6b7280; font-size: 15px; font-weight: 700; padding: 14px 12px; cursor: pointer; transition: all .2s; font-family: 'Sora', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .lang-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #111; border-top: 1px solid #1f1f1f; display: flex; padding: 8px 16px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); gap: 8px; }
+    .lang-btn { flex: 1; background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 10px; color: #6b7280; font-size: 13px; font-weight: 700; padding: 9px 10px; cursor: pointer; transition: all .2s; font-family: 'Sora', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .lang-btn.active { background: white; color: black; border-color: white; }
   </style>
 </head>
@@ -96,7 +96,8 @@
 
   <!-- Footer -->
   <div class="fade-up-4 text-center">
-    <p style="color:#374151;font-size:12px;">© 2026 (DIS)CONNECT · <a href="/index.html" id="txt-try-app" style="color:#4b5563;text-decoration:underline;"></a></p>
+    <p style="color:#374151;font-size:12px;margin-bottom:10px;">© 2026 (DIS)CONNECT</p>
+    <a href="/index.html" id="txt-try-app" style="display:inline-flex;align-items:center;gap:6px;color:#9ca3af;font-size:14px;font-weight:600;text-decoration:none;background:#1c1c1e;border:1px solid #3a3a3c;border-radius:9999px;padding:10px 20px;"></a>
   </div>
 
 </div>
@@ -169,7 +170,7 @@
     document.getElementById('txt-no-spam').textContent     = c.noSpam;
     document.getElementById('txt-success-title').textContent = c.successTitle;
     document.getElementById('txt-success-sub').innerHTML   = c.successSub.replace(/\n/g,'<br>');
-    document.getElementById('txt-try-app').textContent     = c.tryApp;
+    document.getElementById('txt-try-app').innerHTML        = c.tryApp + ' →';
     if (countCache > 0) document.getElementById('wl-count').textContent = c.counter(countCache);
 
     const fl = document.getElementById('features-list');
