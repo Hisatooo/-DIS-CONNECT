@@ -841,7 +841,9 @@ function _drawAvatarBuilder() {
 
   function swatch(key, val, label, isColor) {
     const active = JSON.stringify(cfg[key]) === JSON.stringify(val);
-    const js = `window._abSet(${JSON.stringify(key)},${JSON.stringify(val)})`;
+    // Use single quotes inside onclick to avoid conflict with HTML attribute double quotes
+    const valJS = typeof val === 'string' ? `'${val}'` : JSON.stringify(val);
+    const js = `window._abSet('${key}',${valJS})`;
     if (isColor) {
       return `<button onclick="${js}" style="width:36px;height:36px;border-radius:50%;background:${val};border:3px solid ${active?'white':'transparent'};flex-shrink:0;cursor:pointer;outline:${active?'2px solid #666':'none'};outline-offset:2px;"></button>`;
     }
