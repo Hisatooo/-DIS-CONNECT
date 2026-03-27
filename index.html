@@ -747,7 +747,7 @@ const MOCK_GROUP_CHATS = {
 // ================================================================
 const S = {
   page: 'login',
-  feedTab: 'following',
+  feedTab: 'friends',
   activeSession: null,   // { startTime, totalDuration, timerId, isChallenge }
   viewingUserId: null,
   commentPostId: null,
@@ -1189,7 +1189,7 @@ function renderHome() {
       </button>
     </div>
     <div class="flex-shrink-0 flex space-x-6 px-4 border-b border-gray-900 pb-3">
-      <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">Following</button>
+      <button class="feed-tab ${S.feedTab==='friends'?'active-tab':''}" data-tab="friends">${t('フレンド','Friends')}</button>
       <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
     </div>
     <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
@@ -1209,9 +1209,9 @@ function renderFeedList() {
   if (!list) return;
   list.innerHTML = '';
 
-  const posts = S.feedTab === 'following'
+  const posts = S.feedTab === 'friends'
     ? MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isFriend)
-    : MOCK_POSTS;
+    : MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isPublic);
 
   posts.forEach(p => {
     if (p.type === 'ad') {
