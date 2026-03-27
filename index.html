@@ -448,6 +448,7 @@
 
   <!-- ===================== EDIT PROFILE ===================== -->
   <div id="page-edit-profile" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+  <div id="page-avatar-builder" class="page flex flex-col" style="background:#111;"></div>
 
   <!-- ===================== USER PROFILE ===================== -->
   <div id="page-user-profile" class="page flex flex-col"></div>
@@ -737,6 +738,158 @@ const MOCK_FRIENDS = [
   { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
 ];
 
+// ================================================================
+// AVATAR BUILDER SYSTEM
+// ================================================================
+const AVATAR_OPTS = {
+  bg:        ['#6366f1','#3b82f6','#10b981','#f59e0b','#ec4899','#14b8a6','#ef4444','#1c1c1e'],
+  skin:      ['#FDDCB5','#F2C18D','#E8A87C','#C68642','#8D5524','#4A2912'],
+  hair:      ['short','long','bun','buzz','none'],
+  hairColor: ['#1a0a00','#3d2200','#7a4419','#c9a84c','#b22222','#8a8a8a','#f0e68c','#f5f5f5'],
+  eyes:      ['round','narrow','wide','happy'],
+  brows:     ['normal','raised','furrowed'],
+  mouth:     ['smile','grin','neutral','surprised'],
+  glasses:   [false, true]
+};
+const AVATAR_DEFAULTS = {
+  bg:'#6366f1', skin:'#FDDCB5', hair:'short', hairColor:'#1a0a00',
+  eyes:'round', brows:'normal', mouth:'smile', glasses:false
+};
+
+function renderAvatarSVG(cfg, size) {
+  size = size || 48;
+  const c = Object.assign({}, AVATAR_DEFAULTS, cfg || {});
+  const hc = c.hairColor;
+  const sk = c.skin;
+  const hairPaths = {
+    short: `<path d="M24,56 Q23,26 50,23 Q77,26 76,56 Q72,43 50,43 Q28,43 24,56Z" fill="${hc}"/>`,
+    long:  `<path d="M22,60 Q21,22 50,19 Q79,22 78,60 L76,80 Q68,94 62,83 Q61,72 50,72 Q39,72 38,83 Q32,94 24,80Z" fill="${hc}"/>
+            <path d="M24,56 Q23,26 50,23 Q77,26 76,56 Q72,43 50,43 Q28,43 24,56Z" fill="${hc}"/>`,
+    bun:   `<ellipse cx="50" cy="20" rx="13" ry="10" fill="${hc}"/>
+            <path d="M24,56 Q23,26 50,23 Q77,26 76,56 Q72,43 50,43 Q28,43 24,56Z" fill="${hc}"/>`,
+    buzz:  `<ellipse cx="50" cy="34" rx="26" ry="12" fill="${hc}"/>
+            <path d="M24,54 Q23,29 50,27 Q77,29 76,54 Q72,45 50,45 Q28,45 24,54Z" fill="${hc}"/>`,
+    none:  ''
+  };
+  const eyePaths = {
+    round:  `<circle cx="40" cy="52" r="4" fill="#111"/><circle cx="60" cy="52" r="4" fill="#111"/>
+             <circle cx="41.5" cy="50.5" r="1.3" fill="white"/><circle cx="61.5" cy="50.5" r="1.3" fill="white"/>`,
+    narrow: `<ellipse cx="40" cy="52" rx="5" ry="2.5" fill="#111"/><ellipse cx="60" cy="52" rx="5" ry="2.5" fill="#111"/>
+             <circle cx="41" cy="51.5" r="1" fill="white"/><circle cx="61" cy="51.5" r="1" fill="white"/>`,
+    wide:   `<circle cx="40" cy="52" r="5.5" fill="white" stroke="#111" stroke-width="1.5"/><circle cx="40" cy="52" r="3" fill="#111"/>
+             <circle cx="60" cy="52" r="5.5" fill="white" stroke="#111" stroke-width="1.5"/><circle cx="60" cy="52" r="3" fill="#111"/>
+             <circle cx="41" cy="50.5" r="1" fill="white"/><circle cx="61" cy="50.5" r="1" fill="white"/>`,
+    happy:  `<path d="M35,54 Q40,48 45,54" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+             <path d="M55,54 Q60,48 65,54" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`
+  };
+  const browPaths = {
+    normal:   `<path d="M34,45 Q40,43 46,45" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>
+               <path d="M54,45 Q60,43 66,45" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>`,
+    raised:   `<path d="M34,42 Q40,39 46,42" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>
+               <path d="M54,42 Q60,39 66,42" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>`,
+    furrowed: `<path d="M34,44 Q40,47 46,44" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>
+               <path d="M54,44 Q60,47 66,44" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>`
+  };
+  const mouthPaths = {
+    smile:     `<path d="M40,67 Q50,75 60,67" fill="none" stroke="#9b3a3a" stroke-width="2.5" stroke-linecap="round"/>`,
+    grin:      `<path d="M38,65 Q50,78 62,65" fill="#9b3a3a"/><path d="M39,65 Q50,71 61,65" fill="${sk}"/>`,
+    neutral:   `<line x1="43" y1="68" x2="57" y2="68" stroke="#9b3a3a" stroke-width="2.5" stroke-linecap="round"/>`,
+    surprised: `<ellipse cx="50" cy="69" rx="6" ry="5" fill="#9b3a3a"/><ellipse cx="50" cy="70" rx="4" ry="3.5" fill="#7a1a1a"/>`
+  };
+  const glasses = c.glasses
+    ? `<circle cx="40" cy="52" r="9" fill="none" stroke="#333" stroke-width="2.2" opacity="0.85"/>
+       <circle cx="60" cy="52" r="9" fill="none" stroke="#333" stroke-width="2.2" opacity="0.85"/>
+       <line x1="49" y1="52" x2="51" y2="52" stroke="#333" stroke-width="2" opacity="0.85"/>
+       <line x1="22" y1="52" x2="31" y2="52" stroke="#333" stroke-width="1.5" opacity="0.85"/>
+       <line x1="69" y1="52" x2="78" y2="52" stroke="#333" stroke-width="1.5" opacity="0.85"/>`
+    : '';
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="50" fill="${c.bg}"/>
+    <ellipse cx="50" cy="97" rx="22" ry="14" fill="${sk}"/>
+    ${hairPaths[c.hair]||''}
+    <ellipse cx="50" cy="55" rx="26" ry="27" fill="${sk}"/>
+    ${browPaths[c.brows]||browPaths.normal}
+    ${eyePaths[c.eyes]||eyePaths.round}
+    ${mouthPaths[c.mouth]||mouthPaths.smile}
+    ${glasses}
+  </svg>`;
+}
+
+function getAvatarSrc(user, size) {
+  size = size || 48;
+  if (user && user.avatarConfig) {
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(renderAvatarSVG(user.avatarConfig, size));
+  }
+  return (user && user.avatar) ? user.avatar
+    : `https://placehold.co/${size}x${size}/334155/FFF?text=${((user&&user.name)||'?')[0].toUpperCase()}`;
+}
+
+let _abCfg = null, _abOnSave = null;
+
+function renderAvatarBuilder(onSave) {
+  _abCfg = Object.assign({}, AVATAR_DEFAULTS, (getUser()||{}).avatarConfig || {});
+  _abOnSave = onSave;
+  _drawAvatarBuilder();
+  goto('avatar-builder');
+}
+
+function _drawAvatarBuilder() {
+  const cfg = _abCfg;
+  const page = document.getElementById('page-avatar-builder');
+
+  function swatch(key, val, label, isColor) {
+    const active = JSON.stringify(cfg[key]) === JSON.stringify(val);
+    const js = `window._abSet(${JSON.stringify(key)},${JSON.stringify(val)})`;
+    if (isColor) {
+      return `<button onclick="${js}" style="width:36px;height:36px;border-radius:50%;background:${val};border:3px solid ${active?'white':'transparent'};flex-shrink:0;cursor:pointer;outline:${active?'2px solid #666':'none'};outline-offset:2px;"></button>`;
+    }
+    return `<button onclick="${js}" style="padding:8px 16px;border-radius:20px;background:${active?'white':'#2c2c2e'};color:${active?'black':'#9ca3af'};font-size:13px;font-weight:600;border:none;cursor:pointer;flex-shrink:0;font-family:inherit;">${label}</button>`;
+  }
+
+  function row(key, vals, labels, isColor) {
+    return `<div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0;-webkit-overflow-scrolling:touch;scrollbar-width:none;">${vals.map((v,i)=>swatch(key,v,labels?labels[i]:v,isColor)).join('')}</div>`;
+  }
+
+  const hLabels = [t('ショート','Short'),t('ロング','Long'),t('お団子','Bun'),t('バズ','Buzz'),t('なし','None')];
+  const eLabels = [t('丸','Round'),t('細','Narrow'),t('大','Wide'),t('笑','Happy')];
+  const bLabels = [t('普通','Normal'),t('上げ','Raised'),t('寄せ','Furrowed')];
+  const mLabels = [t('微笑み','Smile'),t('ニヤ','Grin'),t('普通','Neutral'),t('驚き','Surprised')];
+  const gLabels = [t('なし','None'),t('あり','On')];
+
+  function sec(label, key, vals, labels, isColor) {
+    return `<div style="margin-bottom:20px;"><p style="color:#6b7280;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:8px;letter-spacing:.05em;">${label}</p>${row(key,vals,labels,isColor)}</div>`;
+  }
+
+  page.innerHTML = `
+    <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #1f1f1f;flex-shrink:0;">
+        <button id="ab-cancel" style="color:#9ca3af;font-size:15px;font-weight:600;background:none;border:none;cursor:pointer;font-family:inherit;">${t('キャンセル','Cancel')}</button>
+        <span style="color:white;font-weight:700;font-size:16px;">${t('アバター編集','Edit Avatar')}</span>
+        <button id="ab-done" style="color:white;font-size:15px;font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit;">${t('完了','Done')}</button>
+      </div>
+      <div style="flex-shrink:0;display:flex;justify-content:center;padding:24px 0 16px;">
+        <div style="border-radius:9999px;overflow:hidden;">${renderAvatarSVG(cfg, 120)}</div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 20px 48px;-webkit-overflow-scrolling:touch;">
+        ${sec(t('背景','Background'),       'bg',        AVATAR_OPTS.bg,        null,    true)}
+        ${sec(t('肌の色','Skin Tone'),       'skin',      AVATAR_OPTS.skin,      null,    true)}
+        ${sec(t('髪型','Hair Style'),        'hair',      AVATAR_OPTS.hair,      hLabels, false)}
+        ${sec(t('髪の色','Hair Color'),      'hairColor', AVATAR_OPTS.hairColor, null,    true)}
+        ${sec(t('目','Eyes'),                'eyes',      AVATAR_OPTS.eyes,      eLabels, false)}
+        ${sec(t('眉毛','Eyebrows'),          'brows',     AVATAR_OPTS.brows,     bLabels, false)}
+        ${sec(t('口','Mouth'),               'mouth',     AVATAR_OPTS.mouth,     mLabels, false)}
+        ${sec(t('メガネ','Glasses'),          'glasses',   AVATAR_OPTS.glasses,   gLabels, false)}
+      </div>
+    </div>`;
+
+  document.getElementById('ab-cancel').addEventListener('click', () => goto('edit-profile'));
+  document.getElementById('ab-done').addEventListener('click', () => { _abOnSave(_abCfg); goto('edit-profile'); });
+}
+
+window._abSet = (key, val) => { _abCfg[key] = val; _drawAvatarBuilder(); };
+
+// ================================================================
+
 const MOCK_POSTS = [
   { id: 1, userId: 'alice', duration: 5400, task: '読書2章分、英単語100個', comment: '久しぶりに集中できた！', time: '2時間前', likes: 12, liked: false, img: null },
   { id: 2, userId: 'ben',   duration: 3600, task: 'プログラミング課題',       comment: null,               time: '5時間前', likes: 8,  liked: false, img: null },
@@ -934,7 +1087,7 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // ================================================================
 const NO_NAV = ['lang','login','register','dm','settings','edit-profile','user-profile',
                 'notifications','notif-settings','challenge','session','interrupt','post-session',
-                'premium','create-group','terms','privacy','onboarding'];
+                'premium','create-group','terms','privacy','onboarding','avatar-builder'];
 
 function updateUnreadDots() {
   const bellDot = document.getElementById('notif-dot-btn');
@@ -1292,7 +1445,7 @@ function renderFeedList() {
     const f = isMe ? (getUser() || {}) : (friendById(p.userId) || {});
     const fName   = isMe ? (f.name || t('あなた','You')) : (f.name || '?');
     const fHandle = isMe ? (f.handle || '') : (f.handle || '');
-    const fAvatar = isMe ? (f.avatar || '') : (f.avatar || '');
+    const fAvatar = isMe ? getAvatarSrc(f, 40) : (f.avatar || '');
     const dur = fmtDuration(p.duration);
     const el = document.createElement('div');
     el.className = 'py-4 border-b border-gray-900';
@@ -2101,7 +2254,7 @@ function renderGroupDetail(groupId) {
       const f = isMe ? null : friendById(id);
       const name = isMe ? myName : (f ? f.name : id);
       const avatar = isMe
-        ? `https://placehold.co/40x40/334155/FFF?text=${myName[0].toUpperCase()}`
+        ? getAvatarSrc(getUser(), 40)
         : (f ? f.avatar : `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
       const ready = readyList.includes(id);
       const declined = declinedList.includes(id);
@@ -2440,7 +2593,7 @@ function renderGroupDetail(groupId) {
             const u2 = getUser();
             const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
             const avatar = isMe
-              ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
+              ? getAvatarSrc(u2, 40)
               : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
             const isGroupOwner = g.owner === id || (isMe && g.owner === 'me');
             const badge = isGroupOwner
@@ -2850,7 +3003,7 @@ function renderProfile() {
 
     <!-- User info -->
     <div class="px-4 flex items-center space-x-4 mb-4">
-      <img id="prof-avatar" src="${u.avatar||''}" class="w-18 h-18 rounded-full border-2 border-[#2C2C2E] cursor-pointer" style="width:72px;height:72px;" alt="">
+      <div id="prof-avatar" class="rounded-full overflow-hidden border-2 border-[#2C2C2E] cursor-pointer flex-shrink-0" style="width:72px;height:72px;">${renderAvatarSVG(u.avatarConfig||AVATAR_DEFAULTS,72)}</div>
       <div class="flex-grow min-w-0">
         <h2 class="text-xl font-black text-white">${u.name||t('ユーザー','User')}</h2>
         <p class="text-gray-600 text-sm">${u.handle||''}</p>
@@ -3269,15 +3422,14 @@ function renderEditProfile() {
 
     <div class="flex flex-col items-center mb-6">
       <div class="relative cursor-pointer" id="ep-avatar-wrap">
-        <img id="ep-avatar-preview" src="${u.avatar||''}" class="w-24 h-24 rounded-full object-cover border-2 border-gray-800" alt="">
-        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+        <div id="ep-avatar-preview" class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-800">${renderAvatarSVG(u.avatarConfig||AVATAR_DEFAULTS, 96)}</div>
+        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full pointer-events-none">
           <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m-9 9h3l9-9a2.121 2.121 0 00-3-3l-9 9v3z"/>
           </svg>
         </div>
-        <input type="file" id="ep-avatar-input" class="hidden" accept="image/*">
       </div>
+      <p class="text-xs text-gray-600 mt-2">${t('タップして編集','Tap to edit')}</p>
     </div>
 
     <div class="space-y-4">
@@ -3304,20 +3456,16 @@ function renderEditProfile() {
     u.name   = document.getElementById('ep-name').value.trim()   || u.name;
     u.handle = '@' + document.getElementById('ep-handle').value.replace('@','').trim();
     u.bio    = document.getElementById('ep-bio').value.trim();
-    const prev = document.getElementById('ep-avatar-preview').src;
-    if (prev && !prev.startsWith('https://placehold')) u.avatar = prev;
     saveUser(u);
     goto('profile');
   });
-  document.getElementById('ep-avatar-wrap').addEventListener('click', () =>
-    document.getElementById('ep-avatar-input').click()
-  );
-  document.getElementById('ep-avatar-input').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => { document.getElementById('ep-avatar-preview').src = ev.target.result; };
-    reader.readAsDataURL(file);
+  document.getElementById('ep-avatar-wrap').addEventListener('click', () => {
+    renderAvatarBuilder(cfg => {
+      const u = getUser() || {};
+      u.avatarConfig = cfg;
+      saveUser(u);
+      document.getElementById('ep-avatar-preview').innerHTML = renderAvatarSVG(cfg, 96);
+    });
   });
 }
 
