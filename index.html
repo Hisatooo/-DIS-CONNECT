@@ -7,6 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>(DIS)CONNECT</title>
+  <link rel="icon" type="image/png" href="/icon.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1197,11 +1198,7 @@ function renderLangSelect() {
 function renderLogin() {
   document.getElementById('page-login').innerHTML = `
     <div class="text-center mb-10">
-      <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5">
-        <svg class="w-8 h-8 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
-        </svg>
-      </div>
+      <img src="/icon.png" alt="(DIS)CONNECT" class="w-20 h-20 rounded-3xl mx-auto mb-5">
       <h1 class="text-4xl font-black text-white">(DIS)CONNECT</h1>
       <p class="text-gray-500 mt-2 text-sm">${t('デジタルデトックスを、みんなで。','Digital detox, together.')}</p>
     </div>
