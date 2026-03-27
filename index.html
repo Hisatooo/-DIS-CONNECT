@@ -1259,17 +1259,26 @@ function renderFeedList() {
       `);
       return;
     }
-    const f = friendById(p.userId) || {};
+    const isMe = p.userId === 'me';
+    const f = isMe ? (getUser() || {}) : (friendById(p.userId) || {});
+    const fName   = isMe ? (f.name || t('あなた','You')) : (f.name || '?');
+    const fHandle = isMe ? (f.handle || '') : (f.handle || '');
+    const fAvatar = isMe ? (f.avatar || '') : (f.avatar || '');
     const dur = fmtDuration(p.duration);
     const el = document.createElement('div');
     el.className = 'py-4 border-b border-gray-900';
     el.innerHTML = `
       <div class="flex items-start space-x-3">
-        <img src="${f.avatar||''}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">
+        <img src="${fAvatar}" class="w-10 h-10 rounded-full flex-shrink-0 ${isMe?'':'cursor-pointer profile-trig'}" data-uid="${p.userId}" alt="">
         <div class="flex-grow min-w-0">
-          <div class="flex items-baseline space-x-2 mb-2">
-            <span class="font-bold text-white text-sm cursor-pointer profile-trig" data-uid="${p.userId}">${f.name||'?'}</span>
-            <span class="text-gray-600 text-xs">${f.handle||''} · ${p.time}</span>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-baseline space-x-2">
+              <span class="font-bold text-white text-sm ${isMe?'':'cursor-pointer profile-trig'}" data-uid="${p.userId}">${fName}</span>
+              <span class="text-gray-600 text-xs">${fHandle}${fHandle?' · ':''}${p.time}</span>
+            </div>
+            ${isMe ? `<button class="post-menu-btn text-gray-600 px-2 py-1" data-pid="${p.id}">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+            </button>` : ''}
           </div>
           <div class="flex items-center space-x-3 bg-[#1C1C1E] border border-gray-800 rounded-2xl p-3 mb-2">
             <div class="w-9 h-9 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
@@ -1323,6 +1332,20 @@ function renderFeedList() {
     el.querySelectorAll('.profile-trig').forEach(t => {
       t.addEventListener('click', e => { e.stopPropagation(); openUserProfile(t.dataset.uid); });
     });
+    // delete own post
+    el.querySelector('.post-menu-btn')?.addEventListener('click', e => {
+      e.stopPropagation();
+      showConfirm(
+        t('投稿を削除', 'Delete Post'),
+        t('この投稿を削除しますか？', 'Delete this post?'),
+        t('削除', 'Delete'),
+        () => {
+          const idx = MOCK_POSTS.findIndex(x => x.id === p.id);
+          if (idx !== -1) MOCK_POSTS.splice(idx, 1);
+          renderFeedList();
+        }
+      );
+    });
     list.appendChild(el);
   });
 }
@@ -1333,7 +1356,7 @@ function renderFeedList() {
 function openCommentPanel(postId) {
   S.commentPostId = postId;
   const post = MOCK_POSTS.find(p => p.id === postId);
-  const f    = friendById(post.userId) || {};
+  const f    = post.userId === 'me' ? (getUser() || {}) : (friendById(post.userId) || {});
   const comments = MOCK_COMMENTS[postId] || [];
 
   // Post preview
@@ -1779,7 +1802,23 @@ function renderPostSession(duration, completed, groupResult = null) {
     };
     reader.readAsDataURL(file);
   });
-  document.getElementById('ps-post-btn').addEventListener('click', () => goto('home'));
+  document.getElementById('ps-post-btn').addEventListener('click', () => {
+    const task    = document.getElementById('ps-task')?.value.trim() || '';
+    const comment = document.getElementById('ps-comment')?.value.trim() || '';
+    const newPost = {
+      id: Date.now(),
+      userId: 'me',
+      duration,
+      task,
+      comment,
+      time: t('たった今', 'Just now'),
+      likes: 0,
+      liked: false,
+      img: null
+    };
+    MOCK_POSTS.unshift(newPost);
+    goto('home');
+  });
   document.getElementById('ps-skip-btn').addEventListener('click', () => goto('home'));
 }
 
