@@ -420,6 +420,26 @@
   <!-- ===================== DM ===================== -->
   <div id="page-dm" class="page flex flex-col"></div>
 
+  <!-- ===================== APP PICKER MODAL ===================== -->
+  <div id="app-picker-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:#1c1c1e;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;">
+      <button id="app-picker-cancel" style="width:36px;height:36px;border-radius:50%;background:#3a3a3c;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <span id="app-picker-title" style="color:white;font-weight:900;font-size:17px;">アプリを選択</span>
+      <button id="app-picker-done" style="width:36px;height:36px;border-radius:50%;background:#3b82f6;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+    </div>
+    <div id="app-picker-list" style="flex:1;overflow-y:auto;padding:0 16px 80px;"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px 28px;background:#1c1c1e;border-top:1px solid #2c2c2e;">
+      <div style="display:flex;align-items:center;background:#2c2c2e;border-radius:12px;padding:10px 14px;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="app-picker-search" type="text" placeholder="Search" style="flex:1;background:none;border:none;outline:none;color:white;font-size:15px;" />
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== PROFILE ===================== -->
   <div id="page-profile" class="page flex flex-col overflow-y-auto no-scrollbar pb-nav"></div>
 
@@ -501,8 +521,13 @@
       <!-- App Selection -->
       <div class="mb-5">
         <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-2">制限するアプリ</p>
-        <input id="app-chip-search" type="text" placeholder="アプリを検索..." class="w-full bg-[#1C1C1E] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 mb-3 outline-none">
-        <div id="app-chip-list" class="max-h-48 overflow-y-auto no-scrollbar"></div>
+        <button id="open-app-picker-btn" class="w-full flex items-center justify-between bg-[#1C1C1E] border border-gray-800 rounded-xl px-4 py-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span id="app-picker-summary" class="text-sm text-gray-400">アプリを選択...</span>
+          </div>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
       </div>
 
       <!-- Divider -->
@@ -2346,8 +2371,13 @@ function renderGroupDetail(groupId) {
 
       <div class="card p-4">
         <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">${t('ブロックするアプリ','Apps to Block')}</p>
-        <input id="gd-app-chip-search" type="text" placeholder="${t('アプリを検索...','Search apps...')}" class="w-full bg-[#2C2C2E] border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 mb-3 outline-none">
-        <div id="gd-app-chip-list" class="max-h-48 overflow-y-auto no-scrollbar"></div>
+        <button id="open-gd-app-picker-btn" class="w-full flex items-center justify-between bg-[#2C2C2E] border border-gray-700 rounded-xl px-4 py-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span id="gd-app-picker-summary" class="text-sm text-gray-400">${t('アプリを選択...','Select apps...')}</span>
+          </div>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
       </div>
 
       <div class="card p-4">
@@ -2492,9 +2522,8 @@ function renderGroupDetail(groupId) {
     }
   } else {
     initGroupDetoxPicker();
-    renderGroupAppChips();
-    const gdSearch = document.getElementById('gd-app-chip-search');
-    if (gdSearch) gdSearch.addEventListener('input', () => renderGroupAppChips(gdSearch.value));
+    updateAppPickerSummary('gd-app-picker-summary', S.groupSelectedApps);
+    document.getElementById('open-gd-app-picker-btn').onclick = () => openAppPicker('group');
 
     document.getElementById('gd-ready-btn')?.addEventListener('click', () => {
       const gdH = getPickerValue('gd-picker-hours');
@@ -3813,14 +3842,161 @@ function renderGlobalDetoxCard() {
   });
 }
 
+function updateAppPickerSummary(summaryId, selectedSet) {
+  const el = document.getElementById(summaryId);
+  if (!el) return;
+  const arr = [...selectedSet];
+  if (arr.length === 0) {
+    el.textContent = t('アプリを選択...', 'Select apps...');
+    el.style.color = '#6b7280';
+  } else if (arr.length <= 3) {
+    el.textContent = arr.join(', ');
+    el.style.color = 'white';
+  } else {
+    el.textContent = `${arr.slice(0,2).join(', ')} +${arr.length - 2}`;
+    el.style.color = 'white';
+  }
+}
+
+function openAppPicker(mode) {
+  // mode: 'individual' | 'group'
+  const selectedSet = mode === 'group' ? S.groupSelectedApps : S.selectedApps;
+  const tempSet = new Set(selectedSet); // 編集用コピー
+  const modal = document.getElementById('app-picker-modal');
+  const listEl = document.getElementById('app-picker-list');
+  const searchEl = document.getElementById('app-picker-search');
+  const titleEl = document.getElementById('app-picker-title');
+  let expandedCats = new Set();
+
+  modal.style.display = 'flex';
+  titleEl.textContent = t('アプリを選択', 'Choose Activities');
+  searchEl.value = '';
+
+  const CAT_ICONS = {
+    'SNS': '💬', 'メッセージ': '✉️', 'エンタメ': '🎬',
+    '音楽': '🎵', 'ゲーム': '🎮', 'ショッピング': '🛍️',
+    'ニュース': '📰', 'ブラウザ': '🌐',
+    'Social': '💬', 'Messaging': '✉️', 'Entertainment': '🎬',
+    'Music': '🎵', 'Games': '🎮', 'Shopping': '🛍️',
+    'News': '📰', 'Browser': '🌐'
+  };
+
+  function renderList(q) {
+    const query = (q || '').toLowerCase();
+    listEl.innerHTML = '';
+
+    // All Apps & Categories row
+    const allSelected = ALL_APPS.every(a => tempSet.has(a.label));
+    const allRow = document.createElement('div');
+    allRow.style.cssText = 'background:#2c2c2e;border-radius:14px;overflow:hidden;margin-bottom:8px;';
+    allRow.innerHTML = `
+      <div class="app-picker-row" data-type="all" style="display:flex;align-items:center;padding:14px 16px;gap:14px;cursor:pointer;">
+        <div class="picker-circle ${allSelected?'picker-circle-on':''}" style="width:24px;height:24px;border-radius:50%;border:2px solid ${allSelected?'#3b82f6':'#636366'};background:${allSelected?'#3b82f6':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          ${allSelected?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>':''}
+        </div>
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#ef4444,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🗂️</div>
+        <span style="color:white;font-weight:600;font-size:15px;">${t('すべてのアプリ','All Apps & Categories')}</span>
+      </div>`;
+    allRow.querySelector('.app-picker-row').addEventListener('click', () => {
+      if (allSelected) { tempSet.clear(); } else { ALL_APPS.forEach(a => tempSet.add(a.label)); }
+      renderList(searchEl.value);
+    });
+    listEl.appendChild(allRow);
+
+    // カテゴリ別
+    const cats = [...new Set(ALL_APPS.map(a => a.cat))];
+    cats.forEach(cat => {
+      const appsInCat = ALL_APPS.filter(a => a.cat === cat);
+      const filtered  = query ? appsInCat.filter(a => a.label.toLowerCase().includes(query)) : appsInCat;
+      if (filtered.length === 0) return;
+
+      const selCount  = filtered.filter(a => tempSet.has(a.label)).length;
+      const catSel    = selCount === filtered.length && filtered.length > 0;
+      const expanded  = expandedCats.has(cat) || !!query;
+
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#2c2c2e;border-radius:14px;overflow:hidden;margin-bottom:8px;';
+
+      // Category header row
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;padding:14px 16px;gap:14px;cursor:pointer;';
+      header.innerHTML = `
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid ${catSel?'#3b82f6':'#636366'};background:${catSel?'#3b82f6':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          ${catSel?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>':''}
+        </div>
+        <div style="width:36px;height:36px;border-radius:10px;background:#3a3a3c;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${CAT_ICONS[cat]||'📱'}</div>
+        <span style="color:white;font-weight:600;font-size:15px;flex:1;">${cat}</span>
+        ${!query ? `<span style="color:#636366;font-size:14px;margin-right:4px;">${selCount>0?selCount:''}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="2" style="transform:rotate(${expanded?90:0}deg);transition:.2s;"><path d="M9 5l7 7-7 7"/></svg>` : ''}
+      `;
+
+      // Category circle click → toggle all in cat
+      header.querySelector('div').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (catSel) { filtered.forEach(a => tempSet.delete(a.label)); }
+        else { filtered.forEach(a => tempSet.add(a.label)); }
+        renderList(searchEl.value);
+      });
+
+      // Chevron / row click → expand
+      if (!query) {
+        header.addEventListener('click', () => {
+          if (expandedCats.has(cat)) expandedCats.delete(cat);
+          else expandedCats.add(cat);
+          renderList(searchEl.value);
+        });
+      }
+
+      card.appendChild(header);
+
+      // Individual app rows (shown if expanded or searching)
+      if (expanded) {
+        filtered.forEach((a, idx) => {
+          const sel = tempSet.has(a.label);
+          const appRow = document.createElement('div');
+          appRow.style.cssText = `display:flex;align-items:center;padding:12px 16px;gap:14px;cursor:pointer;border-top:1px solid #3a3a3c;`;
+          appRow.innerHTML = `
+            <div style="width:24px;height:24px;border-radius:50%;border:2px solid ${sel?'#3b82f6':'#636366'};background:${sel?'#3b82f6':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              ${sel?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>':''}
+            </div>
+            <div style="width:36px;height:36px;border-radius:10px;background:#${a.bg};display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:14px;flex-shrink:0;">${a.label[0]}</div>
+            <span style="color:white;font-size:15px;">${a.label}</span>
+          `;
+          appRow.addEventListener('click', () => {
+            if (tempSet.has(a.label)) tempSet.delete(a.label);
+            else tempSet.add(a.label);
+            renderList(searchEl.value);
+          });
+          card.appendChild(appRow);
+        });
+      }
+
+      listEl.appendChild(card);
+    });
+  }
+
+  renderList('');
+  searchEl.oninput = () => renderList(searchEl.value);
+
+  document.getElementById('app-picker-cancel').onclick = () => {
+    modal.style.display = 'none';
+  };
+  document.getElementById('app-picker-done').onclick = () => {
+    if (mode === 'group') {
+      S.groupSelectedApps = new Set(tempSet);
+      updateAppPickerSummary('gd-app-picker-summary', S.groupSelectedApps);
+    } else {
+      S.selectedApps = new Set(tempSet);
+      updateAppPickerSummary('app-picker-summary', S.selectedApps);
+    }
+    modal.style.display = 'none';
+  };
+}
+
 function openManualSheet() {
   document.getElementById('manual-sheet').classList.add('open');
-  renderAppChips();
-  const searchInput = document.getElementById('app-chip-search');
-  if (searchInput) {
-    searchInput.value = '';
-    searchInput.addEventListener('input', () => renderAppChips(searchInput.value));
-  }
+  updateAppPickerSummary('app-picker-summary', S.selectedApps);
+  document.getElementById('open-app-picker-btn').onclick = () => openAppPicker('individual');
   initTimePicker();
   initSlider('manual-slider','manual-thumb','manual-reveal', () => {
     const h = getPickerValue('picker-hours');
