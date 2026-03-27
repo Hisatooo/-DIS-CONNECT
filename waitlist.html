@@ -31,8 +31,9 @@
     .fade-up-3 { animation: fadeUp .7s .3s ease both; }
     .fade-up-4 { animation: fadeUp .7s .45s ease both; }
     #success-msg { display: none; }
-    .lang-btn { background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 8px; color: #9ca3af; font-size: 12px; font-weight: 700; padding: 5px 12px; cursor: pointer; transition: all .2s; font-family: 'Sora', sans-serif; }
-    .lang-btn.active { background: #3a3a3c; color: white; border-color: #636366; }
+    .lang-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #111; border-top: 1px solid #1f1f1f; display: flex; padding: 12px 24px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); gap: 8px; }
+    .lang-btn { flex: 1; background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 12px; color: #6b7280; font-size: 15px; font-weight: 700; padding: 14px 12px; cursor: pointer; transition: all .2s; font-family: 'Sora', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .lang-btn.active { background: white; color: black; border-color: white; }
   </style>
 </head>
 <body>
@@ -41,15 +42,13 @@
 <div class="glow-orb" style="width:600px;height:600px;top:-200px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,#3b82f622,transparent 70%);"></div>
 <div class="glow-orb" style="width:400px;height:400px;bottom:-100px;right:-100px;background:radial-gradient(circle,#8b5cf614,transparent 70%);"></div>
 
-<!-- Lang switcher -->
-<div style="position:relative;z-index:10;display:flex;justify-content:flex-end;padding:16px 24px 0;">
-  <div style="display:flex;gap:6px;background:#111;border:1px solid #1f1f1f;border-radius:10px;padding:4px;">
-    <button class="lang-btn active" id="lang-ja-btn" onclick="setLang('ja')">🇯🇵 JP</button>
-    <button class="lang-btn" id="lang-en-btn" onclick="setLang('en')">🇺🇸 EN</button>
-  </div>
+<!-- Lang switcher bar (fixed bottom) -->
+<div class="lang-bar">
+  <button class="lang-btn active" id="lang-ja-btn" onclick="setLang('ja')">🇯🇵 日本語</button>
+  <button class="lang-btn" id="lang-en-btn" onclick="setLang('en')">🇺🇸 English</button>
 </div>
 
-<div style="position:relative;z-index:1;max-width:480px;margin:0 auto;padding:32px 24px 80px;">
+<div style="position:relative;z-index:1;max-width:480px;margin:0 auto;padding:32px 24px 120px;">
 
   <!-- Logo -->
   <div class="fade-up text-center mb-12">
@@ -106,7 +105,7 @@
   const COPY = {
     ja: {
       badge:        'まもなくリリース / Coming Soon',
-      headline:     'スマホを\n手放す勇気を、\nみんなと。',
+      headline:     'Disconnect to\nReconnect.',
       sub:          'デジタルデトックスをフレンドと共有する\nまったく新しいSNS体験。',
       formLabel:    'ウェイトリストに登録',
       namePh:       '名前（任意）',
@@ -127,7 +126,7 @@
     },
     en: {
       badge:        'Coming Soon',
-      headline:     'Disconnect\ntogether.',
+      headline:     'Disconnect to\nReconnect.',
       sub:          'A brand new social experience\nfor digital detox with friends.',
       formLabel:    'Join the Waitlist',
       namePh:       'Name (optional)',
