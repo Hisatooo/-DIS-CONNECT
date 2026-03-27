@@ -494,8 +494,9 @@
 
       <!-- App Selection -->
       <div class="mb-5">
-        <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
-        <div id="app-chip-list" class="flex flex-wrap gap-2"></div>
+        <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-2">制限するアプリ</p>
+        <input id="app-chip-search" type="text" placeholder="アプリを検索..." class="w-full bg-[#1C1C1E] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 mb-3 outline-none">
+        <div id="app-chip-list" class="max-h-48 overflow-y-auto no-scrollbar"></div>
       </div>
 
       <!-- Divider -->
@@ -1379,14 +1380,68 @@ document.getElementById('comment-send-btn').addEventListener('click', () => {
 // CHALLENGE PAGE
 // ================================================================
 const ALL_APPS = [
-  { label: 'YouTube',   bg: 'FF0000' },
-  { label: 'Instagram', bg: 'C13584' },
-  { label: 'X',         bg: '1D9BF0' },
-  { label: 'TikTok',   bg: '010101' },
-  { label: 'LINE',      bg: '06C755' },
-  { label: 'Facebook',  bg: '1877F2' },
-  { label: 'Discord',   bg: '5865F2' },
-  { label: 'Twitch',    bg: '9146FF' },
+  // SNS
+  { label: 'YouTube',     bg: 'FF0000', cat: 'SNS' },
+  { label: 'Instagram',   bg: 'C13584', cat: 'SNS' },
+  { label: 'X',           bg: '1D9BF0', cat: 'SNS' },
+  { label: 'TikTok',      bg: '010101', cat: 'SNS' },
+  { label: 'Facebook',    bg: '1877F2', cat: 'SNS' },
+  { label: 'Snapchat',    bg: 'FFFC00', cat: 'SNS' },
+  { label: 'Pinterest',   bg: 'E60023', cat: 'SNS' },
+  { label: 'LinkedIn',    bg: '0A66C2', cat: 'SNS' },
+  { label: 'BeReal',      bg: '000000', cat: 'SNS' },
+  { label: 'Threads',     bg: '101010', cat: 'SNS' },
+  { label: 'Tumblr',      bg: '35465C', cat: 'SNS' },
+  { label: 'Reddit',      bg: 'FF4500', cat: 'SNS' },
+  // メッセージ
+  { label: 'LINE',        bg: '06C755', cat: 'メッセージ' },
+  { label: 'Discord',     bg: '5865F2', cat: 'メッセージ' },
+  { label: 'WhatsApp',    bg: '25D366', cat: 'メッセージ' },
+  { label: 'Telegram',    bg: '26A5E4', cat: 'メッセージ' },
+  { label: 'Messenger',   bg: '0099FF', cat: 'メッセージ' },
+  { label: 'Signal',      bg: '3A76F0', cat: 'メッセージ' },
+  { label: 'Slack',       bg: '4A154B', cat: 'メッセージ' },
+  { label: 'Skype',       bg: '00AFF0', cat: 'メッセージ' },
+  { label: 'Zoom',        bg: '2D8CFF', cat: 'メッセージ' },
+  // エンタメ
+  { label: 'Netflix',     bg: 'E50914', cat: 'エンタメ' },
+  { label: 'Hulu',        bg: '1CE783', cat: 'エンタメ' },
+  { label: 'Disney+',     bg: '113CCF', cat: 'エンタメ' },
+  { label: 'Amazon',      bg: 'FF9900', cat: 'エンタメ' },
+  { label: 'AbemaTV',     bg: '00C7B1', cat: 'エンタメ' },
+  { label: 'DAZN',        bg: 'F9F300', cat: 'エンタメ' },
+  { label: 'Twitch',      bg: '9146FF', cat: 'エンタメ' },
+  { label: 'Niconico',    bg: 'FFFFFF', cat: 'エンタメ' },
+  { label: 'U-NEXT',      bg: 'FF1E56', cat: 'エンタメ' },
+  // 音楽
+  { label: 'Spotify',     bg: '1DB954', cat: '音楽' },
+  { label: 'Apple Music', bg: 'FC3C44', cat: '音楽' },
+  { label: 'YouTube Music',bg: 'FF0000', cat: '音楽' },
+  { label: 'SoundCloud',  bg: 'FF5500', cat: '音楽' },
+  { label: 'AWA',         bg: '000000', cat: '音楽' },
+  // ゲーム
+  { label: 'モンスト',    bg: 'F7700B', cat: 'ゲーム' },
+  { label: 'パズドラ',    bg: '1A4FA0', cat: 'ゲーム' },
+  { label: 'ポケモンGO',  bg: '0075BE', cat: 'ゲーム' },
+  { label: 'Roblox',      bg: 'E2231A', cat: 'ゲーム' },
+  { label: 'Minecraft',   bg: '62B47A', cat: 'ゲーム' },
+  { label: 'フォートナイト', bg: '1B2838', cat: 'ゲーム' },
+  { label: 'Clash of Clans', bg: '4A90D9', cat: 'ゲーム' },
+  { label: 'Among Us',    bg: 'C51111', cat: 'ゲーム' },
+  // ショッピング
+  { label: '楽天',        bg: 'BF0000', cat: 'ショッピング' },
+  { label: 'メルカリ',    bg: 'FF0211', cat: 'ショッピング' },
+  { label: 'ZOZOTOWN',    bg: '000000', cat: 'ショッピング' },
+  { label: 'ヤフオク',    bg: 'FF0033', cat: 'ショッピング' },
+  { label: 'PayPay',      bg: 'FF0033', cat: 'ショッピング' },
+  // ニュース
+  { label: 'SmartNews',   bg: 'FF3C00', cat: 'ニュース' },
+  { label: 'Yahoo!',      bg: '720E9E', cat: 'ニュース' },
+  { label: 'NewsPicks',   bg: 'E60012', cat: 'ニュース' },
+  { label: 'グノシー',    bg: '00AAFF', cat: 'ニュース' },
+  // ブラウザ
+  { label: 'Safari',      bg: '006CFF', cat: 'ブラウザ' },
+  { label: 'Chrome',      bg: '4285F4', cat: 'ブラウザ' },
 ];
 const getBlockedApps = () => ALL_APPS.filter(a => S.selectedApps.has(a.label));
 
@@ -2284,8 +2339,9 @@ function renderGroupDetail(groupId) {
       </div>
 
       <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">${t('ブロックするアプリ','Apps to Block')}</p>
-        <div id="gd-app-chip-list" class="flex flex-wrap gap-2"></div>
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">${t('ブロックするアプリ','Apps to Block')}</p>
+        <input id="gd-app-chip-search" type="text" placeholder="${t('アプリを検索...','Search apps...')}" class="w-full bg-[#2C2C2E] border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 mb-3 outline-none">
+        <div id="gd-app-chip-list" class="max-h-48 overflow-y-auto no-scrollbar"></div>
       </div>
 
       <div class="card p-4">
@@ -2431,6 +2487,8 @@ function renderGroupDetail(groupId) {
   } else {
     initGroupDetoxPicker();
     renderGroupAppChips();
+    const gdSearch = document.getElementById('gd-app-chip-search');
+    if (gdSearch) gdSearch.addEventListener('input', () => renderGroupAppChips(gdSearch.value));
 
     document.getElementById('gd-ready-btn')?.addEventListener('click', () => {
       const gdH = getPickerValue('gd-picker-hours');
@@ -3346,15 +3404,26 @@ function renderNotifications() {
 // ================================================================
 // MANUAL START SHEET (TIME PICKER + SLIDER)
 // ================================================================
-function renderAppChips() {
+function renderAppChips(filter) {
   const container = document.getElementById('app-chip-list');
   if (!container) return;
-  container.innerHTML = ALL_APPS.map(a => {
-    const sel = S.selectedApps.has(a.label);
-    return `<button class="app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
-      <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
-      ${a.label}
-    </button>`;
+  const q = (filter || '').toLowerCase();
+  const apps = q ? ALL_APPS.filter(a => a.label.toLowerCase().includes(q)) : ALL_APPS;
+  const cats = [...new Set(apps.map(a => a.cat))];
+  container.innerHTML = cats.map(cat => {
+    const catApps = apps.filter(a => a.cat === cat);
+    return `<div class="w-full mb-3">
+      <p class="text-xs text-gray-600 font-bold mb-2">${cat}</p>
+      <div class="flex flex-wrap gap-2">
+        ${catApps.map(a => {
+          const sel = S.selectedApps.has(a.label);
+          return `<button class="app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
+            <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
+            ${a.label}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
   }).join('');
   container.querySelectorAll('.app-chip').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3370,15 +3439,26 @@ function renderAppChips() {
   });
 }
 
-function renderGroupAppChips() {
+function renderGroupAppChips(filter) {
   const container = document.getElementById('gd-app-chip-list');
   if (!container) return;
-  container.innerHTML = ALL_APPS.map(a => {
-    const sel = S.groupSelectedApps.has(a.label);
-    return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
-      <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
-      ${a.label}
-    </button>`;
+  const q = (filter || '').toLowerCase();
+  const apps = q ? ALL_APPS.filter(a => a.label.toLowerCase().includes(q)) : ALL_APPS;
+  const cats = [...new Set(apps.map(a => a.cat))];
+  container.innerHTML = cats.map(cat => {
+    const catApps = apps.filter(a => a.cat === cat);
+    return `<div class="w-full mb-3">
+      <p class="text-xs text-gray-600 font-bold mb-2">${cat}</p>
+      <div class="flex flex-wrap gap-2">
+        ${catApps.map(a => {
+          const sel = S.groupSelectedApps.has(a.label);
+          return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
+            <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
+            ${a.label}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
   }).join('');
   container.querySelectorAll('.gd-app-chip').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3544,6 +3624,11 @@ function renderGlobalDetoxCard() {
 function openManualSheet() {
   document.getElementById('manual-sheet').classList.add('open');
   renderAppChips();
+  const searchInput = document.getElementById('app-chip-search');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.addEventListener('input', () => renderAppChips(searchInput.value));
+  }
   initTimePicker();
   initSlider('manual-slider','manual-thumb','manual-reveal', () => {
     const h = getPickerValue('picker-hours');
