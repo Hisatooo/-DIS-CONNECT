@@ -744,6 +744,11 @@ const MOCK_POSTS = [
   { id: 'ad1', type: 'ad', brand: 'Notion', text: '思考を整理するワークスペース。今日から使おう。', cta: '詳しく見る' },
   { id: 4, userId: 'david', duration: 7200, task: 'AI論文読み込み', comment: '2時間、スマホなし！', time: '2日前', likes: 21, liked: false, img: null },
 ];
+// 自分の投稿をlocalStorageから復元（ページ先頭に挿入）
+(function() {
+  const saved = JSON.parse(localStorage.getItem('to_my_posts') || '[]');
+  saved.forEach(p => MOCK_POSTS.unshift(p));
+})();
 
 const MOCK_COMMENTS = {
   1: [{ userId: 'ben',   text: 'すごい！継続できてますね' },
@@ -834,6 +839,8 @@ const getUser    = () => JSON.parse(localStorage.getItem('to_user'))    || null;
 const saveUser   = u  => localStorage.setItem('to_user', JSON.stringify(u));
 const getHistory = () => JSON.parse(localStorage.getItem('to_history')) || [];
 const saveHistory= h  => localStorage.setItem('to_history', JSON.stringify(h));
+const getMyPosts = () => JSON.parse(localStorage.getItem('to_my_posts')) || [];
+const saveMyPosts= p  => localStorage.setItem('to_my_posts', JSON.stringify(p));
 const getDM      = id => JSON.parse(localStorage.getItem(`to_dm_${id}`)) || [
   { from: id,  text: 'やあ！最近デトックスできてる？',    time: '昨日' },
   { from: 'me',text: 'ちょっとずつ！今日も頑張ろう',     time: '昨日' },
@@ -1241,9 +1248,10 @@ function renderFeedList() {
   if (!list) return;
   list.innerHTML = '';
 
+  const mePublic = (getUser()?.isPublic) === true;
   const posts = S.feedTab === 'friends'
     ? MOCK_POSTS.filter(p => p.type === 'ad' || p.userId === 'me' || friendById(p.userId)?.isFriend)
-    : MOCK_POSTS.filter(p => p.type === 'ad' || p.userId === 'me' || friendById(p.userId)?.isPublic);
+    : MOCK_POSTS.filter(p => p.type === 'ad' || (p.userId === 'me' && mePublic) || friendById(p.userId)?.isPublic);
 
   posts.forEach(p => {
     if (p.type === 'ad') {
@@ -1342,6 +1350,7 @@ function renderFeedList() {
         () => {
           const idx = MOCK_POSTS.findIndex(x => x.id === p.id);
           if (idx !== -1) MOCK_POSTS.splice(idx, 1);
+          saveMyPosts(MOCK_POSTS.filter(x => x.userId === 'me'));
           renderFeedList();
         }
       );
@@ -1817,6 +1826,7 @@ function renderPostSession(duration, completed, groupResult = null) {
       img: null
     };
     MOCK_POSTS.unshift(newPost);
+    saveMyPosts(MOCK_POSTS.filter(p => p.userId === 'me'));
     goto('home');
   });
   document.getElementById('ps-skip-btn').addEventListener('click', () => goto('home'));
@@ -3236,6 +3246,7 @@ function buildPostsList() {
         () => {
           const idx = MOCK_POSTS.findIndex(x => x.id == pid);
           if (idx !== -1) MOCK_POSTS.splice(idx, 1);
+          saveMyPosts(MOCK_POSTS.filter(x => x.userId === 'me'));
           buildPostsList();
         }
       );
