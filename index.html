@@ -1242,8 +1242,8 @@ function renderFeedList() {
   list.innerHTML = '';
 
   const posts = S.feedTab === 'friends'
-    ? MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isFriend)
-    : MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isPublic);
+    ? MOCK_POSTS.filter(p => p.type === 'ad' || p.userId === 'me' || friendById(p.userId)?.isFriend)
+    : MOCK_POSTS.filter(p => p.type === 'ad' || p.userId === 'me' || friendById(p.userId)?.isPublic);
 
   posts.forEach(p => {
     if (p.type === 'ad') {
