@@ -450,6 +450,7 @@
   <!-- ===================== EDIT PROFILE ===================== -->
   <div id="page-edit-profile" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
   <div id="page-avatar-builder" class="page flex flex-col" style="background:#111;"></div>
+  <div id="page-survey" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-10 pb-10"></div>
 
   <!-- ===================== USER PROFILE ===================== -->
   <div id="page-user-profile" class="page flex flex-col"></div>
@@ -1088,7 +1089,7 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // ================================================================
 const NO_NAV = ['lang','login','register','dm','settings','edit-profile','user-profile',
                 'notifications','notif-settings','challenge','session','interrupt','post-session',
-                'premium','create-group','terms','privacy','onboarding','avatar-builder'];
+                'premium','create-group','terms','privacy','onboarding','avatar-builder','survey'];
 
 function updateUnreadDots() {
   const bellDot = document.getElementById('notif-dot-btn');
@@ -1352,7 +1353,7 @@ function renderRegister() {
         saveUser({ ...u, uid: cred.user.uid });
         registerFCMToken(cred.user.uid);
         S._justRegistered = true;
-        renderOnboarding();
+        renderSurvey();
       })
       .catch(err => {
         console.error(err);
@@ -5079,6 +5080,98 @@ function renderPremium() {
   `;
   goto('premium');
   document.getElementById('prem-back').addEventListener('click', () => goto('profile'));
+}
+
+// ================================================================
+// SURVEY (post-registration segmentation)
+// ================================================================
+function renderSurvey() {
+  const page = document.getElementById('page-survey');
+
+  const occupations = [
+    { v: 'student',    ja: '学生',         en: 'Student' },
+    { v: 'employee',   ja: '会社員',       en: 'Office Worker' },
+    { v: 'freelance',  ja: 'フリーランス', en: 'Freelancer' },
+    { v: 'homemaker',  ja: '主婦・主夫',   en: 'Homemaker' },
+    { v: 'other',      ja: 'その他',       en: 'Other' },
+  ];
+  const goals = [
+    { v: 'sns',        ja: 'SNS・動画依存を減らす',   en: 'Reduce SNS / video addiction' },
+    { v: 'focus',      ja: '仕事・勉強の集中力アップ', en: 'Improve focus at work/study' },
+    { v: 'sleep',      ja: '睡眠の質を上げる',         en: 'Better sleep' },
+    { v: 'family',     ja: '家族・子どもへの影響',     en: 'Family / parenting concern' },
+    { v: 'health',     ja: '心身の健康管理',           en: 'Mental & physical health' },
+    { v: 'other',      ja: 'その他',                   en: 'Other' },
+  ];
+  const usages = [
+    { v: 'lt2',  ja: '2時間未満',  en: 'Under 2h' },
+    { v: '2to4', ja: '2〜4時間',   en: '2–4h' },
+    { v: '4to6', ja: '4〜6時間',   en: '4–6h' },
+    { v: 'gt6',  ja: '6時間以上',  en: '6h+' },
+  ];
+
+  let selOccupation = null, selGoals = new Set(), selUsage = null;
+
+  function chip(label, active, onclick) {
+    return `<button onclick="${onclick}" style="padding:10px 16px;border-radius:9999px;border:1.5px solid ${active?'white':'#3a3a3c'};background:${active?'white':'transparent'};color:${active?'black':'#9ca3af'};font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">${label}</button>`;
+  }
+
+  function render() {
+    page.innerHTML = `
+      <div class="mb-8">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-widest mb-1">${t('ステップ 2 / 3','Step 2 of 3')}</p>
+        <h2 class="text-2xl font-black text-white leading-tight">${t('あなたのことを\n教えてください','Tell us about\nyourself').replace(/\n/g,'<br>')}</h2>
+        <p class="text-gray-600 text-sm mt-2">${t('アプリをより良くするために使います','Used to improve your experience')}</p>
+      </div>
+
+      <div class="mb-6">
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-3">${t('職業','Occupation')}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${occupations.map(o => chip(t(o.ja,o.en), selOccupation===o.v, `window._surveyOcc('${o.v}')`)).join('')}
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-3">${t('デトックスの目的','Detox Goal')} <span class="text-gray-700 normal-case">${t('（複数可）','(multiple ok)')}</span></p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${goals.map(g => chip(t(g.ja,g.en), selGoals.has(g.v), `window._surveyGoal('${g.v}')`)).join('')}
+        </div>
+      </div>
+
+      <div class="mb-10">
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-3">${t('1日の平均スマホ使用時間','Avg. Daily Phone Use')}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${usages.map(u => chip(t(u.ja,u.en), selUsage===u.v, `window._surveyUsage('${u.v}')`)).join('')}
+        </div>
+      </div>
+
+      <button id="survey-next" class="w-full bg-white text-black font-bold py-4 rounded-full text-base active:bg-gray-200 transition">
+        ${t('次へ','Next')}
+      </button>
+      <button id="survey-skip" class="w-full text-gray-700 font-semibold py-3 text-sm mt-1">
+        ${t('スキップ','Skip')}
+      </button>
+    `;
+
+    document.getElementById('survey-next').addEventListener('click', async () => {
+      const u = getUser() || {};
+      const segment = { occupation: selOccupation, goals: [...selGoals], dailyUsage: selUsage };
+      u.segment = segment;
+      saveUser(u);
+      if (db && u.uid) {
+        try { await db.collection('users').doc(u.uid).update({ segment }); } catch(e) {}
+      }
+      renderOnboarding();
+    });
+    document.getElementById('survey-skip').addEventListener('click', () => renderOnboarding());
+  }
+
+  window._surveyOcc   = v => { selOccupation = selOccupation === v ? null : v; render(); };
+  window._surveyGoal  = v => { selGoals.has(v) ? selGoals.delete(v) : selGoals.add(v); render(); };
+  window._surveyUsage = v => { selUsage = selUsage === v ? null : v; render(); };
+
+  render();
+  goto('survey');
 }
 
 // ================================================================
