@@ -1058,12 +1058,16 @@ function renderLogin() {
       <button id="li-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
         ${t('ログイン','Log In')}
       </button>
+      <button id="li-forgot-btn" class="w-full text-gray-500 text-sm py-2 hover:text-gray-300 transition">
+        ${t('パスワードを忘れた方はこちら','Forgot your password?')}
+      </button>
       <button id="li-reg-btn" class="w-full border border-gray-800 text-gray-300 font-semibold py-4 rounded-full text-base hover:bg-white/5 transition">
         ${t('新規登録','Sign Up')}
       </button>
     </div>
   `;
   document.getElementById('li-btn').addEventListener('click', handleLogin);
+  document.getElementById('li-forgot-btn').addEventListener('click', handleForgotPassword);
   document.getElementById('li-reg-btn').addEventListener('click', () => goto('register'));
 }
 
@@ -1097,6 +1101,23 @@ function handleLogin() {
     .finally(() => {
       btn.disabled = false;
       btn.textContent = t('ログイン','Log In');
+    });
+}
+
+function handleForgotPassword() {
+  const email = document.getElementById('li-email').value.trim();
+  if (!email) {
+    alert(t('メールアドレスを入力してください','Please enter your email address'));
+    return;
+  }
+  if (!auth) { alert(t('認証サービスが利用できません','Auth service unavailable')); return; }
+  auth.sendPasswordResetEmail(email)
+    .then(() => {
+      alert(t('パスワード再設定メールを送信しました。メールをご確認ください。', 'Password reset email sent. Please check your inbox.'));
+    })
+    .catch(err => {
+      console.error(err);
+      alert(t('送信に失敗しました: ' + err.message, 'Failed to send: ' + err.message));
     });
 }
 
