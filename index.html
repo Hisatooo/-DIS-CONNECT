@@ -1804,16 +1804,6 @@ function renderPostSession(duration, completed, groupResult = null) {
         <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('一言コメント（任意）','Comment (optional)')}</label>
         <input id="ps-comment" class="input-field" type="text" placeholder="${t('今日のデトックスはどうでしたか？','How was your detox today?')}">
       </div>
-      <button id="ps-img-btn" class="card w-full p-4 flex items-center space-x-3 text-left hover:bg-[#2C2C2E] transition">
-        <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        <span class="text-gray-400 text-sm">${t('画像を追加','Add Photo')}</span>
-      </button>
-      <input type="file" id="ps-img-input" class="hidden" accept="image/*">
-      <div id="ps-img-preview" class="hidden rounded-2xl overflow-hidden">
-        <img id="ps-img-preview-src" class="w-full max-h-48 object-cover" alt="">
-      </div>
       <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">${t('投稿する','Post')}</button>
       <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">${t('スキップ','Skip')}</button>
     </div>
@@ -1821,17 +1811,6 @@ function renderPostSession(duration, completed, groupResult = null) {
 
   goto('post-session');
 
-  document.getElementById('ps-img-btn').addEventListener('click', () => document.getElementById('ps-img-input').click());
-  document.getElementById('ps-img-input').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      document.getElementById('ps-img-preview-src').src = ev.target.result;
-      document.getElementById('ps-img-preview').classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-  });
   document.getElementById('ps-post-btn').addEventListener('click', () => {
     const task    = document.getElementById('ps-task')?.value.trim() || '';
     const comment = document.getElementById('ps-comment')?.value.trim() || '';
