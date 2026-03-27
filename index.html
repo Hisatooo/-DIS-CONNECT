@@ -1443,13 +1443,15 @@ function renderFeedList() {
     const f = isMe ? (getUser() || {}) : (friendById(p.userId) || {});
     const fName   = isMe ? (f.name || t('あなた','You')) : (f.name || '?');
     const fHandle = isMe ? (f.handle || '') : (f.handle || '');
-    const fAvatar = isMe ? getAvatarSrc(f, 40) : (f.avatar || '');
+    const fAvatarHTML = (isMe && f.avatarConfig)
+      ? `<div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden" style="min-width:40px;">${renderAvatarSVG(f.avatarConfig, 40)}</div>`
+      : `<img src="${f.avatar||''}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">`;
     const dur = fmtDuration(p.duration);
     const el = document.createElement('div');
     el.className = 'py-4 border-b border-gray-900';
     el.innerHTML = `
       <div class="flex items-start space-x-3">
-        <img src="${fAvatar}" class="w-10 h-10 rounded-full flex-shrink-0 ${isMe?'':'cursor-pointer profile-trig'}" data-uid="${p.userId}" alt="">
+        ${fAvatarHTML}
         <div class="flex-grow min-w-0">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-baseline space-x-2">
@@ -2251,9 +2253,10 @@ function renderGroupDetail(groupId) {
       const isMe = id === 'me';
       const f = isMe ? null : friendById(id);
       const name = isMe ? myName : (f ? f.name : id);
-      const avatar = isMe
-        ? getAvatarSrc(getUser(), 40)
-        : (f ? f.avatar : `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+      const meUser = isMe ? getUser() : null;
+      const avatarHTML = (isMe && meUser?.avatarConfig)
+        ? `<div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(ready||(!declined))?'':'opacity-40'}">${renderAvatarSVG(meUser.avatarConfig, 36)}</div>`
+        : `<img src="${f ? f.avatar : `https://placehold.co/36x36/555/FFF?text=${id[0].toUpperCase()}`}" class="w-9 h-9 rounded-full ${(ready||(!declined))?'':'opacity-40'}" alt="${name}">`;
       const ready = readyList.includes(id);
       const declined = declinedList.includes(id);
       const statusLabel = ready
@@ -2264,7 +2267,7 @@ function renderGroupDetail(groupId) {
       return `
         <div class="flex items-center justify-between py-2">
           <div class="flex items-center gap-3">
-            <img src="${avatar}" class="w-9 h-9 rounded-full ${(ready||(!declined))?'':'opacity-40'}" alt="${name}">
+            ${avatarHTML}
             <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
           </div>
           ${statusLabel}
