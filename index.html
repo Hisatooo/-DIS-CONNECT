@@ -248,6 +248,12 @@
     }
     .picker-pad { height: 5.5rem; flex-shrink: 0; }
 
+    /* ===== SCREEN TIME PERIOD TABS ===== */
+    .active-period {
+      background: #3a3a3c;
+      color: white;
+    }
+
     /* ===== WEEKLY CHART ===== */
     .week-col {
       flex: 1;
@@ -2798,15 +2804,55 @@ function renderProfile() {
       </div>
     </div>
 
-    <!-- Weekly Record -->
+    <!-- Screen Time -->
     <div class="px-4 mb-5">
       <div class="card p-4">
-        <div class="flex items-baseline justify-between mb-4">
-          <h3 class="font-bold text-white text-sm">Weekly Record</h3>
-          <p class="text-xs text-gray-600" id="weekly-total-label"></p>
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-white text-sm">${t('スクリーンタイム','Screen Time')}</h3>
+          <div class="flex gap-1 bg-[#2C2C2E] rounded-lg p-0.5" id="st-period-tabs">
+            <button class="st-period-btn active-period text-xs px-2.5 py-1 rounded-md font-semibold transition-all" data-period="week">${t('今週','Week')}</button>
+            <button class="st-period-btn text-xs px-2.5 py-1 rounded-md font-semibold transition-all text-gray-600" data-period="month">${t('今月','Month')}</button>
+            <button class="st-period-btn text-xs px-2.5 py-1 rounded-md font-semibold transition-all text-gray-600" data-period="all">${t('累計','All')}</button>
+          </div>
         </div>
-        <div class="flex items-end space-x-1.5 h-24" id="weekly-chart"></div>
-        <div class="flex space-x-1.5 mt-2"      id="weekly-labels"></div>
+        <!-- Big stat -->
+        <div class="mb-4">
+          <p class="text-3xl font-black text-white" id="st-main-stat">—</p>
+          <p class="text-xs text-gray-600 mt-0.5" id="st-main-label">${t('デトックスで削減','reduced by detox')}</p>
+          <p class="text-xs mt-1" id="st-compare-label"></p>
+        </div>
+        <!-- Bar chart: stacked (estimated usage gray + detox green) -->
+        <div class="flex items-end gap-1 h-28 mb-1" id="st-chart"></div>
+        <div class="flex gap-1 mb-4" id="st-labels"></div>
+        <!-- Legend -->
+        <div class="flex items-center gap-4 mb-4">
+          <div class="flex items-center gap-1.5">
+            <div class="w-3 h-3 rounded-sm" style="background:#3b3b3d"></div>
+            <span class="text-xs text-gray-600">${t('推定使用時間','Est. usage')}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-3 h-3 rounded-sm" style="background:#34d399"></div>
+            <span class="text-xs text-gray-600">${t('デトックス削減','Detox saved')}</span>
+          </div>
+        </div>
+        <!-- Sub stats row -->
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-[#1C1C1E] rounded-xl p-3 text-center">
+            <p class="text-white font-black text-base" id="st-sessions">0</p>
+            <p class="text-gray-600 text-xs mt-0.5">${t('セッション','Sessions')}</p>
+          </div>
+          <div class="bg-[#1C1C1E] rounded-xl p-3 text-center">
+            <p class="text-white font-black text-base" id="st-reduction-pct">0%</p>
+            <p class="text-gray-600 text-xs mt-0.5">${t('削減率','Reduction')}</p>
+          </div>
+          <div class="bg-[#1C1C1E] rounded-xl p-3 text-center">
+            <p class="text-white font-black text-base" id="st-longest">0m</p>
+            <p class="text-gray-600 text-xs mt-0.5">${t('最長','Longest')}</p>
+          </div>
+        </div>
+        <!-- Baseline hint -->
+        <p class="text-xs text-gray-700 text-center mt-3">${t('推定使用時間は1日6時間を基準としています','Based on 6h/day estimated usage')}</p>
       </div>
     </div>
 
@@ -2831,12 +2877,23 @@ function renderProfile() {
   document.getElementById('prof-terms-btn').addEventListener('click', () => { S._prevPage = 'profile'; renderTerms(); goto('terms'); });
   document.getElementById('prof-privacy-btn').addEventListener('click', () => { S._prevPage = 'profile'; renderPrivacy(); goto('privacy'); });
 
-  buildWeeklyChart('weekly-chart', 'weekly-labels', 'weekly-total-label', getWeekData(history));
+  buildScreenTimeChart(history, 'week');
+  document.querySelectorAll('.st-period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.st-period-btn').forEach(b => {
+        b.classList.remove('active-period');
+        b.classList.add('text-gray-600');
+      });
+      btn.classList.add('active-period');
+      btn.classList.remove('text-gray-600');
+      buildScreenTimeChart(history, btn.dataset.period);
+    });
+  });
   buildHistoryList(history);
 }
 
 function getWeekData(history) {
-  const days = [0,0,0,0,0,0,0]; // minutes per day (Sun=0)
+  const days = [0,0,0,0,0,0,0];
   const now  = new Date();
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
@@ -2846,6 +2903,141 @@ function getWeekData(history) {
     if (d >= startOfWeek) days[d.getDay()] += Math.floor(h.duration / 60);
   });
   return days;
+}
+
+// ── Screen Time chart ────────────────────────────────────────────
+const DAILY_ESTIMATE_MIN = 360; // 推定使用時間: 6時間/日
+
+function buildScreenTimeChart(history, period) {
+  const completed = history.filter(h => h.completed);
+
+  // 期間フィルタ & バーデータ生成
+  const now = new Date();
+  let bars = [], barLabels = [], prevTotal = 0;
+
+  if (period === 'week') {
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay());
+    start.setHours(0,0,0,0);
+    const dayNames = S.lang === 'en'
+      ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+      : ['日','月','火','水','木','金','土'];
+    bars = [0,0,0,0,0,0,0];
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      if (d >= start) bars[d.getDay()] += Math.floor(h.duration / 60);
+    });
+    barLabels = dayNames;
+    // 先週の合計（比較用）
+    const prevStart = new Date(start); prevStart.setDate(prevStart.getDate()-7);
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      if (d >= prevStart && d < start) prevTotal += Math.floor(h.duration / 60);
+    });
+
+  } else if (period === 'month') {
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+    bars = new Array(daysInMonth).fill(0);
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      if (d >= start && d.getMonth() === now.getMonth()) {
+        bars[d.getDate()-1] += Math.floor(h.duration / 60);
+      }
+    });
+    // 週ごとに集約して表示
+    const weeks = [0,0,0,0,0];
+    bars.forEach((m, i) => { weeks[Math.floor(i/7)] += m; });
+    bars = weeks.slice(0, Math.ceil(daysInMonth/7));
+    barLabels = bars.map((_, i) => `W${i+1}`);
+    // 先月比
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const prevMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 1);
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      if (d >= prevMonthStart && d < prevMonthEnd) prevTotal += Math.floor(h.duration / 60);
+    });
+
+  } else { // all
+    // 月ごとに集約（最大12ヶ月）
+    const monthMap = {};
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      monthMap[key] = (monthMap[key]||0) + Math.floor(h.duration/60);
+    });
+    const keys = Object.keys(monthMap).sort().slice(-8);
+    bars = keys.map(k => monthMap[k]);
+    barLabels = keys.map(k => k.slice(5)); // "MM"
+    if (bars.length === 0) { bars = [0]; barLabels = ['—']; }
+  }
+
+  // 集計値
+  const detoxTotal  = bars.reduce((a,b) => a+b, 0);
+  const sessions    = completed.filter(h => {
+    if (period === 'all') return true;
+    const d = new Date(h.date);
+    if (period === 'week') {
+      const s = new Date(now); s.setDate(now.getDate()-now.getDay()); s.setHours(0,0,0,0);
+      return d >= s;
+    }
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const longest     = sessions.length ? Math.max(...sessions.map(h => Math.floor(h.duration/60))) : 0;
+  const estTotal    = DAILY_ESTIMATE_MIN * bars.length;
+  const pct         = estTotal > 0 ? Math.min(100, Math.round(detoxTotal / estTotal * 100)) : 0;
+
+  // メイン数値表示
+  const fmtMin = m => m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m}m`;
+  document.getElementById('st-main-stat').textContent  = fmtMin(detoxTotal);
+  document.getElementById('st-sessions').textContent   = sessions.length;
+  document.getElementById('st-reduction-pct').textContent = pct + '%';
+  document.getElementById('st-longest').textContent    = fmtMin(longest);
+
+  // 比較ラベル（週・月のみ）
+  const compareEl = document.getElementById('st-compare-label');
+  if (period !== 'all' && prevTotal > 0) {
+    const diff = detoxTotal - prevTotal;
+    const sign = diff >= 0 ? '+' : '';
+    compareEl.textContent = `${t('前期間比','vs prev')} ${sign}${fmtMin(Math.abs(diff))}`;
+    compareEl.className = `text-xs mt-1 ${diff >= 0 ? 'text-emerald-500' : 'text-red-400'}`;
+  } else {
+    compareEl.textContent = '';
+  }
+
+  // バーチャート描画
+  const chartEl  = document.getElementById('st-chart');
+  const labelsEl = document.getElementById('st-labels');
+  if (!chartEl || !labelsEl) return;
+  chartEl.innerHTML = labelsEl.innerHTML = '';
+
+  const maxBar  = Math.max(...bars, 1);
+  const maxBase = Math.max(maxBar, DAILY_ESTIMATE_MIN);
+  const today   = now.getDay();
+
+  bars.forEach((detoxMin, i) => {
+    const estMin    = DAILY_ESTIMATE_MIN;
+    const savedPct  = Math.min(detoxMin, estMin) / maxBase * 100;
+    const remainPct = Math.max(0, estMin - detoxMin) / maxBase * 100;
+    const isToday   = period === 'week' && i === today;
+
+    const col = document.createElement('div');
+    col.className = 'flex flex-col items-center justify-end';
+    col.style.flex = '1';
+    col.innerHTML = `
+      <div class="w-full flex flex-col justify-end rounded-lg overflow-hidden" style="height:100px;background:#1C1C1E;">
+        <div style="height:${savedPct}%;background:${isToday?'#10b981':'#34d399'};transition:height .4s;min-height:${detoxMin>0?'2px':'0'};border-radius:0 0 6px 6px;"></div>
+        <div style="height:${remainPct}%;background:#3b3b3d;"></div>
+      </div>
+    `;
+    chartEl.appendChild(col);
+
+    const lbl = document.createElement('div');
+    lbl.style.flex = '1';
+    lbl.className  = `text-center text-xs mt-1 ${isToday ? 'text-white font-bold' : 'text-gray-700'}`;
+    lbl.textContent = barLabels[i] || '';
+    labelsEl.appendChild(lbl);
+  });
 }
 
 function buildWeeklyChart(chartId, labelsId, totalId, data) {
