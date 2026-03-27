@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>(DIS)CONNECT — ウェイトリスト</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: #000;
+      color: #fff;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+    .glow-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .btn-main {
+      background: white;
+      color: black;
+      font-weight: 800;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-main:hover { opacity: .88; }
+    .btn-main:active { transform: scale(.97); }
+    .btn-main:disabled { opacity: .4; cursor: not-allowed; }
+    .input-field {
+      background: #1c1c1e;
+      border: 1px solid #3a3a3c;
+      border-radius: 14px;
+      color: white;
+      outline: none;
+      font-family: 'Sora', sans-serif;
+      transition: border-color .2s;
+    }
+    .input-field:focus { border-color: #636366; }
+    .input-field::placeholder { color: #636366; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff0f;
+      border: 1px solid #ffffff18;
+      border-radius: 9999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #9ca3af;
+    }
+    .feature-card {
+      background: #111;
+      border: 1px solid #1f1f1f;
+      border-radius: 20px;
+      padding: 24px;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(24px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp .7s ease forwards; }
+    .fade-up-2 { animation: fadeUp .7s .15s ease both; }
+    .fade-up-3 { animation: fadeUp .7s .3s ease both; }
+    .fade-up-4 { animation: fadeUp .7s .45s ease both; }
+    #success-msg { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="glow-orb" style="width:600px;height:600px;top:-200px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,#3b82f622,transparent 70%);"></div>
+<div class="glow-orb" style="width:400px;height:400px;bottom:-100px;right:-100px;background:radial-gradient(circle,#8b5cf614,transparent 70%);"></div>
+
+<div style="position:relative;z-index:1;max-width:480px;margin:0 auto;padding:48px 24px 80px;">
+
+  <!-- Logo -->
+  <div class="fade-up text-center mb-12">
+    <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:32px;">
+      <div style="width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5">
+          <path d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+        </svg>
+      </div>
+      <span style="font-size:20px;font-weight:900;letter-spacing:-0.5px;">(DIS)CONNECT</span>
+    </div>
+
+    <div class="badge mb-6">
+      <span style="width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;"></span>
+      まもなくリリース / Coming Soon
+    </div>
+
+    <h1 style="font-size:clamp(32px,8vw,48px);font-weight:900;line-height:1.1;letter-spacing:-1.5px;margin:0 0 16px;">
+      スマホを<br>手放す勇気を、<br>みんなと。
+    </h1>
+    <p style="color:#6b7280;font-size:15px;line-height:1.7;margin:0;">
+      デジタルデトックスをフレンドと共有する<br>まったく新しいSNS体験。
+    </p>
+  </div>
+
+  <!-- Waitlist Form -->
+  <div class="fade-up-2 feature-card mb-6" id="form-card">
+    <p style="font-size:13px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin:0 0 16px;">ウェイトリストに登録</p>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <input id="wl-name" class="input-field" type="text" placeholder="名前（任意）" style="padding:14px 16px;font-size:15px;width:100%;">
+      <input id="wl-email" class="input-field" type="email" placeholder="メールアドレス *" style="padding:14px 16px;font-size:15px;width:100%;">
+      <button id="wl-btn" class="btn-main" style="padding:16px;font-size:16px;width:100%;margin-top:4px;">
+        早期アクセスを申し込む
+      </button>
+    </div>
+    <p style="color:#4b5563;font-size:12px;text-align:center;margin:12px 0 0;">
+      スパムは送りません。リリース時にのみご連絡します。
+    </p>
+  </div>
+
+  <!-- Success message -->
+  <div class="feature-card mb-6 text-center" id="success-msg">
+    <div style="font-size:40px;margin-bottom:12px;">🎉</div>
+    <p style="font-weight:800;font-size:18px;margin:0 0 8px;">登録完了！</p>
+    <p style="color:#6b7280;font-size:14px;margin:0;">リリース時にご連絡します。<br>楽しみにお待ちください！</p>
+  </div>
+
+  <!-- Counter -->
+  <p class="fade-up-2 text-center" style="color:#4b5563;font-size:13px;margin-bottom:32px;" id="wl-count"></p>
+
+  <!-- Features -->
+  <div class="fade-up-3" style="display:flex;flex-direction:column;gap:12px;margin-bottom:48px;">
+    <div class="feature-card" style="display:flex;align-items:flex-start;gap:16px;padding:20px;">
+      <span style="font-size:24px;flex-shrink:0;">📵</span>
+      <div>
+        <p style="font-weight:700;font-size:14px;margin:0 0 4px;">デジタルデトックス</p>
+        <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">選んだアプリを一定時間ブロック。自分のペースで始められる。</p>
+      </div>
+    </div>
+    <div class="feature-card" style="display:flex;align-items:flex-start;gap:16px;padding:20px;">
+      <span style="font-size:24px;flex-shrink:0;">👥</span>
+      <div>
+        <p style="font-weight:700;font-size:14px;margin:0 0 4px;">フレンドと一緒に</p>
+        <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">グループデトックスでお互いに励まし合い、達成感を共有。</p>
+      </div>
+    </div>
+    <div class="feature-card" style="display:flex;align-items:flex-start;gap:16px;padding:20px;">
+      <span style="font-size:24px;flex-shrink:0;">📊</span>
+      <div>
+        <p style="font-weight:700;font-size:14px;margin:0 0 4px;">スクリーンタイムを可視化</p>
+        <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">デトックスで削減した時間をグラフで確認。成長が見える。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="fade-up-4 text-center">
+    <p style="color:#374151;font-size:12px;">© 2026 (DIS)CONNECT · <a href="/index.html" style="color:#4b5563;text-decoration:underline;">アプリを試す</a></p>
+  </div>
+
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhhdcJ7Yigw5VGxuJxXSicqqHPe2xNcCY",
+    authDomain: "tuneout-a7c7b.firebaseapp.com",
+    projectId: "tuneout-a7c7b",
+    storageBucket: "tuneout-a7c7b.firebasestorage.app",
+    messagingSenderId: "798608722916",
+    appId: "1:798608722916:web:95d9766c02bdcfd52455f1"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // 登録者数を表示
+  db.collection('waitlist').get().then(snap => {
+    const n = snap.size;
+    if (n > 0) {
+      document.getElementById('wl-count').textContent = `すでに ${n} 人が登録済み`;
+    }
+  }).catch(() => {});
+
+  document.getElementById('wl-btn').addEventListener('click', async () => {
+    const email = document.getElementById('wl-email').value.trim();
+    const name  = document.getElementById('wl-name').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('wl-email').style.borderColor = '#ef4444';
+      document.getElementById('wl-email').focus();
+      return;
+    }
+    document.getElementById('wl-email').style.borderColor = '';
+    const btn = document.getElementById('wl-btn');
+    btn.disabled = true;
+    btn.textContent = '登録中...';
+    try {
+      // 重複チェック
+      const exists = await db.collection('waitlist').where('email','==',email).get();
+      if (!exists.empty) {
+        document.getElementById('form-card').style.display = 'none';
+        document.getElementById('success-msg').style.display = 'block';
+        return;
+      }
+      await db.collection('waitlist').add({
+        email,
+        name: name || null,
+        registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lang: navigator.language || 'ja'
+      });
+      document.getElementById('form-card').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    } catch(e) {
+      console.error(e);
+      btn.disabled = false;
+      btn.textContent = '早期アクセスを申し込む';
+      alert('エラーが発生しました。もう一度お試しください。');
+    }
+  });
+</script>
+</body>
+</html>

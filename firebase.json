@@ -3,6 +3,9 @@
     "source": "functions",
     "runtime": "nodejs20"
   },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "public": ".",
     "ignore": [
@@ -13,7 +16,8 @@
       "package-lock.json",
       "tailwind.config.js",
       "tw_input.css",
-      "functions/**"
+      "functions/**",
+      "firestore.rules"
     ],
     "rewrites": [
       {

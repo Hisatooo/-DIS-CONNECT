@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ウェイトリスト: 誰でも読み書き可（メール登録のみ）
+    match /waitlist/{doc} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['email','name','registeredAt','lang'])
+                    && request.resource.data.email is string
+                    && request.resource.data.email.size() < 200;
+      allow update, delete: if false;
+    }
+
+    // その他: 認証済みユーザーのみ
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
