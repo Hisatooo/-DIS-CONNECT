@@ -1445,8 +1445,8 @@ function renderFeedList() {
     const f = isMe ? (getUser() || {}) : (friendById(p.userId) || {});
     const fName   = isMe ? (f.name || t('あなた','You')) : (f.name || '?');
     const fHandle = isMe ? (f.handle || '') : (f.handle || '');
-    const fAvatarHTML = (isMe && f.avatarConfig)
-      ? `<div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden" style="min-width:40px;">${renderAvatarSVG(f.avatarConfig, 40)}</div>`
+    const fAvatarHTML = f.avatarConfig
+      ? `<div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden cursor-pointer profile-trig" data-uid="${p.userId}" style="min-width:40px;">${renderAvatarSVG(f.avatarConfig, 40)}</div>`
       : `<img src="${f.avatar||''}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">`;
     const dur = fmtDuration(p.duration);
     const el = document.createElement('div');
@@ -1545,9 +1545,12 @@ function openCommentPanel(postId) {
   const comments = MOCK_COMMENTS[postId] || [];
 
   // Post preview
+  const fAvatarTag = f.avatarConfig
+    ? `<div class="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden">${renderAvatarSVG(f.avatarConfig, 36)}</div>`
+    : `<img src="${f.avatar||''}" class="w-9 h-9 rounded-full flex-shrink-0" alt="">`;
   document.getElementById('comment-post-body').innerHTML = `
     <div class="flex items-start space-x-3">
-      <img src="${f.avatar||''}" class="w-9 h-9 rounded-full flex-shrink-0" alt="">
+      ${fAvatarTag}
       <div class="flex-grow">
         <p class="font-bold text-white text-sm">${f.name} <span class="text-gray-600 font-normal text-xs">${f.handle} · ${post.time}</span></p>
         <div class="flex items-center space-x-2 mt-2 bg-[#1C1C1E] border border-gray-800 rounded-xl p-2.5">
@@ -1600,9 +1603,12 @@ document.getElementById('comment-send-btn').addEventListener('click', () => {
   MOCK_COMMENTS[S.commentPostId].push({ userId: 'me', text });
   // Re-render comment list inline
   const cl = document.getElementById('comment-list');
+  const uAvatarTag = u?.avatarConfig
+    ? `<div class="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden">${renderAvatarSVG(u.avatarConfig, 32)}</div>`
+    : `<img src="${u?.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">`;
   cl.insertAdjacentHTML('beforeend', `
     <div class="flex items-start space-x-3">
-      <img src="${u?.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+      ${uAvatarTag}
       <div>
         <p class="text-sm font-bold text-white">${u?.name||'You'}</p>
         <p class="text-sm text-gray-300 mt-0.5">${text}</p>
