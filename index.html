@@ -733,11 +733,11 @@ const MOCK_GROUPS = [
 ];
 
 const MOCK_FRIENDS = [
-  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
-  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
-  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
-  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
-  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', avatarConfig: { bgColor:'#3B82F6', skinColor:'#FDDCB5', hairStyle:'long',  hairColor:'#C9A84C', eyeStyle:'almond', browStyle:'normal', mouthStyle:'smile',   hasGlasses:false }, isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
+  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', avatarConfig: { bgColor:'#F59E0B', skinColor:'#C68642', hairStyle:'short', hairColor:'#1A0A00', eyeStyle:'round',  browStyle:'raised', mouthStyle:'neutral', hasGlasses:true  }, isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
+  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', avatarConfig: { bgColor:'#EC4899', skinColor:'#FDDCB5', hairStyle:'bun',   hairColor:'#B22222', eyeStyle:'happy',  browStyle:'thin',   mouthStyle:'grin',    hasGlasses:false }, isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', avatarConfig: { bgColor:'#14B8A6', skinColor:'#8D5524', hairStyle:'buzz',  hairColor:'#3D2200', eyeStyle:'round',  browStyle:'normal', mouthStyle:'smile',   hasGlasses:false }, isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', avatarConfig: { bgColor:'#8B5CF6', skinColor:'#F2C18D', hairStyle:'curly', hairColor:'#7A4419', eyeStyle:'almond', browStyle:'normal', mouthStyle:'smirk',   hasGlasses:false }, isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
 ];
 
 // ================================================================
@@ -1292,7 +1292,7 @@ function renderRegister() {
       </div>
       <div>
         <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーID (@)','User ID (@)')}</label>
-        <input id="reg-handle" class="input-field" type="text" placeholder="${t('例: tuneout_user','e.g. tuneout_user')}">
+        <input id="reg-handle" class="input-field" type="text" placeholder="${t('例: disconnect_user','e.g. disconnect_user')}">
         <p class="text-xs text-gray-700 mt-1 ml-1">${t('3〜30文字、英数字・_・. のみ','3–30 chars, letters, numbers, _ and . only')}</p>
       </div>
       <div>
@@ -1447,7 +1447,7 @@ function renderFeedList() {
     const fHandle = isMe ? (f.handle || '') : (f.handle || '');
     const fAvatarHTML = f.avatarConfig
       ? `<div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden cursor-pointer profile-trig" data-uid="${p.userId}" style="min-width:40px;">${renderAvatarSVG(f.avatarConfig, 40)}</div>`
-      : `<img src="${f.avatar||''}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">`;
+      : `<img src="${getAvatarSrc(f,40)}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">`;
     const dur = fmtDuration(p.duration);
     const el = document.createElement('div');
     el.className = 'py-4 border-b border-gray-900';
@@ -1547,7 +1547,7 @@ function openCommentPanel(postId) {
   // Post preview
   const fAvatarTag = f.avatarConfig
     ? `<div class="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden">${renderAvatarSVG(f.avatarConfig, 36)}</div>`
-    : `<img src="${f.avatar||''}" class="w-9 h-9 rounded-full flex-shrink-0" alt="">`;
+    : `<img src="${getAvatarSrc(f,36)}" class="w-9 h-9 rounded-full flex-shrink-0" alt="">`;
   document.getElementById('comment-post-body').innerHTML = `
     <div class="flex items-start space-x-3">
       ${fAvatarTag}
@@ -1575,7 +1575,7 @@ function openCommentPanel(postId) {
       const cf = friendById(c.userId) || {};
       cl.insertAdjacentHTML('beforeend', `
         <div class="flex items-start space-x-3">
-          <img src="${cf.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+          <img src="${getAvatarSrc(cf,32)}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
           <div>
             <p class="text-sm font-bold text-white">${cf.name||'?'} <span class="text-gray-600 font-normal text-xs">${cf.handle||''}</span></p>
             <p class="text-sm text-gray-300 mt-0.5">${c.text}</p>
@@ -2181,7 +2181,7 @@ function renderGroupsList() {
           const f = friendById(id);
           if (!f) return '';
           const isOn = !!f.sessionStart;
-          return `<div class="relative"><img src="${f.avatar}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
+          return `<div class="relative"><img src="${getAvatarSrc(f, 28)}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
         }).join('')}
         ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length}${t('人がデトックス中',' detoxing')}</span>` : `<span class="text-xs text-gray-700 ml-1">${t('待機中','Waiting')}</span>`}
       </div>
@@ -2350,7 +2350,7 @@ function renderGroupDetail(groupId) {
           <div class="flex justify-start mb-3" data-from="${msg.from}">
             <div class="max-w-xs w-full">
               <div class="flex items-center gap-2 mb-1.5">
-                <img src="${fromF?.avatar || `https://placehold.co/24x24/555/FFF?text=${msg.from[0].toUpperCase()}`}" class="w-6 h-6 rounded-full" alt="">
+                <img src="${getAvatarSrc(fromF,24)}" class="w-6 h-6 rounded-full" alt="">
                 <span class="text-xs text-gray-500">${fromF?.name || msg.from}</span>
                 <span class="text-xs text-gray-700">${msg.time}</span>
               </div>
@@ -2380,7 +2380,7 @@ function renderGroupDetail(groupId) {
         const name2  = isMe ? (getUser()?.name || t('あなた','You')) : (fromF2?.name || msg.from);
         return `
           <div class="flex ${isMe?'justify-end':'justify-start'} mb-2">
-            ${!isMe ? `<img src="${fromF2?.avatar || `https://placehold.co/32x32/555/FFF?text=${msg.from[0].toUpperCase()}`}" class="w-8 h-8 rounded-full mr-2 flex-shrink-0 self-end" alt="">` : ''}
+            ${!isMe ? `<img src="${getAvatarSrc(fromF2,32)}" class="w-8 h-8 rounded-full mr-2 flex-shrink-0 self-end" alt="">` : ''}
             <div class="max-w-[72%]">
               ${!isMe ? `<p class="text-xs text-gray-600 mb-0.5 ml-1">${name2}</p>` : ''}
               <div class="px-3.5 py-2.5 rounded-2xl text-sm ${isMe?'bg-white text-black rounded-br-sm':'bg-[#2C2C2E] text-white rounded-bl-sm'}">${msg.text}</div>
@@ -2823,7 +2823,7 @@ function buildFriendCard(f, isActive) {
   el.innerHTML = `
     <div class="flex items-center space-x-3">
       <div class="relative">
-        <img src="${f.avatar}" class="w-12 h-12 rounded-full ${isActive?'':'opacity-50'}" alt="">
+        <img src="${getAvatarSrc(f, 48)}" class="w-12 h-12 rounded-full ${isActive?'':'opacity-50'}" alt="">
         ${isActive ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
       </div>
       <div>
@@ -2901,7 +2901,7 @@ function renderMsgList(filter = '') {
     el.className = 'card flex items-center space-x-3 p-4 cursor-pointer hover:bg-[#2C2C2E] transition';
     el.innerHTML = `
       <div class="relative flex-shrink-0">
-        <img src="${f.avatar}" class="w-12 h-12 rounded-full" alt="">
+        <img src="${getAvatarSrc(f, 48)}" class="w-12 h-12 rounded-full" alt="">
         ${f.sessionStart ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
       </div>
       <div class="flex-grow min-w-0">
@@ -2928,7 +2928,7 @@ function openDM(friend) {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      <img src="${friend.avatar}" class="w-9 h-9 rounded-full" alt="">
+      <img src="${getAvatarSrc(friend, 36)}" class="w-9 h-9 rounded-full" alt="">
       <div>
         <p class="font-bold text-white text-sm">${friend.name}</p>
         <p class="text-xs text-gray-700">既読なし</p>
@@ -3512,7 +3512,7 @@ function renderNotifSettings() {
     return `
       <div class="flex justify-between items-center py-3 ${border}">
         <div class="flex items-center gap-2.5 min-w-0">
-          <img src="${f.avatar}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
+          <img src="${getAvatarSrc(f,28)}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
           <span class="text-white text-sm truncate">${f.name}</span>
         </div>
         <div class="flex items-center gap-3 flex-shrink-0">
@@ -3793,7 +3793,7 @@ function openUserProfile(userId) {
     </div>
     <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10">
       <div class="flex items-center space-x-4 py-5">
-        <img src="${f.avatar}" class="w-16 h-16 rounded-full border-2 border-gray-800" alt="">
+        <img src="${getAvatarSrc(f,64)}" class="w-16 h-16 rounded-full border-2 border-gray-800" alt="">
         <div>
           <h2 class="text-xl font-black text-white">${f.name}</h2>
           <p class="text-gray-600 text-sm">${f.handle}</p>
@@ -4444,7 +4444,7 @@ function renderInviteSheet(group) {
     friendsList.innerHTML = invitableFriends.map(f => `
       <div class="flex items-center justify-between py-2">
         <div class="flex items-center gap-3">
-          <img src="${f.avatar}" class="w-10 h-10 rounded-full" alt="${f.name}">
+          <img src="${getAvatarSrc(f,40)}" class="w-10 h-10 rounded-full" alt="${f.name}">
           <div>
             <p class="font-semibold text-white text-sm">${f.name}</p>
             <p class="text-xs text-gray-600">${f.handle}</p>
@@ -4540,7 +4540,7 @@ function renderCreateGroup() {
           ${MOCK_FRIENDS.filter(f => f.isFriend).map(f => `
             <div class="card p-3 flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <img src="${f.avatar}" class="w-9 h-9 rounded-full" alt="${f.name}">
+                <img src="${getAvatarSrc(f,36)}" class="w-9 h-9 rounded-full" alt="${f.name}">
                 <div>
                   <p class="text-sm font-semibold text-white">${f.name}</p>
                   <p class="text-xs text-gray-600">${f.handle}</p>
