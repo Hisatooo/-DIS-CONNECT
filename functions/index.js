@@ -108,9 +108,12 @@ exports.updateDailySchedule = functions.pubsub
   .schedule("0 22 * * *")
   .timeZone("Asia/Tokyo")
   .onRun(async (_context) => {
-    // ランダムな開始時刻を生成（8:00〜22:00 JST の間）
-    const startHour = Math.floor(Math.random() * 14) + 8; // 8〜21
-    const startMin = Math.random() < 0.5 ? 0 : 30;
+    // ランダムな開始時刻を生成（12:30〜19:00 JST の間）
+    const totalOffsetMin = Math.floor(Math.random() * 391); // 0〜390分（=6時間30分）
+    const baseMin = 12 * 60 + 30; // 12:30
+    const absMin = baseMin + totalOffsetMin;
+    const startHour = Math.floor(absMin / 60);
+    const startMin = absMin % 60 < 30 ? 0 : 30;
     const durationOptions = [30, 60, 90, 120]; // 分
     const duration =
       durationOptions[Math.floor(Math.random() * durationOptions.length)];
