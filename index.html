@@ -2262,9 +2262,10 @@ function renderGroupDetail(groupId) {
       const f = isMe ? null : friendById(id);
       const name = isMe ? myName : (f ? f.name : id);
       const meUser = isMe ? getUser() : null;
-      const avatarHTML = (isMe && meUser?.avatarConfig)
-        ? `<div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(ready||(!declined))?'':'opacity-40'}">${renderAvatarSVG(meUser.avatarConfig, 36)}</div>`
-        : `<img src="${f ? f.avatar : `https://placehold.co/36x36/555/FFF?text=${id[0].toUpperCase()}`}" class="w-9 h-9 rounded-full ${(ready||(!declined))?'':'opacity-40'}" alt="${name}">`;
+      const _lobbyUser = isMe ? meUser : f;
+      const avatarHTML = _lobbyUser?.avatarConfig
+        ? `<div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(ready||(!declined))?'':'opacity-40'}">${renderAvatarSVG(_lobbyUser.avatarConfig, 36)}</div>`
+        : `<img src="${getAvatarSrc(_lobbyUser||{name:id}, 36)}" class="w-9 h-9 rounded-full ${(ready||(!declined))?'':'opacity-40'}" alt="${name}">`;
       const ready = readyList.includes(id);
       const declined = declinedList.includes(id);
       const statusLabel = ready
@@ -2601,9 +2602,7 @@ function renderGroupDetail(groupId) {
             const f = isMe ? null : friendById(id);
             const u2 = getUser();
             const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
-            const avatar = isMe
-              ? getAvatarSrc(u2, 40)
-              : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+            const avatar = getAvatarSrc(isMe ? u2 : (f || {name:id}), 40);
             const isGroupOwner = g.owner === id || (isMe && g.owner === 'me');
             const badge = isGroupOwner
               ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">${t('オーナー','Owner')}</span>`
