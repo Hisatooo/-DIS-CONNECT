@@ -1349,6 +1349,7 @@ function renderRegister() {
         const u = {
           name, handle: `@${handle.replace('@','')}`,
           bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
+          avatarConfig: Object.assign({}, AVATAR_DEFAULTS),
           email, isPublic: true,
         };
         await db.collection('users').doc(cred.user.uid).set(u);
@@ -1713,9 +1714,7 @@ function renderSessionPage() {
             const f = isMe ? null : friendById(id);
             const u2 = getUser();
             const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
-            const avatar = isMe
-              ? `https://placehold.co/24x24/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
-              : (f?f.avatar.replace('48x48','24x24'):`https://placehold.co/24x24/555/FFF?text=${id[0].toUpperCase()}`);
+            const avatar = getAvatarSrc(isMe ? u2 : (f || {name:id}), 24);
             return `<img src="${avatar}" class="w-6 h-6 rounded-full border-2 border-black" title="${name}">`;
           }).join('')}
         </div>
