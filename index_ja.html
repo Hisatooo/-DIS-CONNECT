@@ -7,7 +7,13 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>(DIS)CONNECT</title>
+  <link rel="icon" type="image/png" href="/icon.png">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     /* ===== BASE ===== */
@@ -243,6 +249,12 @@
     }
     .picker-pad { height: 5.5rem; flex-shrink: 0; }
 
+    /* ===== SCREEN TIME PERIOD TABS ===== */
+    .active-period {
+      background: #3a3a3c;
+      color: white;
+    }
+
     /* ===== WEEKLY CHART ===== */
     .week-col {
       flex: 1;
@@ -316,6 +328,54 @@
 
     /* ===== PADDING FOR NAV ===== */
     .pb-nav { padding-bottom: 7rem; }
+
+    /* ===== ONBOARDING ANIMATIONS ===== */
+    .ob-phone {
+      width: 150px; height: 260px;
+      background: #111; border-radius: 24px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    @keyframes ob-swipe {
+      0%   { transform: translateX(0); opacity:1; }
+      60%  { transform: translateX(94px); opacity:1; }
+      80%  { transform: translateX(94px); opacity:0; }
+      81%  { transform: translateX(0); opacity:0; }
+      100% { transform: translateX(0); opacity:1; }
+    }
+    @keyframes ob-pulse-ring {
+      0%   { transform: scale(1); opacity:0.6; }
+      100% { transform: scale(1.6); opacity:0; }
+    }
+    @keyframes ob-status-cycle {
+      0%,40%  { opacity:1; }
+      50%,90% { opacity:0; }
+      100%    { opacity:1; }
+    }
+    @keyframes ob-checkin {
+      0%,100% { opacity:0; transform:scale(0.5); }
+      20%,80% { opacity:1; transform:scale(1); }
+    }
+    @keyframes ob-heart-pop {
+      0%   { transform:scale(1); }
+      30%  { transform:scale(1.5); }
+      60%  { transform:scale(0.9); }
+      100% { transform:scale(1); }
+    }
+    @keyframes ob-count-up {
+      0%   { opacity:1; } 49% { opacity:1; }
+      50%  { opacity:0; } 99% { opacity:0; }
+      100% { opacity:1; }
+    }
+    @keyframes ob-fadein-up {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes ob-timer-tick {
+      0%   { content:"03:00"; }
+      100% { content:"02:47"; }
+    }
   </style>
 </head>
 <body class="antialiased overflow-hidden h-screen w-screen">
@@ -325,8 +385,11 @@
 <!-- ========================================================== -->
 <div id="app" class="h-full w-full max-w-md mx-auto relative overflow-hidden bg-black">
 
+  <!-- ===================== LANGUAGE SELECT ===================== -->
+  <div id="page-lang" class="page flex flex-col items-center justify-center px-8"></div>
+
   <!-- ===================== LOGIN ===================== -->
-  <div id="page-login" class="page active flex flex-col justify-center px-8"></div>
+  <div id="page-login" class="page flex flex-col justify-center px-8"></div>
 
   <!-- ===================== REGISTER ===================== -->
   <div id="page-register" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-14 pb-10"></div>
@@ -358,6 +421,26 @@
   <!-- ===================== DM ===================== -->
   <div id="page-dm" class="page flex flex-col"></div>
 
+  <!-- ===================== APP PICKER MODAL ===================== -->
+  <div id="app-picker-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:#1c1c1e;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;">
+      <button id="app-picker-cancel" style="width:36px;height:36px;border-radius:50%;background:#3a3a3c;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <span id="app-picker-title" style="color:white;font-weight:900;font-size:17px;">アプリを選択</span>
+      <button id="app-picker-done" style="width:36px;height:36px;border-radius:50%;background:#3b82f6;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+    </div>
+    <div id="app-picker-list" style="flex:1;overflow-y:auto;padding:0 16px 80px;"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px 28px;background:#1c1c1e;border-top:1px solid #2c2c2e;">
+      <div style="display:flex;align-items:center;background:#2c2c2e;border-radius:12px;padding:10px 14px;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="app-picker-search" type="text" placeholder="Search" style="flex:1;background:none;border:none;outline:none;color:white;font-size:15px;" />
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== PROFILE ===================== -->
   <div id="page-profile" class="page flex flex-col overflow-y-auto no-scrollbar pb-nav"></div>
 
@@ -366,6 +449,8 @@
 
   <!-- ===================== EDIT PROFILE ===================== -->
   <div id="page-edit-profile" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+  <div id="page-avatar-builder" class="page flex flex-col" style="background:#111;"></div>
+  <div id="page-survey" class="page flex flex-col overflow-y-auto no-scrollbar px-6 pt-10 pb-10"></div>
 
   <!-- ===================== USER PROFILE ===================== -->
   <div id="page-user-profile" class="page flex flex-col"></div>
@@ -381,6 +466,9 @@
 
   <!-- ===================== CREATE GROUP ===================== -->
   <div id="page-create-group" class="page flex flex-col overflow-y-auto no-scrollbar px-5 pt-5 pb-10"></div>
+
+  <!-- ===================== ONBOARDING ===================== -->
+  <div id="page-onboarding" class="page flex flex-col items-center justify-between px-6 pt-12 pb-10"></div>
 
   <!-- ===================== TERMS ===================== -->
   <div id="page-terms" class="page flex flex-col overflow-y-auto no-scrollbar"></div>
@@ -435,8 +523,14 @@
 
       <!-- App Selection -->
       <div class="mb-5">
-        <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-3">制限するアプリ</p>
-        <div id="app-chip-list" class="flex flex-wrap gap-2"></div>
+        <p id="manual-apps-label" class="text-xs text-gray-600 font-semibold mb-2">制限するアプリ</p>
+        <button id="open-app-picker-btn" class="w-full flex items-center justify-between bg-[#1C1C1E] border border-gray-800 rounded-xl px-4 py-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span id="app-picker-summary" class="text-sm text-gray-400">アプリを選択...</span>
+          </div>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
       </div>
 
       <!-- Divider -->
@@ -465,7 +559,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
         </div>
-        <span id="manual-slider-label" class="slider-label">スワイプして開始</span>
+        <span id="manual-slider-label" class="slider-label">スワイプして(DIS)CONNECT</span>
       </div>
 
       <button id="manual-cancel-btn" class="w-full text-gray-600 font-semibold py-3 mt-1 text-sm">キャンセル</button>
@@ -540,6 +634,50 @@
 'use strict';
 
 // ================================================================
+// FIREBASE INIT
+// ================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBhhdcJ7Yigw5VGxuJxXSicqqHPe2xNcCY",
+  authDomain: "tuneout-a7c7b.firebaseapp.com",
+  databaseURL: "https://tuneout-a7c7b-default-rtdb.firebaseio.com",
+  projectId: "tuneout-a7c7b",
+  storageBucket: "tuneout-a7c7b.firebasestorage.app",
+  messagingSenderId: "798608722916",
+  appId: "1:798608722916:web:95d9766c02bdcfd52455f1",
+  measurementId: "G-ME79H7QYQ7"
+};
+let auth      = null;
+let db        = null;
+let messaging = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db   = firebase.firestore();
+  if (firebase.messaging.isSupported()) {
+    messaging = firebase.messaging();
+  }
+} catch(e) {
+  console.error('Firebase init failed:', e);
+}
+
+// FCMトークンを取得してFirestoreのusers/{uid}/fcmTokenに保存
+async function registerFCMToken(uid) {
+  if (!messaging || !db || !uid) return;
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+    const token = await messaging.getToken({
+      vapidKey: 'BN7lEUdOjXotzGNLeu_LM_B8hvXSgmSLkquZzQtUx4P8BkzUZP-i_LdkvXic5q83hlY_Tk9I_66DGbio8eks3Ks'
+    });
+    if (token) {
+      await db.collection('users').doc(uid).update({ fcmToken: token });
+    }
+  } catch(e) {
+    console.warn('FCM token registration failed:', e);
+  }
+}
+
+// ================================================================
 // MOCK DATA
 // ================================================================
 const MOCK_GROUPS = [
@@ -595,12 +733,166 @@ const MOCK_GROUPS = [
 ];
 
 const MOCK_FRIENDS = [
-  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
-  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
-  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
-  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
-  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'alice', name: 'Alice',  handle: '@alice',   avatar: 'https://placehold.co/48x48/475569/FFF?text=A', avatarConfig: { bgColor:'#3B82F6', skinColor:'#FDDCB5', hairStyle:'long',  hairColor:'#C9A84C', eyeStyle:'almond', browStyle:'normal', mouthStyle:'smile',   hasGlasses:false }, isFriend: true,  bio: 'フロントエンド開発者', isPublic: true,  sessionStart: Date.now() - 900000,  sessionDuration: 3600,    blockPublic: true  },
+  { id: 'ben',   name: 'Ben',    handle: '@ben',     avatar: 'https://placehold.co/48x48/f97316/FFF?text=B', avatarConfig: { bgColor:'#F59E0B', skinColor:'#C68642', hairStyle:'short', hairColor:'#1A0A00', eyeStyle:'round',  browStyle:'raised', mouthStyle:'neutral', hasGlasses:true  }, isFriend: true,  bio: '集中力向上中',     isPublic: false, sessionStart: Date.now() - 1800000, sessionDuration: 7200,    blockPublic: false },
+  { id: 'chloe', name: 'Chloe',  handle: '@chloe',   avatar: 'https://placehold.co/48x48/ec4899/FFF?text=C', avatarConfig: { bgColor:'#EC4899', skinColor:'#FDDCB5', hairStyle:'bun',   hairColor:'#B22222', eyeStyle:'happy',  browStyle:'thin',   mouthStyle:'grin',    hasGlasses:false }, isFriend: true,  bio: 'UIデザイナー',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'david', name: 'David',  handle: '@david',   avatar: 'https://placehold.co/48x48/14b8a6/FFF?text=D', avatarConfig: { bgColor:'#14B8A6', skinColor:'#8D5524', hairStyle:'buzz',  hairColor:'#3D2200', eyeStyle:'round',  browStyle:'normal', mouthStyle:'smile',   hasGlasses:false }, isFriend: true,  bio: 'Python & AI',     isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
+  { id: 'emma',  name: 'Emma',   handle: '@emma',    avatar: 'https://placehold.co/48x48/8b5cf6/FFF?text=E', avatarConfig: { bgColor:'#8B5CF6', skinColor:'#F2C18D', hairStyle:'curly', hairColor:'#7A4419', eyeStyle:'almond', browStyle:'normal', mouthStyle:'smirk',   hasGlasses:false }, isFriend: false, bio: 'ランニング好き',   isPublic: true,  sessionStart: null,         sessionDuration: 0,       blockPublic: true  },
 ];
+
+// ================================================================
+// AVATAR BUILDER SYSTEM
+// ================================================================
+const AVATAR_OPTS = {
+  bg:        ['#6366f1','#3b82f6','#10b981','#f59e0b','#ec4899','#14b8a6','#ef4444','#1c1c1e'],
+  skin:      ['#FDDCB5','#F2C18D','#E8A87C','#C68642','#8D5524','#4A2912'],
+  hair:      ['short','long','bun','buzz','none'],
+  hairColor: ['#1a0a00','#3d2200','#7a4419','#c9a84c','#b22222','#8a8a8a','#f0e68c','#f5f5f5'],
+  eyes:      ['round','narrow','wide','happy'],
+  brows:     ['normal','raised','furrowed'],
+  mouth:     ['smile','grin','neutral','surprised'],
+  glasses:   [false, true]
+};
+const AVATAR_DEFAULTS = {
+  bg:'#6366f1', skin:'#FDDCB5', hair:'short', hairColor:'#1a0a00',
+  eyes:'round', brows:'normal', mouth:'smile', glasses:false
+};
+
+function renderAvatarSVG(cfg, size) {
+  size = size || 48;
+  const c = Object.assign({}, AVATAR_DEFAULTS, cfg || {});
+  const hc = c.hairColor;
+  const sk = c.skin;
+  const hairPaths = {
+    short: `<path d="M24,56 Q23,26 50,23 Q77,26 76,56 Q72,43 50,43 Q28,43 24,56Z" fill="${hc}"/>`,
+    long:  `<path d="M22,60 Q21,22 50,19 Q79,22 78,60 L76,80 Q68,94 62,83 Q61,72 50,72 Q39,72 38,83 Q32,94 24,80Z" fill="${hc}"/>
+            <path d="M24,56 Q23,26 50,23 Q77,26 76,56 Q72,43 50,43 Q28,43 24,56Z" fill="${hc}"/>`,
+    bun:   `<ellipse cx="50" cy="20" rx="13" ry="10" fill="${hc}"/>
+            <path d="M24,56 Q23,26 50,23 Q77,26 76,56 Q72,43 50,43 Q28,43 24,56Z" fill="${hc}"/>`,
+    buzz:  `<ellipse cx="50" cy="34" rx="26" ry="12" fill="${hc}"/>
+            <path d="M24,54 Q23,29 50,27 Q77,29 76,54 Q72,45 50,45 Q28,45 24,54Z" fill="${hc}"/>`,
+    none:  ''
+  };
+  const eyePaths = {
+    round:  `<circle cx="40" cy="52" r="4" fill="#111"/><circle cx="60" cy="52" r="4" fill="#111"/>
+             <circle cx="41.5" cy="50.5" r="1.3" fill="white"/><circle cx="61.5" cy="50.5" r="1.3" fill="white"/>`,
+    narrow: `<ellipse cx="40" cy="52" rx="5" ry="2.5" fill="#111"/><ellipse cx="60" cy="52" rx="5" ry="2.5" fill="#111"/>
+             <circle cx="41" cy="51.5" r="1" fill="white"/><circle cx="61" cy="51.5" r="1" fill="white"/>`,
+    wide:   `<circle cx="40" cy="52" r="5.5" fill="white" stroke="#111" stroke-width="1.5"/><circle cx="40" cy="52" r="3" fill="#111"/>
+             <circle cx="60" cy="52" r="5.5" fill="white" stroke="#111" stroke-width="1.5"/><circle cx="60" cy="52" r="3" fill="#111"/>
+             <circle cx="41" cy="50.5" r="1" fill="white"/><circle cx="61" cy="50.5" r="1" fill="white"/>`,
+    happy:  `<path d="M35,54 Q40,48 45,54" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+             <path d="M55,54 Q60,48 65,54" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>`
+  };
+  const browPaths = {
+    normal:   `<path d="M34,45 Q40,43 46,45" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>
+               <path d="M54,45 Q60,43 66,45" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>`,
+    raised:   `<path d="M34,42 Q40,39 46,42" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>
+               <path d="M54,42 Q60,39 66,42" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>`,
+    furrowed: `<path d="M34,44 Q40,47 46,44" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>
+               <path d="M54,44 Q60,47 66,44" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linecap="round"/>`
+  };
+  const mouthPaths = {
+    smile:     `<path d="M40,67 Q50,75 60,67" fill="none" stroke="#9b3a3a" stroke-width="2.5" stroke-linecap="round"/>`,
+    grin:      `<path d="M38,65 Q50,78 62,65" fill="#9b3a3a"/><path d="M39,65 Q50,71 61,65" fill="${sk}"/>`,
+    neutral:   `<line x1="43" y1="68" x2="57" y2="68" stroke="#9b3a3a" stroke-width="2.5" stroke-linecap="round"/>`,
+    surprised: `<ellipse cx="50" cy="69" rx="6" ry="5" fill="#9b3a3a"/><ellipse cx="50" cy="70" rx="4" ry="3.5" fill="#7a1a1a"/>`
+  };
+  const glasses = c.glasses
+    ? `<circle cx="40" cy="52" r="9" fill="none" stroke="#333" stroke-width="2.2" opacity="0.85"/>
+       <circle cx="60" cy="52" r="9" fill="none" stroke="#333" stroke-width="2.2" opacity="0.85"/>
+       <line x1="49" y1="52" x2="51" y2="52" stroke="#333" stroke-width="2" opacity="0.85"/>
+       <line x1="22" y1="52" x2="31" y2="52" stroke="#333" stroke-width="1.5" opacity="0.85"/>
+       <line x1="69" y1="52" x2="78" y2="52" stroke="#333" stroke-width="1.5" opacity="0.85"/>`
+    : '';
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none;display:block;">
+    <circle cx="50" cy="50" r="50" fill="${c.bg}"/>
+    <ellipse cx="50" cy="97" rx="22" ry="14" fill="${sk}"/>
+    ${hairPaths[c.hair]||''}
+    <ellipse cx="50" cy="55" rx="26" ry="27" fill="${sk}"/>
+    ${browPaths[c.brows]||browPaths.normal}
+    ${eyePaths[c.eyes]||eyePaths.round}
+    ${mouthPaths[c.mouth]||mouthPaths.smile}
+    ${glasses}
+  </svg>`;
+}
+
+function getAvatarSrc(user, size) {
+  size = size || 48;
+  if (user && user.avatarConfig) {
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(renderAvatarSVG(user.avatarConfig, size));
+  }
+  return (user && user.avatar) ? user.avatar
+    : `https://placehold.co/${size}x${size}/334155/FFF?text=${((user&&user.name)||'?')[0].toUpperCase()}`;
+}
+
+let _abCfg = null, _abOnSave = null;
+
+function renderAvatarBuilder(onSave) {
+  _abCfg = Object.assign({}, AVATAR_DEFAULTS, (getUser()||{}).avatarConfig || {});
+  _abOnSave = onSave;
+  _drawAvatarBuilder();
+  goto('avatar-builder');
+}
+
+function _drawAvatarBuilder() {
+  const cfg = _abCfg;
+  const page = document.getElementById('page-avatar-builder');
+
+  function swatch(key, val, label, isColor) {
+    const active = JSON.stringify(cfg[key]) === JSON.stringify(val);
+    // Use single quotes inside onclick to avoid conflict with HTML attribute double quotes
+    const valJS = typeof val === 'string' ? `'${val}'` : JSON.stringify(val);
+    const js = `window._abSet('${key}',${valJS})`;
+    if (isColor) {
+      return `<button onclick="${js}" style="width:36px;height:36px;border-radius:50%;background:${val};border:3px solid ${active?'white':'transparent'};flex-shrink:0;cursor:pointer;outline:${active?'2px solid #666':'none'};outline-offset:2px;"></button>`;
+    }
+    return `<button onclick="${js}" style="padding:8px 16px;border-radius:20px;background:${active?'white':'#2c2c2e'};color:${active?'black':'#9ca3af'};font-size:13px;font-weight:600;border:none;cursor:pointer;flex-shrink:0;font-family:inherit;">${label}</button>`;
+  }
+
+  function row(key, vals, labels, isColor) {
+    return `<div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0;-webkit-overflow-scrolling:touch;scrollbar-width:none;">${vals.map((v,i)=>swatch(key,v,labels?labels[i]:v,isColor)).join('')}</div>`;
+  }
+
+  const hLabels = [t('ショート','Short'),t('ロング','Long'),t('お団子','Bun'),t('バズ','Buzz'),t('なし','None')];
+  const eLabels = [t('丸','Round'),t('細','Narrow'),t('大','Wide'),t('笑','Happy')];
+  const bLabels = [t('普通','Normal'),t('上げ','Raised'),t('寄せ','Furrowed')];
+  const mLabels = [t('微笑み','Smile'),t('ニヤ','Grin'),t('普通','Neutral'),t('驚き','Surprised')];
+  const gLabels = [t('なし','None'),t('あり','On')];
+
+  function sec(label, key, vals, labels, isColor) {
+    return `<div style="margin-bottom:20px;"><p style="color:#6b7280;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:8px;letter-spacing:.05em;">${label}</p>${row(key,vals,labels,isColor)}</div>`;
+  }
+
+  page.innerHTML = `
+    <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #1f1f1f;flex-shrink:0;">
+        <button id="ab-cancel" style="color:#9ca3af;font-size:15px;font-weight:600;background:none;border:none;cursor:pointer;font-family:inherit;">${t('キャンセル','Cancel')}</button>
+        <span style="color:white;font-weight:700;font-size:16px;">${t('アバター編集','Edit Avatar')}</span>
+        <button id="ab-done" style="color:white;font-size:15px;font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit;">${t('完了','Done')}</button>
+      </div>
+      <div style="flex-shrink:0;display:flex;justify-content:center;padding:24px 0 16px;">
+        <div style="border-radius:9999px;overflow:hidden;">${renderAvatarSVG(cfg, 120)}</div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 20px 48px;-webkit-overflow-scrolling:touch;">
+        ${sec(t('背景','Background'),       'bg',        AVATAR_OPTS.bg,        null,    true)}
+        ${sec(t('肌の色','Skin Tone'),       'skin',      AVATAR_OPTS.skin,      null,    true)}
+        ${sec(t('髪型','Hair Style'),        'hair',      AVATAR_OPTS.hair,      hLabels, false)}
+        ${sec(t('髪の色','Hair Color'),      'hairColor', AVATAR_OPTS.hairColor, null,    true)}
+        ${sec(t('目','Eyes'),                'eyes',      AVATAR_OPTS.eyes,      eLabels, false)}
+        ${sec(t('眉毛','Eyebrows'),          'brows',     AVATAR_OPTS.brows,     bLabels, false)}
+        ${sec(t('口','Mouth'),               'mouth',     AVATAR_OPTS.mouth,     mLabels, false)}
+        ${sec(t('メガネ','Glasses'),          'glasses',   AVATAR_OPTS.glasses,   gLabels, false)}
+      </div>
+    </div>`;
+
+  document.getElementById('ab-cancel').addEventListener('click', () => goto('edit-profile'));
+  document.getElementById('ab-done').addEventListener('click', () => { _abOnSave(_abCfg); goto('edit-profile'); });
+}
+
+window._abSet = (key, val) => { _abCfg[key] = val; _drawAvatarBuilder(); };
+
+// ================================================================
 
 const MOCK_POSTS = [
   { id: 1, userId: 'alice', duration: 5400, task: '読書2章分、英単語100個', comment: '久しぶりに集中できた！', time: '2時間前', likes: 12, liked: false, img: null },
@@ -609,6 +901,11 @@ const MOCK_POSTS = [
   { id: 'ad1', type: 'ad', brand: 'Notion', text: '思考を整理するワークスペース。今日から使おう。', cta: '詳しく見る' },
   { id: 4, userId: 'david', duration: 7200, task: 'AI論文読み込み', comment: '2時間、スマホなし！', time: '2日前', likes: 21, liked: false, img: null },
 ];
+// 自分の投稿をlocalStorageから復元（ページ先頭に挿入）
+(function() {
+  const saved = JSON.parse(localStorage.getItem('to_my_posts') || '[]');
+  saved.forEach(p => MOCK_POSTS.unshift(p));
+})();
 
 const MOCK_COMMENTS = {
   1: [{ userId: 'ben',   text: 'すごい！継続できてますね' },
@@ -644,7 +941,7 @@ const MOCK_GROUP_CHATS = {
 // ================================================================
 const S = {
   page: 'login',
-  feedTab: 'following',
+  feedTab: 'friends',
   activeSession: null,   // { startTime, totalDuration, timerId, isChallenge }
   viewingUserId: null,
   commentPostId: null,
@@ -662,8 +959,8 @@ const S = {
   lang: 'ja',            // 'ja' | 'en'
   notifPrefs: {          // 通知種別設定
     enabled: true,
-    friendDetoxStart: true,  // フレンドのデトックス開始
-    friendDetoxEnd: true,    // フレンドのデトックス終了
+    friendDetoxStart: false, // フレンドのデトックス開始
+    friendDetoxEnd: false,   // フレンドのデトックス終了
     likes: true,             // いいね
     comments: true,          // コメント
     groupInvite: true,       // グループ招待
@@ -685,7 +982,7 @@ function renderStaticLabels() {
   set('manual-sheet-sub', t('制限するアプリと時間をセット','Set apps to block and duration'));
   set('manual-apps-label', t('制限するアプリ','Apps to Block'));
   set('manual-time-label', t('時間','Duration'));
-  set('manual-slider-label', t('スワイプして開始','Swipe to Start'));
+  set('manual-slider-label', t('スワイプして(DIS)CONNECT','Swipe to (DIS)CONNECT'));
   set('manual-cancel-btn', t('キャンセル','Cancel'));
   set('confirm-cancel-btn', t('キャンセル','Cancel'));
   set('comment-panel-title', t('投稿','Post'));
@@ -699,6 +996,8 @@ const getUser    = () => JSON.parse(localStorage.getItem('to_user'))    || null;
 const saveUser   = u  => localStorage.setItem('to_user', JSON.stringify(u));
 const getHistory = () => JSON.parse(localStorage.getItem('to_history')) || [];
 const saveHistory= h  => localStorage.setItem('to_history', JSON.stringify(h));
+const getMyPosts = () => JSON.parse(localStorage.getItem('to_my_posts')) || [];
+const saveMyPosts= p  => localStorage.setItem('to_my_posts', JSON.stringify(p));
 const getDM      = id => JSON.parse(localStorage.getItem(`to_dm_${id}`)) || [
   { from: id,  text: 'やあ！最近デトックスできてる？',    time: '昨日' },
   { from: 'me',text: 'ちょっとずつ！今日も頑張ろう',     time: '昨日' },
@@ -733,7 +1032,7 @@ function showGroupLimitPrompt() {
 function showDetoxLimitPrompt() {
   showConfirm(
     t('本日の上限に達しました','Daily Limit Reached'),
-    t('グループデトックスは1日3回まで参加できます。プレミアムにアップグレードすると無制限に参加できます。','You can join group detox sessions up to 3 times per day. Upgrade to Premium for unlimited sessions.'),
+    t('グループデトックスは1日2回まで参加できます。プレミアムにアップグレードすると無制限に参加できます。','You can join group detox sessions up to 2 times per day. Upgrade to Premium for unlimited sessions.'),
     t('プレミアムへ','Go Premium'),
     () => goto('premium')
   );
@@ -790,9 +1089,9 @@ function friendById(id) { return MOCK_FRIENDS.find(f => f.id === id); }
 // ================================================================
 // NAVIGATION
 // ================================================================
-const NO_NAV = ['login','register','dm','settings','edit-profile','user-profile',
+const NO_NAV = ['lang','login','register','dm','settings','edit-profile','user-profile',
                 'notifications','notif-settings','challenge','session','interrupt','post-session',
-                'premium','create-group','terms','privacy'];
+                'premium','create-group','terms','privacy','onboarding','avatar-builder','survey'];
 
 function updateUnreadDots() {
   const bellDot = document.getElementById('notif-dot-btn');
@@ -841,6 +1140,7 @@ function goto(page) {
   if (page === 'messages')     renderMessages();
   if (page === 'profile')      renderProfile();
   if (page === 'notifications') renderNotifications();
+  if (page === 'lang')          renderLangSelect();
 }
 
 // ================================================================
@@ -861,14 +1161,47 @@ document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
 // ================================================================
 // LOGIN PAGE
 // ================================================================
+// ================================================================
+// LANGUAGE SELECT
+// ================================================================
+function renderLangSelect() {
+  const page = document.getElementById('page-lang');
+  page.innerHTML = `
+    <div class="w-full text-center mb-12">
+      <h1 class="text-4xl font-black text-white tracking-tight mb-1">(DIS)CONNECT</h1>
+      <p class="text-gray-600 text-sm">Choose your language / 言語を選んでください</p>
+    </div>
+    <div class="w-full space-y-3">
+      <button id="lang-ja" class="w-full py-5 rounded-2xl text-lg font-black text-white flex items-center justify-between px-6" style="background:#1C1C1E;border:1px solid rgba(255,255,255,0.1);">
+        <span class="text-2xl">🇯🇵</span>
+        <span>日本語</span>
+        <span class="text-gray-600 text-sm font-normal">Japanese</span>
+      </button>
+      <button id="lang-en" class="w-full py-5 rounded-2xl text-lg font-black text-white flex items-center justify-between px-6" style="background:#1C1C1E;border:1px solid rgba(255,255,255,0.1);">
+        <span class="text-2xl">🇺🇸</span>
+        <span>English</span>
+        <span class="text-gray-600 text-sm font-normal">英語</span>
+      </button>
+    </div>
+  `;
+  document.getElementById('lang-ja').addEventListener('click', () => {
+    S.lang = 'ja';
+    localStorage.setItem('to_lang', 'ja');
+    renderLogin();
+    goto('login');
+  });
+  document.getElementById('lang-en').addEventListener('click', () => {
+    S.lang = 'en';
+    localStorage.setItem('to_lang', 'en');
+    renderLogin();
+    goto('login');
+  });
+}
+
 function renderLogin() {
   document.getElementById('page-login').innerHTML = `
     <div class="text-center mb-10">
-      <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5">
-        <svg class="w-8 h-8 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
-        </svg>
-      </div>
+      <img src="/icon.png" alt="(DIS)CONNECT" class="w-20 h-20 rounded-3xl mx-auto mb-5">
       <h1 class="text-4xl font-black text-white">(DIS)CONNECT</h1>
       <p class="text-gray-500 mt-2 text-sm">${t('デジタルデトックスを、みんなで。','Digital detox, together.')}</p>
     </div>
@@ -878,24 +1211,67 @@ function renderLogin() {
       <button id="li-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base mt-1 active:bg-gray-200 transition">
         ${t('ログイン','Log In')}
       </button>
+      <button id="li-forgot-btn" class="w-full text-gray-500 text-sm py-2 hover:text-gray-300 transition">
+        ${t('パスワードを忘れた方はこちら','Forgot your password?')}
+      </button>
       <button id="li-reg-btn" class="w-full border border-gray-800 text-gray-300 font-semibold py-4 rounded-full text-base hover:bg-white/5 transition">
         ${t('新規登録','Sign Up')}
       </button>
     </div>
   `;
   document.getElementById('li-btn').addEventListener('click', handleLogin);
+  document.getElementById('li-forgot-btn').addEventListener('click', handleForgotPassword);
   document.getElementById('li-reg-btn').addEventListener('click', () => goto('register'));
 }
 
 function handleLogin() {
-  let u = getUser();
-  if (!u) {
-    u = { name: t('ゆうき','Yuuki'), handle: '@yuuki', bio: t('デジタルデトックス挑戦中','Digital detox challenger'),
-          avatar: 'https://placehold.co/72x72/334155/FFF?text=U',
-          email: 'user@example.com', isPublic: true };
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  if (!email || !pass) { alert(t('メールアドレスとパスワードを入力してください','Please enter email and password')); return; }
+  // Firebase未初期化の場合はlocalStorageで代替
+  if (!auth) {
+    let u = getUser() || { name: 'User', handle: '@user', bio: '', avatar: 'https://placehold.co/72x72/334155/FFF?text=U', email, isPublic: true };
     saveUser(u);
+    goto('home');
+    return;
   }
-  goto('home');
+  const btn = document.getElementById('li-btn');
+  btn.disabled = true;
+  btn.textContent = t('ログイン中...','Logging in...');
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(async (cred) => {
+      if (db) {
+        const snap = await db.collection('users').doc(cred.user.uid).get();
+        if (snap.exists) saveUser({ ...snap.data(), uid: cred.user.uid });
+      }
+      registerFCMToken(cred.user.uid);
+      goto('home');
+    })
+    .catch(err => {
+      console.error(err);
+      alert(t('ログインに失敗しました: ' + err.message, 'Login failed: ' + err.message));
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = t('ログイン','Log In');
+    });
+}
+
+function handleForgotPassword() {
+  const email = document.getElementById('li-email').value.trim();
+  if (!email) {
+    alert(t('メールアドレスを入力してください','Please enter your email address'));
+    return;
+  }
+  if (!auth) { alert(t('認証サービスが利用できません','Auth service unavailable')); return; }
+  auth.sendPasswordResetEmail(email)
+    .then(() => {
+      alert(t('パスワード再設定メールを送信しました。メールをご確認ください。', 'Password reset email sent. Please check your inbox.'));
+    })
+    .catch(err => {
+      console.error(err);
+      alert(t('送信に失敗しました: ' + err.message, 'Failed to send: ' + err.message));
+    });
 }
 
 // ================================================================
@@ -916,7 +1292,7 @@ function renderRegister() {
       </div>
       <div>
         <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('ユーザーID (@)','User ID (@)')}</label>
-        <input id="reg-handle" class="input-field" type="text" placeholder="${t('例: tuneout_user','e.g. tuneout_user')}">
+        <input id="reg-handle" class="input-field" type="text" placeholder="${t('例: disconnect_user','e.g. disconnect_user')}">
         <p class="text-xs text-gray-700 mt-1 ml-1">${t('3〜30文字、英数字・_・. のみ','3–30 chars, letters, numbers, _ and . only')}</p>
       </div>
       <div>
@@ -960,16 +1336,34 @@ function renderRegister() {
     const name   = document.getElementById('reg-name').value.trim();
     const handle = document.getElementById('reg-handle').value.trim();
     const email  = document.getElementById('reg-email').value.trim();
+    const pass   = document.getElementById('reg-pass').value;
     const agree  = document.getElementById('reg-agree').checked;
-    if (!name || !handle || !email) { alert(t('必須項目を入力してください','Please fill in all required fields')); return; }
+    if (!name || !handle || !email || !pass) { alert(t('必須項目を入力してください','Please fill in all required fields')); return; }
+    if (pass.length < 8) { alert(t('パスワードは8文字以上で入力してください','Password must be at least 8 characters')); return; }
     if (!agree) { alert(t('利用規約に同意してください','Please agree to the Terms of Service')); return; }
-    const u = {
-      name, handle: `@${handle.replace('@','')}`,
-      bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
-      email, isPublic: true,
-    };
-    saveUser(u);
-    goto('home');
+    const btn = document.getElementById('reg-submit');
+    btn.disabled = true;
+    btn.textContent = t('登録中...','Signing up...');
+    auth.createUserWithEmailAndPassword(email, pass)
+      .then(async (cred) => {
+        const u = {
+          name, handle: `@${handle.replace('@','')}`,
+          bio: '', avatar: `https://placehold.co/72x72/334155/FFF?text=${name[0].toUpperCase()}`,
+          avatarConfig: Object.assign({}, AVATAR_DEFAULTS),
+          email, isPublic: true,
+        };
+        await db.collection('users').doc(cred.user.uid).set(u);
+        saveUser({ ...u, uid: cred.user.uid });
+        registerFCMToken(cred.user.uid);
+        S._justRegistered = true;
+        renderSurvey();
+      })
+      .catch(err => {
+        console.error(err);
+        alert(t('登録に失敗しました: ' + err.message, 'Sign up failed: ' + err.message));
+        btn.disabled = false;
+        btn.textContent = t('登録する','Sign Up');
+      });
   });
 }
 
@@ -1009,7 +1403,7 @@ function renderHome() {
       </button>
     </div>
     <div class="flex-shrink-0 flex space-x-6 px-4 border-b border-gray-900 pb-3">
-      <button class="feed-tab ${S.feedTab==='following'?'active-tab':''}" data-tab="following">Following</button>
+      <button class="feed-tab ${S.feedTab==='friends'?'active-tab':''}" data-tab="friends">${t('フレンド','Friends')}</button>
       <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
     </div>
     <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
@@ -1029,9 +1423,10 @@ function renderFeedList() {
   if (!list) return;
   list.innerHTML = '';
 
-  const posts = S.feedTab === 'following'
-    ? MOCK_POSTS.filter(p => p.type === 'ad' || friendById(p.userId)?.isFriend)
-    : MOCK_POSTS;
+  const mePublic = (getUser()?.isPublic) === true;
+  const posts = S.feedTab === 'friends'
+    ? MOCK_POSTS.filter(p => p.type === 'ad' || p.userId === 'me' || friendById(p.userId)?.isFriend)
+    : MOCK_POSTS.filter(p => p.type === 'ad' || (p.userId === 'me' && mePublic) || friendById(p.userId)?.isPublic);
 
   posts.forEach(p => {
     if (p.type === 'ad') {
@@ -1047,17 +1442,28 @@ function renderFeedList() {
       `);
       return;
     }
-    const f = friendById(p.userId) || {};
+    const isMe = p.userId === 'me';
+    const f = isMe ? (getUser() || {}) : (friendById(p.userId) || {});
+    const fName   = isMe ? (f.name || t('あなた','You')) : (f.name || '?');
+    const fHandle = isMe ? (f.handle || '') : (f.handle || '');
+    const fAvatarHTML = f.avatarConfig
+      ? `<div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden cursor-pointer profile-trig" data-uid="${p.userId}" style="min-width:40px;">${renderAvatarSVG(f.avatarConfig, 40)}</div>`
+      : `<img src="${getAvatarSrc(f,40)}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">`;
     const dur = fmtDuration(p.duration);
     const el = document.createElement('div');
     el.className = 'py-4 border-b border-gray-900';
     el.innerHTML = `
       <div class="flex items-start space-x-3">
-        <img src="${f.avatar||''}" class="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer profile-trig" data-uid="${p.userId}" alt="">
+        ${fAvatarHTML}
         <div class="flex-grow min-w-0">
-          <div class="flex items-baseline space-x-2 mb-2">
-            <span class="font-bold text-white text-sm cursor-pointer profile-trig" data-uid="${p.userId}">${f.name||'?'}</span>
-            <span class="text-gray-600 text-xs">${f.handle||''} · ${p.time}</span>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-baseline space-x-2">
+              <span class="font-bold text-white text-sm ${isMe?'':'cursor-pointer profile-trig'}" data-uid="${p.userId}">${fName}</span>
+              <span class="text-gray-600 text-xs">${fHandle}${fHandle?' · ':''}${p.time}</span>
+            </div>
+            ${isMe ? `<button class="post-menu-btn text-gray-600 px-2 py-1" data-pid="${p.id}">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+            </button>` : ''}
           </div>
           <div class="flex items-center space-x-3 bg-[#1C1C1E] border border-gray-800 rounded-2xl p-3 mb-2">
             <div class="w-9 h-9 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
@@ -1111,6 +1517,21 @@ function renderFeedList() {
     el.querySelectorAll('.profile-trig').forEach(t => {
       t.addEventListener('click', e => { e.stopPropagation(); openUserProfile(t.dataset.uid); });
     });
+    // delete own post
+    el.querySelector('.post-menu-btn')?.addEventListener('click', e => {
+      e.stopPropagation();
+      showConfirm(
+        t('投稿を削除', 'Delete Post'),
+        t('この投稿を削除しますか？', 'Delete this post?'),
+        t('削除', 'Delete'),
+        () => {
+          const idx = MOCK_POSTS.findIndex(x => x.id === p.id);
+          if (idx !== -1) MOCK_POSTS.splice(idx, 1);
+          saveMyPosts(MOCK_POSTS.filter(x => x.userId === 'me'));
+          renderFeedList();
+        }
+      );
+    });
     list.appendChild(el);
   });
 }
@@ -1121,13 +1542,16 @@ function renderFeedList() {
 function openCommentPanel(postId) {
   S.commentPostId = postId;
   const post = MOCK_POSTS.find(p => p.id === postId);
-  const f    = friendById(post.userId) || {};
+  const f    = post.userId === 'me' ? (getUser() || {}) : (friendById(post.userId) || {});
   const comments = MOCK_COMMENTS[postId] || [];
 
   // Post preview
+  const fAvatarTag = f.avatarConfig
+    ? `<div class="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden">${renderAvatarSVG(f.avatarConfig, 36)}</div>`
+    : `<img src="${getAvatarSrc(f,36)}" class="w-9 h-9 rounded-full flex-shrink-0" alt="">`;
   document.getElementById('comment-post-body').innerHTML = `
     <div class="flex items-start space-x-3">
-      <img src="${f.avatar||''}" class="w-9 h-9 rounded-full flex-shrink-0" alt="">
+      ${fAvatarTag}
       <div class="flex-grow">
         <p class="font-bold text-white text-sm">${f.name} <span class="text-gray-600 font-normal text-xs">${f.handle} · ${post.time}</span></p>
         <div class="flex items-center space-x-2 mt-2 bg-[#1C1C1E] border border-gray-800 rounded-xl p-2.5">
@@ -1152,7 +1576,7 @@ function openCommentPanel(postId) {
       const cf = friendById(c.userId) || {};
       cl.insertAdjacentHTML('beforeend', `
         <div class="flex items-start space-x-3">
-          <img src="${cf.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+          <img src="${getAvatarSrc(cf,32)}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
           <div>
             <p class="text-sm font-bold text-white">${cf.name||'?'} <span class="text-gray-600 font-normal text-xs">${cf.handle||''}</span></p>
             <p class="text-sm text-gray-300 mt-0.5">${c.text}</p>
@@ -1180,9 +1604,12 @@ document.getElementById('comment-send-btn').addEventListener('click', () => {
   MOCK_COMMENTS[S.commentPostId].push({ userId: 'me', text });
   // Re-render comment list inline
   const cl = document.getElementById('comment-list');
+  const uAvatarTag = u?.avatarConfig
+    ? `<div class="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden">${renderAvatarSVG(u.avatarConfig, 32)}</div>`
+    : `<img src="${u?.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">`;
   cl.insertAdjacentHTML('beforeend', `
     <div class="flex items-start space-x-3">
-      <img src="${u?.avatar||''}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+      ${uAvatarTag}
       <div>
         <p class="text-sm font-bold text-white">${u?.name||'You'}</p>
         <p class="text-sm text-gray-300 mt-0.5">${text}</p>
@@ -1199,14 +1626,68 @@ document.getElementById('comment-send-btn').addEventListener('click', () => {
 // CHALLENGE PAGE
 // ================================================================
 const ALL_APPS = [
-  { label: 'YouTube',   bg: 'FF0000' },
-  { label: 'Instagram', bg: 'C13584' },
-  { label: 'X',         bg: '1D9BF0' },
-  { label: 'TikTok',   bg: '010101' },
-  { label: 'LINE',      bg: '06C755' },
-  { label: 'Facebook',  bg: '1877F2' },
-  { label: 'Discord',   bg: '5865F2' },
-  { label: 'Twitch',    bg: '9146FF' },
+  // SNS
+  { label: 'YouTube',     bg: 'FF0000', cat: 'SNS' },
+  { label: 'Instagram',   bg: 'C13584', cat: 'SNS' },
+  { label: 'X',           bg: '1D9BF0', cat: 'SNS' },
+  { label: 'TikTok',      bg: '010101', cat: 'SNS' },
+  { label: 'Facebook',    bg: '1877F2', cat: 'SNS' },
+  { label: 'Snapchat',    bg: 'FFFC00', cat: 'SNS' },
+  { label: 'Pinterest',   bg: 'E60023', cat: 'SNS' },
+  { label: 'LinkedIn',    bg: '0A66C2', cat: 'SNS' },
+  { label: 'BeReal',      bg: '000000', cat: 'SNS' },
+  { label: 'Threads',     bg: '101010', cat: 'SNS' },
+  { label: 'Tumblr',      bg: '35465C', cat: 'SNS' },
+  { label: 'Reddit',      bg: 'FF4500', cat: 'SNS' },
+  // メッセージ
+  { label: 'LINE',        bg: '06C755', cat: 'メッセージ' },
+  { label: 'Discord',     bg: '5865F2', cat: 'メッセージ' },
+  { label: 'WhatsApp',    bg: '25D366', cat: 'メッセージ' },
+  { label: 'Telegram',    bg: '26A5E4', cat: 'メッセージ' },
+  { label: 'Messenger',   bg: '0099FF', cat: 'メッセージ' },
+  { label: 'Signal',      bg: '3A76F0', cat: 'メッセージ' },
+  { label: 'Slack',       bg: '4A154B', cat: 'メッセージ' },
+  { label: 'Skype',       bg: '00AFF0', cat: 'メッセージ' },
+  { label: 'Zoom',        bg: '2D8CFF', cat: 'メッセージ' },
+  // エンタメ
+  { label: 'Netflix',     bg: 'E50914', cat: 'エンタメ' },
+  { label: 'Hulu',        bg: '1CE783', cat: 'エンタメ' },
+  { label: 'Disney+',     bg: '113CCF', cat: 'エンタメ' },
+  { label: 'Amazon',      bg: 'FF9900', cat: 'エンタメ' },
+  { label: 'AbemaTV',     bg: '00C7B1', cat: 'エンタメ' },
+  { label: 'DAZN',        bg: 'F9F300', cat: 'エンタメ' },
+  { label: 'Twitch',      bg: '9146FF', cat: 'エンタメ' },
+  { label: 'Niconico',    bg: 'FFFFFF', cat: 'エンタメ' },
+  { label: 'U-NEXT',      bg: 'FF1E56', cat: 'エンタメ' },
+  // 音楽
+  { label: 'Spotify',     bg: '1DB954', cat: '音楽' },
+  { label: 'Apple Music', bg: 'FC3C44', cat: '音楽' },
+  { label: 'YouTube Music',bg: 'FF0000', cat: '音楽' },
+  { label: 'SoundCloud',  bg: 'FF5500', cat: '音楽' },
+  { label: 'AWA',         bg: '000000', cat: '音楽' },
+  // ゲーム
+  { label: 'モンスト',    bg: 'F7700B', cat: 'ゲーム' },
+  { label: 'パズドラ',    bg: '1A4FA0', cat: 'ゲーム' },
+  { label: 'ポケモンGO',  bg: '0075BE', cat: 'ゲーム' },
+  { label: 'Roblox',      bg: 'E2231A', cat: 'ゲーム' },
+  { label: 'Minecraft',   bg: '62B47A', cat: 'ゲーム' },
+  { label: 'フォートナイト', bg: '1B2838', cat: 'ゲーム' },
+  { label: 'Clash of Clans', bg: '4A90D9', cat: 'ゲーム' },
+  { label: 'Among Us',    bg: 'C51111', cat: 'ゲーム' },
+  // ショッピング
+  { label: '楽天',        bg: 'BF0000', cat: 'ショッピング' },
+  { label: 'メルカリ',    bg: 'FF0211', cat: 'ショッピング' },
+  { label: 'ZOZOTOWN',    bg: '000000', cat: 'ショッピング' },
+  { label: 'ヤフオク',    bg: 'FF0033', cat: 'ショッピング' },
+  { label: 'PayPay',      bg: 'FF0033', cat: 'ショッピング' },
+  // ニュース
+  { label: 'SmartNews',   bg: 'FF3C00', cat: 'ニュース' },
+  { label: 'Yahoo!',      bg: '720E9E', cat: 'ニュース' },
+  { label: 'NewsPicks',   bg: 'E60012', cat: 'ニュース' },
+  { label: 'グノシー',    bg: '00AAFF', cat: 'ニュース' },
+  // ブラウザ
+  { label: 'Safari',      bg: '006CFF', cat: 'ブラウザ' },
+  { label: 'Chrome',      bg: '4285F4', cat: 'ブラウザ' },
 ];
 const getBlockedApps = () => ALL_APPS.filter(a => S.selectedApps.has(a.label));
 
@@ -1233,9 +1714,7 @@ function renderSessionPage() {
             const f = isMe ? null : friendById(id);
             const u2 = getUser();
             const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
-            const avatar = isMe
-              ? `https://placehold.co/24x24/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
-              : (f?f.avatar.replace('48x48','24x24'):`https://placehold.co/24x24/555/FFF?text=${id[0].toUpperCase()}`);
+            const avatar = getAvatarSrc(isMe ? u2 : (f || {name:id}), 24);
             return `<img src="${avatar}" class="w-6 h-6 rounded-full border-2 border-black" title="${name}">`;
           }).join('')}
         </div>
@@ -1485,16 +1964,6 @@ function renderPostSession(duration, completed, groupResult = null) {
         <label class="block text-xs text-gray-600 font-bold uppercase mb-1 ml-1">${t('一言コメント（任意）','Comment (optional)')}</label>
         <input id="ps-comment" class="input-field" type="text" placeholder="${t('今日のデトックスはどうでしたか？','How was your detox today?')}">
       </div>
-      <button id="ps-img-btn" class="card w-full p-4 flex items-center space-x-3 text-left hover:bg-[#2C2C2E] transition">
-        <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        <span class="text-gray-400 text-sm">${t('画像を追加','Add Photo')}</span>
-      </button>
-      <input type="file" id="ps-img-input" class="hidden" accept="image/*">
-      <div id="ps-img-preview" class="hidden rounded-2xl overflow-hidden">
-        <img id="ps-img-preview-src" class="w-full max-h-48 object-cover" alt="">
-      </div>
       <button id="ps-post-btn" class="w-full bg-white text-black font-bold py-4 rounded-full text-base">${t('投稿する','Post')}</button>
       <button id="ps-skip-btn" class="w-full text-gray-700 font-semibold py-2 text-sm">${t('スキップ','Skip')}</button>
     </div>
@@ -1502,18 +1971,24 @@ function renderPostSession(duration, completed, groupResult = null) {
 
   goto('post-session');
 
-  document.getElementById('ps-img-btn').addEventListener('click', () => document.getElementById('ps-img-input').click());
-  document.getElementById('ps-img-input').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      document.getElementById('ps-img-preview-src').src = ev.target.result;
-      document.getElementById('ps-img-preview').classList.remove('hidden');
+  document.getElementById('ps-post-btn').addEventListener('click', () => {
+    const task    = document.getElementById('ps-task')?.value.trim() || '';
+    const comment = document.getElementById('ps-comment')?.value.trim() || '';
+    const newPost = {
+      id: Date.now(),
+      userId: 'me',
+      duration,
+      task,
+      comment,
+      time: t('たった今', 'Just now'),
+      likes: 0,
+      liked: false,
+      img: null
     };
-    reader.readAsDataURL(file);
+    MOCK_POSTS.unshift(newPost);
+    saveMyPosts(MOCK_POSTS.filter(p => p.userId === 'me'));
+    goto('home');
   });
-  document.getElementById('ps-post-btn').addEventListener('click', () => goto('home'));
   document.getElementById('ps-skip-btn').addEventListener('click', () => goto('home'));
 }
 
@@ -1705,7 +2180,7 @@ function renderGroupsList() {
           const f = friendById(id);
           if (!f) return '';
           const isOn = !!f.sessionStart;
-          return `<div class="relative"><img src="${f.avatar}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
+          return `<div class="relative"><img src="${getAvatarSrc(f, 28)}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
         }).join('')}
         ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length}${t('人がデトックス中',' detoxing')}</span>` : `<span class="text-xs text-gray-700 ml-1">${t('待機中','Waiting')}</span>`}
       </div>
@@ -1785,9 +2260,11 @@ function renderGroupDetail(groupId) {
       const isMe = id === 'me';
       const f = isMe ? null : friendById(id);
       const name = isMe ? myName : (f ? f.name : id);
-      const avatar = isMe
-        ? `https://placehold.co/40x40/334155/FFF?text=${myName[0].toUpperCase()}`
-        : (f ? f.avatar : `https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+      const meUser = isMe ? getUser() : null;
+      const _lobbyUser = isMe ? meUser : f;
+      const avatarHTML = _lobbyUser?.avatarConfig
+        ? `<div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(ready||(!declined))?'':'opacity-40'}">${renderAvatarSVG(_lobbyUser.avatarConfig, 36)}</div>`
+        : `<img src="${getAvatarSrc(_lobbyUser||{name:id}, 36)}" class="w-9 h-9 rounded-full ${(ready||(!declined))?'':'opacity-40'}" alt="${name}">`;
       const ready = readyList.includes(id);
       const declined = declinedList.includes(id);
       const statusLabel = ready
@@ -1798,7 +2275,7 @@ function renderGroupDetail(groupId) {
       return `
         <div class="flex items-center justify-between py-2">
           <div class="flex items-center gap-3">
-            <img src="${avatar}" class="w-9 h-9 rounded-full ${(ready||(!declined))?'':'opacity-40'}" alt="${name}">
+            ${avatarHTML}
             <p class="text-sm font-semibold text-white">${name}${isMe?` (${t('あなた','You')})`:''}</p>
           </div>
           ${statusLabel}
@@ -1864,7 +2341,7 @@ function renderGroupDetail(groupId) {
       if (msg.type === 'detox_invite') {
         const fromF  = friendById(msg.from);
         const durStr = fmtDuration(msg.duration, true);
-        const alreadyUsed = !isPremium() && getGroupDetoxCount() >= 3;
+        const alreadyUsed = !isPremium() && getGroupDetoxCount() >= 2;
         const lobbyForGroup = S.groupDetox && S.groupDetox.groupId === groupId;
         const meJoined   = lobbyForGroup && S.groupDetox.readyMembers.includes('me');
         const meDeclined = lobbyForGroup && (S.groupDetox.declinedMembers || []).includes('me');
@@ -1873,7 +2350,7 @@ function renderGroupDetail(groupId) {
           <div class="flex justify-start mb-3" data-from="${msg.from}">
             <div class="max-w-xs w-full">
               <div class="flex items-center gap-2 mb-1.5">
-                <img src="${fromF?.avatar || `https://placehold.co/24x24/555/FFF?text=${msg.from[0].toUpperCase()}`}" class="w-6 h-6 rounded-full" alt="">
+                <img src="${getAvatarSrc(fromF,24)}" class="w-6 h-6 rounded-full" alt="">
                 <span class="text-xs text-gray-500">${fromF?.name || msg.from}</span>
                 <span class="text-xs text-gray-700">${msg.time}</span>
               </div>
@@ -1903,7 +2380,7 @@ function renderGroupDetail(groupId) {
         const name2  = isMe ? (getUser()?.name || t('あなた','You')) : (fromF2?.name || msg.from);
         return `
           <div class="flex ${isMe?'justify-end':'justify-start'} mb-2">
-            ${!isMe ? `<img src="${fromF2?.avatar || `https://placehold.co/32x32/555/FFF?text=${msg.from[0].toUpperCase()}`}" class="w-8 h-8 rounded-full mr-2 flex-shrink-0 self-end" alt="">` : ''}
+            ${!isMe ? `<img src="${getAvatarSrc(fromF2,32)}" class="w-8 h-8 rounded-full mr-2 flex-shrink-0 self-end" alt="">` : ''}
             <div class="max-w-[72%]">
               ${!isMe ? `<p class="text-xs text-gray-600 mb-0.5 ml-1">${name2}</p>` : ''}
               <div class="px-3.5 py-2.5 rounded-2xl text-sm ${isMe?'bg-white text-black rounded-br-sm':'bg-[#2C2C2E] text-white rounded-bl-sm'}">${msg.text}</div>
@@ -1980,7 +2457,7 @@ function renderGroupDetail(groupId) {
           return;
         }
 
-        if (!isPremium() && getGroupDetoxCount() >= 3) { showDetoxLimitPrompt(); return; }
+        if (!isPremium() && getGroupDetoxCount() >= 2) { showDetoxLimitPrompt(); return; }
 
         // 参加：招待者が作成したロビーに自分も追加
         S.groupDetox = {
@@ -2104,8 +2581,14 @@ function renderGroupDetail(groupId) {
       </div>
 
       <div class="card p-4">
-        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-3">${t('ブロックするアプリ','Apps to Block')}</p>
-        <div id="gd-app-chip-list" class="flex flex-wrap gap-2"></div>
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-wider mb-2">${t('ブロックするアプリ','Apps to Block')}</p>
+        <button id="open-gd-app-picker-btn" class="w-full flex items-center justify-between bg-[#2C2C2E] border border-gray-700 rounded-xl px-4 py-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span id="gd-app-picker-summary" class="text-sm text-gray-400">${t('アプリを選択...','Select apps...')}</span>
+          </div>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
       </div>
 
       <div class="card p-4">
@@ -2118,9 +2601,7 @@ function renderGroupDetail(groupId) {
             const f = isMe ? null : friendById(id);
             const u2 = getUser();
             const name = isMe ? (u2?u2.name:t('あなた','You')) : (f?f.name:id);
-            const avatar = isMe
-              ? `https://placehold.co/40x40/334155/FFF?text=${(u2?u2.name:t('あなた','You'))[0].toUpperCase()}`
-              : (f?f.avatar:`https://placehold.co/40x40/555/FFF?text=${id[0].toUpperCase()}`);
+            const avatar = getAvatarSrc(isMe ? u2 : (f || {name:id}), 40);
             const isGroupOwner = g.owner === id || (isMe && g.owner === 'me');
             const badge = isGroupOwner
               ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${g.color}22;color:${g.color}">${t('オーナー','Owner')}</span>`
@@ -2250,7 +2731,8 @@ function renderGroupDetail(groupId) {
     }
   } else {
     initGroupDetoxPicker();
-    renderGroupAppChips();
+    updateAppPickerSummary('gd-app-picker-summary', S.groupSelectedApps);
+    document.getElementById('open-gd-app-picker-btn').onclick = () => openAppPicker('group');
 
     document.getElementById('gd-ready-btn')?.addEventListener('click', () => {
       const gdH = getPickerValue('gd-picker-hours');
@@ -2330,7 +2812,8 @@ function buildFriendCard(f, isActive) {
   el.className = 'card p-4 flex items-center justify-between cursor-pointer hover:bg-[#2C2C2E] transition';
   el.dataset.uid = f.id;
 
-  const elapsed = isActive ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
+  const elapsed   = isActive ? Math.floor((Date.now() - f.sessionStart) / 1000) : 0;
+  const remaining = isActive ? Math.max(0, f.sessionDuration - elapsed) : 0;
   const blockText = (isActive && f.isPublic && f.blockPublic)
     ? `<p class="text-xs text-gray-500 mt-0.5">${t('YouTube, Instagram をブロック中','Blocking YouTube, Instagram')}</p>`
     : '';
@@ -2338,7 +2821,7 @@ function buildFriendCard(f, isActive) {
   el.innerHTML = `
     <div class="flex items-center space-x-3">
       <div class="relative">
-        <img src="${f.avatar}" class="w-12 h-12 rounded-full ${isActive?'':'opacity-50'}" alt="">
+        <img src="${getAvatarSrc(f, 48)}" class="w-12 h-12 rounded-full ${isActive?'':'opacity-50'}" alt="">
         ${isActive ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
       </div>
       <div>
@@ -2349,8 +2832,8 @@ function buildFriendCard(f, isActive) {
     </div>
     <div class="text-right flex-shrink-0 ml-2">
       ${isActive
-        ? `<p class="font-bold text-white text-sm friend-elapsed" data-start="${f.sessionStart}">${fmtCountdown(elapsed)}</p>
-           <p class="text-xs text-gray-700">${t('経過','Elapsed')}</p>`
+        ? `<p class="font-bold text-white text-sm friend-remaining" data-start="${f.sessionStart}" data-duration="${f.sessionDuration}">${fmtCountdown(remaining)}</p>
+           <p class="text-xs text-gray-700">${t('残り','Remaining')}</p>`
         : `<svg class="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
            </svg>`
@@ -2362,10 +2845,12 @@ function buildFriendCard(f, isActive) {
 }
 
 function updateFriendTimers() {
-  document.querySelectorAll('.friend-elapsed').forEach(el => {
-    const start   = parseInt(el.dataset.start);
-    const elapsed = Math.floor((Date.now() - start) / 1000);
-    el.textContent = fmtCountdown(elapsed);
+  document.querySelectorAll('.friend-remaining').forEach(el => {
+    const start     = parseInt(el.dataset.start);
+    const duration  = parseInt(el.dataset.duration);
+    const elapsed   = Math.floor((Date.now() - start) / 1000);
+    const remaining = Math.max(0, duration - elapsed);
+    el.textContent  = fmtCountdown(remaining);
   });
 }
 
@@ -2414,7 +2899,7 @@ function renderMsgList(filter = '') {
     el.className = 'card flex items-center space-x-3 p-4 cursor-pointer hover:bg-[#2C2C2E] transition';
     el.innerHTML = `
       <div class="relative flex-shrink-0">
-        <img src="${f.avatar}" class="w-12 h-12 rounded-full" alt="">
+        <img src="${getAvatarSrc(f, 48)}" class="w-12 h-12 rounded-full" alt="">
         ${f.sessionStart ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1C1C1E]"></div>' : ''}
       </div>
       <div class="flex-grow min-w-0">
@@ -2441,7 +2926,7 @@ function openDM(friend) {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      <img src="${friend.avatar}" class="w-9 h-9 rounded-full" alt="">
+      <img src="${getAvatarSrc(friend, 36)}" class="w-9 h-9 rounded-full" alt="">
       <div>
         <p class="font-bold text-white text-sm">${friend.name}</p>
         <p class="text-xs text-gray-700">既読なし</p>
@@ -2525,7 +3010,7 @@ function renderProfile() {
 
     <!-- User info -->
     <div class="px-4 flex items-center space-x-4 mb-4">
-      <img id="prof-avatar" src="${u.avatar||''}" class="w-18 h-18 rounded-full border-2 border-[#2C2C2E] cursor-pointer" style="width:72px;height:72px;" alt="">
+      <div id="prof-avatar" class="rounded-full overflow-hidden border-2 border-[#2C2C2E] cursor-pointer flex-shrink-0" style="width:72px;height:72px;">${renderAvatarSVG(u.avatarConfig||AVATAR_DEFAULTS,72)}</div>
       <div class="flex-grow min-w-0">
         <h2 class="text-xl font-black text-white">${u.name||t('ユーザー','User')}</h2>
         <p class="text-gray-600 text-sm">${u.handle||''}</p>
@@ -2557,22 +3042,66 @@ function renderProfile() {
       </div>
     </div>
 
-    <!-- Weekly Record -->
+    <!-- Screen Time -->
     <div class="px-4 mb-5">
       <div class="card p-4">
-        <div class="flex items-baseline justify-between mb-4">
-          <h3 class="font-bold text-white text-sm">Weekly Record</h3>
-          <p class="text-xs text-gray-600" id="weekly-total-label"></p>
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-white text-sm">${t('スクリーンタイム','Screen Time')}</h3>
+          <div class="flex gap-1 bg-[#2C2C2E] rounded-lg p-0.5" id="st-period-tabs">
+            <button class="st-period-btn active-period text-xs px-2.5 py-1 rounded-md font-semibold transition-all" data-period="week">${t('今週','Week')}</button>
+            <button class="st-period-btn text-xs px-2.5 py-1 rounded-md font-semibold transition-all text-gray-600" data-period="month">${t('今月','Month')}</button>
+            <button class="st-period-btn text-xs px-2.5 py-1 rounded-md font-semibold transition-all text-gray-600" data-period="all">${t('累計','All')}</button>
+          </div>
         </div>
-        <div class="flex items-end space-x-1.5 h-24" id="weekly-chart"></div>
-        <div class="flex space-x-1.5 mt-2"      id="weekly-labels"></div>
+        <!-- Big stat -->
+        <div class="mb-4">
+          <p class="text-3xl font-black text-white" id="st-main-stat">—</p>
+          <p class="text-xs text-gray-600 mt-0.5" id="st-main-label">${t('デトックスで削減','reduced by detox')}</p>
+          <p class="text-xs mt-1" id="st-compare-label"></p>
+        </div>
+        <!-- Bar chart: stacked (estimated usage gray + detox green) -->
+        <div class="flex items-end gap-1 h-28 mb-1" id="st-chart"></div>
+        <div class="flex gap-1 mb-4" id="st-labels"></div>
+        <!-- Legend -->
+        <div class="flex items-center gap-4 mb-4">
+          <div class="flex items-center gap-1.5">
+            <div class="w-3 h-3 rounded-sm" style="background:#3b3b3d"></div>
+            <span class="text-xs text-gray-600">${t('推定使用時間','Est. usage')}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-3 h-3 rounded-sm" style="background:#34d399"></div>
+            <span class="text-xs text-gray-600">${t('デトックス削減','Detox saved')}</span>
+          </div>
+        </div>
+        <!-- Sub stats row -->
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-[#1C1C1E] rounded-xl p-3 text-center">
+            <p class="text-white font-black text-base" id="st-sessions">0</p>
+            <p class="text-gray-600 text-xs mt-0.5">${t('セッション','Sessions')}</p>
+          </div>
+          <div class="bg-[#1C1C1E] rounded-xl p-3 text-center">
+            <p class="text-white font-black text-base" id="st-reduction-pct">0%</p>
+            <p class="text-gray-600 text-xs mt-0.5">${t('削減率','Reduction')}</p>
+          </div>
+          <div class="bg-[#1C1C1E] rounded-xl p-3 text-center">
+            <p class="text-white font-black text-base" id="st-longest">0m</p>
+            <p class="text-gray-600 text-xs mt-0.5">${t('最長','Longest')}</p>
+          </div>
+        </div>
+        <!-- Baseline hint -->
+        <p class="text-xs text-gray-700 text-center mt-3">${t('推定使用時間は1日6時間を基準としています','Based on 6h/day estimated usage')}</p>
       </div>
     </div>
 
-    <!-- Session history -->
+    <!-- History tabs -->
     <div class="px-4">
-      <h3 class="font-bold text-white text-sm mb-3">${t('セッション履歴','Session History')}</h3>
+      <div class="flex gap-1 bg-[#1C1C1E] rounded-full p-1 mb-4">
+        <button id="prof-tab-sessions" class="prof-hist-tab flex-1 py-2 rounded-full text-xs font-bold text-white bg-[#3a3a3c] transition">${t('セッション履歴','Sessions')}</button>
+        <button id="prof-tab-posts" class="prof-hist-tab flex-1 py-2 rounded-full text-xs font-bold text-gray-600 transition">${t('投稿履歴','Posts')}</button>
+      </div>
       <div id="history-list" class="space-y-2 pb-4"></div>
+      <div id="posts-list" class="space-y-3 pb-4 hidden"></div>
     </div>
 
     <!-- Legal links -->
@@ -2590,12 +3119,37 @@ function renderProfile() {
   document.getElementById('prof-terms-btn').addEventListener('click', () => { S._prevPage = 'profile'; renderTerms(); goto('terms'); });
   document.getElementById('prof-privacy-btn').addEventListener('click', () => { S._prevPage = 'profile'; renderPrivacy(); goto('privacy'); });
 
-  buildWeeklyChart('weekly-chart', 'weekly-labels', 'weekly-total-label', getWeekData(history));
+  buildScreenTimeChart(history, 'week');
+  document.querySelectorAll('.st-period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.st-period-btn').forEach(b => {
+        b.classList.remove('active-period');
+        b.classList.add('text-gray-600');
+      });
+      btn.classList.add('active-period');
+      btn.classList.remove('text-gray-600');
+      buildScreenTimeChart(history, btn.dataset.period);
+    });
+  });
   buildHistoryList(history);
+  buildPostsList();
+
+  document.getElementById('prof-tab-sessions').addEventListener('click', () => {
+    document.getElementById('prof-tab-sessions').className = 'prof-hist-tab flex-1 py-2 rounded-full text-xs font-bold text-white bg-[#3a3a3c] transition';
+    document.getElementById('prof-tab-posts').className    = 'prof-hist-tab flex-1 py-2 rounded-full text-xs font-bold text-gray-600 transition';
+    document.getElementById('history-list').classList.remove('hidden');
+    document.getElementById('posts-list').classList.add('hidden');
+  });
+  document.getElementById('prof-tab-posts').addEventListener('click', () => {
+    document.getElementById('prof-tab-posts').className    = 'prof-hist-tab flex-1 py-2 rounded-full text-xs font-bold text-white bg-[#3a3a3c] transition';
+    document.getElementById('prof-tab-sessions').className = 'prof-hist-tab flex-1 py-2 rounded-full text-xs font-bold text-gray-600 transition';
+    document.getElementById('posts-list').classList.remove('hidden');
+    document.getElementById('history-list').classList.add('hidden');
+  });
 }
 
 function getWeekData(history) {
-  const days = [0,0,0,0,0,0,0]; // minutes per day (Sun=0)
+  const days = [0,0,0,0,0,0,0];
   const now  = new Date();
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
@@ -2605,6 +3159,141 @@ function getWeekData(history) {
     if (d >= startOfWeek) days[d.getDay()] += Math.floor(h.duration / 60);
   });
   return days;
+}
+
+// ── Screen Time chart ────────────────────────────────────────────
+const DAILY_ESTIMATE_MIN = 360; // 推定使用時間: 6時間/日
+
+function buildScreenTimeChart(history, period) {
+  const completed = history.filter(h => h.completed);
+
+  // 期間フィルタ & バーデータ生成
+  const now = new Date();
+  let bars = [], barLabels = [], prevTotal = 0;
+
+  if (period === 'week') {
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay());
+    start.setHours(0,0,0,0);
+    const dayNames = S.lang === 'en'
+      ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+      : ['日','月','火','水','木','金','土'];
+    bars = [0,0,0,0,0,0,0];
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      if (d >= start) bars[d.getDay()] += Math.floor(h.duration / 60);
+    });
+    barLabels = dayNames;
+    // 先週の合計（比較用）
+    const prevStart = new Date(start); prevStart.setDate(prevStart.getDate()-7);
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      if (d >= prevStart && d < start) prevTotal += Math.floor(h.duration / 60);
+    });
+
+  } else if (period === 'month') {
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+    bars = new Array(daysInMonth).fill(0);
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      if (d >= start && d.getMonth() === now.getMonth()) {
+        bars[d.getDate()-1] += Math.floor(h.duration / 60);
+      }
+    });
+    // 週ごとに集約して表示
+    const weeks = [0,0,0,0,0];
+    bars.forEach((m, i) => { weeks[Math.floor(i/7)] += m; });
+    bars = weeks.slice(0, Math.ceil(daysInMonth/7));
+    barLabels = bars.map((_, i) => `W${i+1}`);
+    // 先月比
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const prevMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 1);
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      if (d >= prevMonthStart && d < prevMonthEnd) prevTotal += Math.floor(h.duration / 60);
+    });
+
+  } else { // all
+    // 月ごとに集約（最大12ヶ月）
+    const monthMap = {};
+    completed.forEach(h => {
+      const d = new Date(h.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      monthMap[key] = (monthMap[key]||0) + Math.floor(h.duration/60);
+    });
+    const keys = Object.keys(monthMap).sort().slice(-8);
+    bars = keys.map(k => monthMap[k]);
+    barLabels = keys.map(k => k.slice(5)); // "MM"
+    if (bars.length === 0) { bars = [0]; barLabels = ['—']; }
+  }
+
+  // 集計値
+  const detoxTotal  = bars.reduce((a,b) => a+b, 0);
+  const sessions    = completed.filter(h => {
+    if (period === 'all') return true;
+    const d = new Date(h.date);
+    if (period === 'week') {
+      const s = new Date(now); s.setDate(now.getDate()-now.getDay()); s.setHours(0,0,0,0);
+      return d >= s;
+    }
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const longest     = sessions.length ? Math.max(...sessions.map(h => Math.floor(h.duration/60))) : 0;
+  const estTotal    = DAILY_ESTIMATE_MIN * bars.length;
+  const pct         = estTotal > 0 ? Math.min(100, Math.round(detoxTotal / estTotal * 100)) : 0;
+
+  // メイン数値表示
+  const fmtMin = m => m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m}m`;
+  document.getElementById('st-main-stat').textContent  = fmtMin(detoxTotal);
+  document.getElementById('st-sessions').textContent   = sessions.length;
+  document.getElementById('st-reduction-pct').textContent = pct + '%';
+  document.getElementById('st-longest').textContent    = fmtMin(longest);
+
+  // 比較ラベル（週・月のみ）
+  const compareEl = document.getElementById('st-compare-label');
+  if (period !== 'all' && prevTotal > 0) {
+    const diff = detoxTotal - prevTotal;
+    const sign = diff >= 0 ? '+' : '';
+    compareEl.textContent = `${t('前期間比','vs prev')} ${sign}${fmtMin(Math.abs(diff))}`;
+    compareEl.className = `text-xs mt-1 ${diff >= 0 ? 'text-emerald-500' : 'text-red-400'}`;
+  } else {
+    compareEl.textContent = '';
+  }
+
+  // バーチャート描画
+  const chartEl  = document.getElementById('st-chart');
+  const labelsEl = document.getElementById('st-labels');
+  if (!chartEl || !labelsEl) return;
+  chartEl.innerHTML = labelsEl.innerHTML = '';
+
+  const maxBar  = Math.max(...bars, 1);
+  const maxBase = Math.max(maxBar, DAILY_ESTIMATE_MIN);
+  const today   = now.getDay();
+
+  bars.forEach((detoxMin, i) => {
+    const estMin    = DAILY_ESTIMATE_MIN;
+    const savedPct  = Math.min(detoxMin, estMin) / maxBase * 100;
+    const remainPct = Math.max(0, estMin - detoxMin) / maxBase * 100;
+    const isToday   = period === 'week' && i === today;
+
+    const col = document.createElement('div');
+    col.className = 'flex flex-col items-center justify-end';
+    col.style.flex = '1';
+    col.innerHTML = `
+      <div class="w-full flex flex-col justify-end rounded-lg overflow-hidden" style="height:100px;background:#1C1C1E;">
+        <div style="height:${savedPct}%;background:${isToday?'#10b981':'#34d399'};transition:height .4s;min-height:${detoxMin>0?'2px':'0'};border-radius:0 0 6px 6px;"></div>
+        <div style="height:${remainPct}%;background:#3b3b3d;"></div>
+      </div>
+    `;
+    chartEl.appendChild(col);
+
+    const lbl = document.createElement('div');
+    lbl.style.flex = '1';
+    lbl.className  = `text-center text-xs mt-1 ${isToday ? 'text-white font-bold' : 'text-gray-700'}`;
+    lbl.textContent = barLabels[i] || '';
+    labelsEl.appendChild(lbl);
+  });
 }
 
 function buildWeeklyChart(chartId, labelsId, totalId, data) {
@@ -2672,6 +3361,59 @@ function buildHistoryList(history) {
   });
 }
 
+function buildPostsList() {
+  const el = document.getElementById('posts-list');
+  if (!el) return;
+  const myPosts = MOCK_POSTS.filter(p => p.userId === 'me');
+  if (myPosts.length === 0) {
+    el.innerHTML = `<p class="text-gray-700 text-sm text-center mt-4">${t('まだ投稿がありません','No posts yet')}</p>`;
+    return;
+  }
+  el.innerHTML = '';
+  myPosts.forEach(p => {
+    const dur = fmtDuration(p.duration);
+    el.insertAdjacentHTML('beforeend', `
+      <div class="card p-3" data-postid="${p.id}">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-9 h-9 rounded-xl bg-[#2C2C2E] flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/>
+            </svg>
+          </div>
+          <div class="flex-grow">
+            <p class="font-bold text-white text-sm">${dur}</p>
+            ${p.task ? `<p class="text-gray-500 text-xs">${p.task}</p>` : ''}
+          </div>
+          <button class="prof-post-delete text-gray-700 p-1" data-postid="${p.id}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+        ${p.comment ? `<p class="text-gray-400 text-sm">${p.comment}</p>` : ''}
+        <div class="flex items-center gap-4 mt-2">
+          <span class="text-xs text-gray-700">${p.time}</span>
+          <span class="text-xs text-gray-700">♡ ${p.likes}</span>
+        </div>
+      </div>
+    `);
+  });
+  el.querySelectorAll('.prof-post-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pid = Number(btn.dataset.postid) || btn.dataset.postid;
+      showConfirm(
+        t('投稿を削除','Delete Post'),
+        t('この投稿を削除しますか？','Delete this post?'),
+        t('削除','Delete'),
+        () => {
+          const idx = MOCK_POSTS.findIndex(x => x.id == pid);
+          if (idx !== -1) MOCK_POSTS.splice(idx, 1);
+          saveMyPosts(MOCK_POSTS.filter(x => x.userId === 'me'));
+          buildPostsList();
+        }
+      );
+    });
+  });
+}
+
 // ================================================================
 // EDIT PROFILE
 // ================================================================
@@ -2687,15 +3429,14 @@ function renderEditProfile() {
 
     <div class="flex flex-col items-center mb-6">
       <div class="relative cursor-pointer" id="ep-avatar-wrap">
-        <img id="ep-avatar-preview" src="${u.avatar||''}" class="w-24 h-24 rounded-full object-cover border-2 border-gray-800" alt="">
-        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+        <div id="ep-avatar-preview" class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-800">${renderAvatarSVG(u.avatarConfig||AVATAR_DEFAULTS, 96)}</div>
+        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full pointer-events-none">
           <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m-9 9h3l9-9a2.121 2.121 0 00-3-3l-9 9v3z"/>
           </svg>
         </div>
-        <input type="file" id="ep-avatar-input" class="hidden" accept="image/*">
       </div>
+      <p class="text-xs text-gray-600 mt-2">${t('タップして編集','Tap to edit')}</p>
     </div>
 
     <div class="space-y-4">
@@ -2722,20 +3463,20 @@ function renderEditProfile() {
     u.name   = document.getElementById('ep-name').value.trim()   || u.name;
     u.handle = '@' + document.getElementById('ep-handle').value.replace('@','').trim();
     u.bio    = document.getElementById('ep-bio').value.trim();
-    const prev = document.getElementById('ep-avatar-preview').src;
-    if (prev && !prev.startsWith('https://placehold')) u.avatar = prev;
     saveUser(u);
     goto('profile');
   });
-  document.getElementById('ep-avatar-wrap').addEventListener('click', () =>
-    document.getElementById('ep-avatar-input').click()
-  );
-  document.getElementById('ep-avatar-input').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => { document.getElementById('ep-avatar-preview').src = ev.target.result; };
-    reader.readAsDataURL(file);
+  document.getElementById('ep-avatar-wrap').addEventListener('click', () => {
+    renderAvatarBuilder(cfg => {
+      const u = getUser() || {};
+      u.avatarConfig = cfg;
+      saveUser(u);
+      const prev = document.getElementById('ep-avatar-preview');
+      if (prev) prev.innerHTML = renderAvatarSVG(cfg, 96);
+      // Re-render feed so avatar updates immediately
+      const homeEl = document.getElementById('page-home');
+      if (homeEl) homeEl.innerHTML = '';
+    });
   });
 }
 
@@ -2759,34 +3500,51 @@ function renderNotifSettings() {
   const friends = MOCK_FRIENDS.filter(f => f.isFriend);
   const detoxEnabled = p.friendDetoxStart || p.friendDetoxEnd;
 
+  const SHOW_LIMIT = 3;
+
+  function friendRow(f, i, total) {
+    const ff = p.friendFilter[f.id] || {};
+    const onStart = ff.start === true;
+    const onEnd   = ff.end   === true;
+    const border  = i < total - 1 ? 'border-b border-gray-900' : '';
+    return `
+      <div class="flex justify-between items-center py-3 ${border}">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <img src="${getAvatarSrc(f,28)}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
+          <span class="text-white text-sm truncate">${f.name}</span>
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-xs text-gray-600">${t('開始','Start')}</span>
+            <div id="nspref-friend-${f.id}-start" class="toggle ${onStart ? 'on' : ''}">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-xs text-gray-600">${t('終了','End')}</span>
+            <div id="nspref-friend-${f.id}-end" class="toggle ${onEnd ? 'on' : ''}">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
   function friendRows() {
-    return friends.map((f, i) => {
-      const ff = p.friendFilter[f.id] || {};
-      const onStart = ff.start !== false;
-      const onEnd   = ff.end   !== false;
-      const border  = i < friends.length - 1 ? 'border-b border-gray-900' : '';
-      return `
-        <div class="flex justify-between items-center py-3 ${border}">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <img src="${f.avatar}" class="w-7 h-7 rounded-full flex-shrink-0" alt="${f.name}">
-            <span class="text-white text-sm truncate">${f.name}</span>
-          </div>
-          <div class="flex items-center gap-3 flex-shrink-0">
-            <div class="flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-600">${t('開始','Start')}</span>
-              <div id="nspref-friend-${f.id}-start" class="toggle ${onStart ? 'on' : ''}">
-                <div class="toggle-knob"></div>
-              </div>
-            </div>
-            <div class="flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-600">${t('終了','End')}</span>
-              <div id="nspref-friend-${f.id}-end" class="toggle ${onEnd ? 'on' : ''}">
-                <div class="toggle-knob"></div>
-              </div>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
+    const visible = friends.slice(0, SHOW_LIMIT);
+    const hidden  = friends.slice(SHOW_LIMIT);
+    let html = visible.map((f, i) => friendRow(f, i, friends.length)).join('');
+    if (hidden.length > 0) {
+      html += `
+        <div id="ns-others-wrap" class="hidden border-t border-gray-900">
+          ${hidden.map((f, i) => friendRow(f, SHOW_LIMIT + i, friends.length)).join('')}
+        </div>
+        <button id="ns-others-btn" class="w-full py-2.5 text-xs text-gray-500 font-semibold flex items-center justify-center gap-1 border-t border-gray-900">
+          <span id="ns-others-label">${t(`その他 ${hidden.length}人を表示`, `Show ${hidden.length} more`)}</span>
+          <svg id="ns-others-arrow" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>`;
+    }
+    return html;
   }
 
   page.innerHTML = `
@@ -2816,12 +3574,11 @@ function renderNotifSettings() {
       <div class="card p-4">
         <p class="text-xs text-gray-700 font-bold uppercase mb-3">${t('フレンドのデトックス','Friend Detox')}</p>
         ${row('friendDetoxStart', t('デトックス開始通知','Friend Starts Detox'), 'friendDetoxStart', true)}
-        ${row('friendDetoxEnd',   t('デトックス終了通知','Friend Ends Detox'),   'friendDetoxEnd',   detoxEnabled)}
-        ${detoxEnabled ? `
-          <div id="ns-friend-list" class="mt-3 pt-3 border-t border-gray-900">
-            <p class="text-xs text-gray-600 font-semibold mb-2">${t('通知するフレンド','Notify me about')}</p>
-            ${friendRows()}
-          </div>` : ''}
+        ${row('friendDetoxEnd',   t('デトックス終了通知','Friend Ends Detox'),   'friendDetoxEnd',   true)}
+        <div id="ns-friend-list" class="mt-3 pt-3 border-t border-gray-900">
+          <p class="text-xs text-gray-600 font-semibold mb-2">${t('フレンドごとの設定','Per-friend settings')}</p>
+          ${friendRows()}
+        </div>
       </div>
 
       <!-- Social notifications -->
@@ -2866,6 +3623,24 @@ function renderNotifSettings() {
       });
     });
   });
+
+  // その他 expand/collapse
+  const othersBtn  = document.getElementById('ns-others-btn');
+  const othersWrap = document.getElementById('ns-others-wrap');
+  const othersLbl  = document.getElementById('ns-others-label');
+  const othersArr  = document.getElementById('ns-others-arrow');
+  if (othersBtn) {
+    let expanded = false;
+    othersBtn.addEventListener('click', () => {
+      expanded = !expanded;
+      othersWrap.classList.toggle('hidden', !expanded);
+      othersArr.style.transform = expanded ? 'rotate(180deg)' : '';
+      const hidden = friends.length - SHOW_LIMIT;
+      othersLbl.textContent = expanded
+        ? t('折りたたむ', 'Show less')
+        : t(`その他 ${hidden}人を表示`, `Show ${hidden} more`);
+    });
+  }
 }
 
 // ================================================================
@@ -2919,6 +3694,10 @@ function renderSettings() {
             <span class="text-gray-600 text-sm">${S.notifPrefs.enabled ? t('オン','On') : t('オフ','Off')}</span>
             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </div>
+        </button>
+        <button id="st-howto-btn" class="w-full flex justify-between items-center py-2.5 border-t border-gray-900">
+          <span class="text-white text-sm">${t('使い方を見る','How to Use')}</span>
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
 
@@ -2982,11 +3761,14 @@ function renderSettings() {
     renderStaticLabels();
     renderSettings();
   });
+  document.getElementById('st-howto-btn').addEventListener('click', () => renderOnboarding(true));
   document.getElementById('logout-btn').addEventListener('click', () => {
     showConfirm(t('ログアウト','Log Out'), t('ログアウトしますか？','Are you sure you want to log out?'), t('ログアウト','Log Out'), () => {
-      localStorage.removeItem('to_user');
-      goto('login');
-      renderLogin();
+      auth.signOut().then(() => {
+        localStorage.removeItem('to_user');
+        goto('login');
+        renderLogin();
+      });
     });
   });
 }
@@ -3009,7 +3791,7 @@ function openUserProfile(userId) {
     </div>
     <div class="flex-grow overflow-y-auto no-scrollbar px-4 pb-10">
       <div class="flex items-center space-x-4 py-5">
-        <img src="${f.avatar}" class="w-16 h-16 rounded-full border-2 border-gray-800" alt="">
+        <img src="${getAvatarSrc(f,64)}" class="w-16 h-16 rounded-full border-2 border-gray-800" alt="">
         <div>
           <h2 class="text-xl font-black text-white">${f.name}</h2>
           <p class="text-gray-600 text-sm">${f.handle}</p>
@@ -3116,22 +3898,32 @@ function renderNotifications() {
   `;
   S.unreadNotif = false;
   updateUnreadDots();
-  goto('notifications');
   document.getElementById('notif-back').addEventListener('click', () => goto(S._prevPage || 'home'));
 }
 
 // ================================================================
 // MANUAL START SHEET (TIME PICKER + SLIDER)
 // ================================================================
-function renderAppChips() {
+function renderAppChips(filter) {
   const container = document.getElementById('app-chip-list');
   if (!container) return;
-  container.innerHTML = ALL_APPS.map(a => {
-    const sel = S.selectedApps.has(a.label);
-    return `<button class="app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
-      <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
-      ${a.label}
-    </button>`;
+  const q = (filter || '').toLowerCase();
+  const apps = q ? ALL_APPS.filter(a => a.label.toLowerCase().includes(q)) : ALL_APPS;
+  const cats = [...new Set(apps.map(a => a.cat))];
+  container.innerHTML = cats.map(cat => {
+    const catApps = apps.filter(a => a.cat === cat);
+    return `<div class="w-full mb-3">
+      <p class="text-xs text-gray-600 font-bold mb-2">${cat}</p>
+      <div class="flex flex-wrap gap-2">
+        ${catApps.map(a => {
+          const sel = S.selectedApps.has(a.label);
+          return `<button class="app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
+            <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
+            ${a.label}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
   }).join('');
   container.querySelectorAll('.app-chip').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3147,15 +3939,26 @@ function renderAppChips() {
   });
 }
 
-function renderGroupAppChips() {
+function renderGroupAppChips(filter) {
   const container = document.getElementById('gd-app-chip-list');
   if (!container) return;
-  container.innerHTML = ALL_APPS.map(a => {
-    const sel = S.groupSelectedApps.has(a.label);
-    return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
-      <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
-      ${a.label}
-    </button>`;
+  const q = (filter || '').toLowerCase();
+  const apps = q ? ALL_APPS.filter(a => a.label.toLowerCase().includes(q)) : ALL_APPS;
+  const cats = [...new Set(apps.map(a => a.cat))];
+  container.innerHTML = cats.map(cat => {
+    const catApps = apps.filter(a => a.cat === cat);
+    return `<div class="w-full mb-3">
+      <p class="text-xs text-gray-600 font-bold mb-2">${cat}</p>
+      <div class="flex flex-wrap gap-2">
+        ${catApps.map(a => {
+          const sel = S.groupSelectedApps.has(a.label);
+          return `<button class="gd-app-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${sel ? 'border-white/30 bg-white/10 text-white' : 'border-gray-800 text-gray-600'}" data-app="${a.label}">
+            <span class="w-4 h-4 rounded flex items-center justify-center text-white font-bold" style="background:#${a.bg};font-size:9px">${a.label[0]}</span>
+            ${a.label}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
   }).join('');
   container.querySelectorAll('.gd-app-chip').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3206,6 +4009,17 @@ function renderTuneout() {
 function renderDetoxNow() {
   const content = document.getElementById('detox-tab-content');
   if (!content) return;
+  const history = getHistory();
+  const streak = getStreak(history);
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const weekSessions = history.filter(h => h.completed && new Date(h.date) >= startOfWeek);
+  const weekTotalSec = weekSessions.reduce((s, h) => s + (h.duration || 0), 0);
+  const wh = Math.floor(weekTotalSec / 3600);
+  const wm = Math.floor((weekTotalSec % 3600) / 60);
+  const weekTimeStr = wh > 0 ? `${wh}h ${wm}m` : wm > 0 ? `${wm}m` : '—';
   content.innerHTML = `
     <div class="mt-2 space-y-4">
       <div class="card p-5">
@@ -3219,17 +4033,17 @@ function renderDetoxNow() {
         <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">${t('今週の実績','This Week')}</p>
         <div class="flex justify-around text-center">
           <div>
-            <p class="text-2xl font-black text-white">3</p>
+            <p class="text-2xl font-black text-white">${weekSessions.length}</p>
             <p class="text-xs text-gray-600 mt-0.5">${t('セッション','Sessions')}</p>
           </div>
           <div class="w-px bg-gray-800"></div>
           <div>
-            <p class="text-2xl font-black text-white">5h 20m</p>
+            <p class="text-2xl font-black text-white">${weekTimeStr}</p>
             <p class="text-xs text-gray-600 mt-0.5">${t('合計時間','Total Time')}</p>
           </div>
           <div class="w-px bg-gray-800"></div>
           <div>
-            <p class="text-2xl font-black text-white">🔥 3</p>
+            <p class="text-2xl font-black text-white">🔥 ${streak}</p>
             <p class="text-xs text-gray-600 mt-0.5">${t('連続日数','Day Streak')}</p>
           </div>
         </div>
@@ -3318,9 +4132,161 @@ function renderGlobalDetoxCard() {
   });
 }
 
+function updateAppPickerSummary(summaryId, selectedSet) {
+  const el = document.getElementById(summaryId);
+  if (!el) return;
+  const arr = [...selectedSet];
+  if (arr.length === 0) {
+    el.textContent = t('アプリを選択...', 'Select apps...');
+    el.style.color = '#6b7280';
+  } else if (arr.length <= 3) {
+    el.textContent = arr.join(', ');
+    el.style.color = 'white';
+  } else {
+    el.textContent = `${arr.slice(0,2).join(', ')} +${arr.length - 2}`;
+    el.style.color = 'white';
+  }
+}
+
+function openAppPicker(mode) {
+  // mode: 'individual' | 'group'
+  const selectedSet = mode === 'group' ? S.groupSelectedApps : S.selectedApps;
+  const tempSet = new Set(selectedSet); // 編集用コピー
+  const modal = document.getElementById('app-picker-modal');
+  const listEl = document.getElementById('app-picker-list');
+  const searchEl = document.getElementById('app-picker-search');
+  const titleEl = document.getElementById('app-picker-title');
+  let expandedCats = new Set();
+
+  modal.style.display = 'flex';
+  titleEl.textContent = t('アプリを選択', 'Choose Activities');
+  searchEl.value = '';
+
+  const CAT_ICONS = {
+    'SNS': '💬', 'メッセージ': '✉️', 'エンタメ': '🎬',
+    '音楽': '🎵', 'ゲーム': '🎮', 'ショッピング': '🛍️',
+    'ニュース': '📰', 'ブラウザ': '🌐',
+    'Social': '💬', 'Messaging': '✉️', 'Entertainment': '🎬',
+    'Music': '🎵', 'Games': '🎮', 'Shopping': '🛍️',
+    'News': '📰', 'Browser': '🌐'
+  };
+
+  function renderList(q) {
+    const query = (q || '').toLowerCase();
+    listEl.innerHTML = '';
+
+    // All Apps & Categories row
+    const allSelected = ALL_APPS.every(a => tempSet.has(a.label));
+    const allRow = document.createElement('div');
+    allRow.style.cssText = 'background:#2c2c2e;border-radius:14px;overflow:hidden;margin-bottom:8px;';
+    allRow.innerHTML = `
+      <div class="app-picker-row" data-type="all" style="display:flex;align-items:center;padding:14px 16px;gap:14px;cursor:pointer;">
+        <div class="picker-circle ${allSelected?'picker-circle-on':''}" style="width:24px;height:24px;border-radius:50%;border:2px solid ${allSelected?'#3b82f6':'#636366'};background:${allSelected?'#3b82f6':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          ${allSelected?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>':''}
+        </div>
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#ef4444,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🗂️</div>
+        <span style="color:white;font-weight:600;font-size:15px;">${t('すべてのアプリ','All Apps & Categories')}</span>
+      </div>`;
+    allRow.querySelector('.app-picker-row').addEventListener('click', () => {
+      if (allSelected) { tempSet.clear(); } else { ALL_APPS.forEach(a => tempSet.add(a.label)); }
+      renderList(searchEl.value);
+    });
+    listEl.appendChild(allRow);
+
+    // カテゴリ別
+    const cats = [...new Set(ALL_APPS.map(a => a.cat))];
+    cats.forEach(cat => {
+      const appsInCat = ALL_APPS.filter(a => a.cat === cat);
+      const filtered  = query ? appsInCat.filter(a => a.label.toLowerCase().includes(query)) : appsInCat;
+      if (filtered.length === 0) return;
+
+      const selCount  = filtered.filter(a => tempSet.has(a.label)).length;
+      const catSel    = selCount === filtered.length && filtered.length > 0;
+      const expanded  = expandedCats.has(cat) || !!query;
+
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#2c2c2e;border-radius:14px;overflow:hidden;margin-bottom:8px;';
+
+      // Category header row
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;padding:14px 16px;gap:14px;cursor:pointer;';
+      header.innerHTML = `
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid ${catSel?'#3b82f6':'#636366'};background:${catSel?'#3b82f6':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          ${catSel?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>':''}
+        </div>
+        <div style="width:36px;height:36px;border-radius:10px;background:#3a3a3c;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${CAT_ICONS[cat]||'📱'}</div>
+        <span style="color:white;font-weight:600;font-size:15px;flex:1;">${cat}</span>
+        ${!query ? `<span style="color:#636366;font-size:14px;margin-right:4px;">${selCount>0?selCount:''}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="2" style="transform:rotate(${expanded?90:0}deg);transition:.2s;"><path d="M9 5l7 7-7 7"/></svg>` : ''}
+      `;
+
+      // Category circle click → toggle all in cat
+      header.querySelector('div').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (catSel) { filtered.forEach(a => tempSet.delete(a.label)); }
+        else { filtered.forEach(a => tempSet.add(a.label)); }
+        renderList(searchEl.value);
+      });
+
+      // Chevron / row click → expand
+      if (!query) {
+        header.addEventListener('click', () => {
+          if (expandedCats.has(cat)) expandedCats.delete(cat);
+          else expandedCats.add(cat);
+          renderList(searchEl.value);
+        });
+      }
+
+      card.appendChild(header);
+
+      // Individual app rows (shown if expanded or searching)
+      if (expanded) {
+        filtered.forEach((a, idx) => {
+          const sel = tempSet.has(a.label);
+          const appRow = document.createElement('div');
+          appRow.style.cssText = `display:flex;align-items:center;padding:12px 16px;gap:14px;cursor:pointer;border-top:1px solid #3a3a3c;`;
+          appRow.innerHTML = `
+            <div style="width:24px;height:24px;border-radius:50%;border:2px solid ${sel?'#3b82f6':'#636366'};background:${sel?'#3b82f6':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              ${sel?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>':''}
+            </div>
+            <div style="width:36px;height:36px;border-radius:10px;background:#${a.bg};display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:14px;flex-shrink:0;">${a.label[0]}</div>
+            <span style="color:white;font-size:15px;">${a.label}</span>
+          `;
+          appRow.addEventListener('click', () => {
+            if (tempSet.has(a.label)) tempSet.delete(a.label);
+            else tempSet.add(a.label);
+            renderList(searchEl.value);
+          });
+          card.appendChild(appRow);
+        });
+      }
+
+      listEl.appendChild(card);
+    });
+  }
+
+  renderList('');
+  searchEl.oninput = () => renderList(searchEl.value);
+
+  document.getElementById('app-picker-cancel').onclick = () => {
+    modal.style.display = 'none';
+  };
+  document.getElementById('app-picker-done').onclick = () => {
+    if (mode === 'group') {
+      S.groupSelectedApps = new Set(tempSet);
+      updateAppPickerSummary('gd-app-picker-summary', S.groupSelectedApps);
+    } else {
+      S.selectedApps = new Set(tempSet);
+      updateAppPickerSummary('app-picker-summary', S.selectedApps);
+    }
+    modal.style.display = 'none';
+  };
+}
+
 function openManualSheet() {
   document.getElementById('manual-sheet').classList.add('open');
-  renderAppChips();
+  updateAppPickerSummary('app-picker-summary', S.selectedApps);
+  document.getElementById('open-app-picker-btn').onclick = () => openAppPicker('individual');
   initTimePicker();
   initSlider('manual-slider','manual-thumb','manual-reveal', () => {
     const h = getPickerValue('picker-hours');
@@ -3487,7 +4453,7 @@ function renderInviteSheet(group) {
     friendsList.innerHTML = invitableFriends.map(f => `
       <div class="flex items-center justify-between py-2">
         <div class="flex items-center gap-3">
-          <img src="${f.avatar}" class="w-10 h-10 rounded-full" alt="${f.name}">
+          <img src="${getAvatarSrc(f,40)}" class="w-10 h-10 rounded-full" alt="${f.name}">
           <div>
             <p class="font-semibold text-white text-sm">${f.name}</p>
             <p class="text-xs text-gray-600">${f.handle}</p>
@@ -3575,9 +4541,51 @@ function renderCreateGroup() {
         </div>
         <span class="text-white font-black text-lg">${t('5名','5')}</span>
       </div>
+
+      <!-- Friend invite -->
+      <div>
+        <label class="block text-xs text-gray-600 font-bold uppercase mb-2 ml-1">${t('フレンドを招待（任意）','Invite Friends (optional)')}</label>
+        <div class="space-y-2" id="cg-friends-list">
+          ${MOCK_FRIENDS.filter(f => f.isFriend).map(f => `
+            <div class="card p-3 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <img src="${getAvatarSrc(f,36)}" class="w-9 h-9 rounded-full" alt="${f.name}">
+                <div>
+                  <p class="text-sm font-semibold text-white">${f.name}</p>
+                  <p class="text-xs text-gray-600">${f.handle}</p>
+                </div>
+              </div>
+              <button class="cg-invite-toggle w-6 h-6 rounded-full border-2 border-gray-700 flex items-center justify-center transition" data-uid="${f.id}" data-selected="false">
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
     </div>
   `;
   goto('create-group');
+
+  const selectedInvites = new Set();
+
+  page.querySelectorAll('.cg-invite-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const uid = btn.dataset.uid;
+      const selected = btn.dataset.selected === 'true';
+      if (selected) {
+        selectedInvites.delete(uid);
+        btn.dataset.selected = 'false';
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.innerHTML = '';
+      } else {
+        selectedInvites.add(uid);
+        btn.dataset.selected = 'true';
+        btn.style.background = 'white';
+        btn.style.borderColor = 'white';
+        btn.innerHTML = '<svg class="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+      }
+    });
+  });
 
   document.getElementById('cg-cancel').addEventListener('click', () => {
     goto('friends');
@@ -3586,7 +4594,7 @@ function renderCreateGroup() {
   document.getElementById('cg-create').addEventListener('click', () => {
     const name = document.getElementById('cg-name').value.trim();
     if (!name) { document.getElementById('cg-name').classList.add('shake'); setTimeout(() => document.getElementById('cg-name').classList.remove('shake'), 500); return; }
-    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [], maxMembers: 5, inviteOnly: true, owner: 'me', description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
+    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [...selectedInvites], maxMembers: 5, inviteOnly: true, owner: 'me', description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
     MOCK_GROUPS.push(newGroup);
     goto('friends');
     setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
@@ -3617,149 +4625,217 @@ function renderCreateGroup() {
 function renderTerms() {
   const isEn = S.lang === 'en';
   const page = document.getElementById('page-terms');
-  page.innerHTML = isEn ? `
-    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
-      <button id="terms-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-xl font-black text-white">Terms of Service</h1>
-    </div>
-    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
-      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
-      <p class="text-sm text-gray-400 leading-relaxed">Welcome to (DIS)CONNECT (the "App"). By downloading, installing, or using the App, you agree to be bound by these Terms of Service with the Operator.</p>
+  const BACK_BTN = '<button id="terms-back" class="text-gray-400 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>';
+  const H1_EN = 'Terms of Service';
+  const H1_JA = '利用規約';
+  const sec = (title, body) => '<div class="space-y-2"><h2 class="text-sm font-black text-white uppercase tracking-wide border-l-2 border-gray-600 pl-3">' + title + '</h2><div class="space-y-2 text-xs text-gray-400 leading-relaxed">' + body + '</div></div>';
+  const warn = (title, body) => '<div class="rounded-2xl p-4 space-y-2" style="background:#f59e0b0d;border:1px solid #f59e0b33"><h2 class="text-sm font-black text-amber-400">' + title + '</h2><div class="space-y-2 text-xs text-gray-400 leading-relaxed">' + body + '</div></div>';
+  const p = (t) => '<p>' + t + '</p>';
+  const b = (t) => '<span class="text-white font-semibold">' + t + '</span>';
+  const li = (items) => '<ul class="space-y-1 pl-3">' + items.map(i => '<li class="flex gap-2"><span class="text-gray-600 flex-shrink-0">・</span><span>' + i + '</span></li>').join('') + '</ul>';
+  const headerHTML = '<div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">' + BACK_BTN + '<h1 class="text-xl font-black text-white">' + (isEn ? H1_EN : H1_JA) + '</h1></div>';
 
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 1 – Service Description</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">The App is a tool that helps users practice digital detox by temporarily restricting access to selected applications and sharing progress with friends and communities. The App is developed and operated by an individual.</p>
-      </div>
+  const bodyEN = [
+    '<p class="text-xs text-gray-500">Effective Date: January 4, 2026 &nbsp;|&nbsp; Last Updated: March 26, 2026</p>',
+    '<p class="text-xs text-gray-400 leading-relaxed">Welcome to <strong class="text-white">(DIS)CONNECT</strong> (the "App"), operated by an individual developer (the "Operator"). By accessing or using the App in any way, you unconditionally agree to these Terms of Service ("Terms"). If you do not agree, you must immediately stop using the App and delete all copies.</p>',
+    sec('Article 1 — Service Description',
+      p('The App provides tools for voluntary digital detox: timed blocking of selected apps, progress sharing, friend/group social features, and a premium subscription tier. The App is an individually operated service and is NOT operated by a corporation.')
+    ),
+    sec('Article 2 — Eligibility & Parental Consent',
+      p('1. You must be at least 13 years old to use this App.') +
+      p('2. Users aged 13–17 must have obtained express parental or guardian consent prior to use.') +
+      p('3. By registering, you represent and warrant that you meet these requirements. The Operator reserves the right to terminate accounts found to be in violation without notice.')
+    ),
+    sec('Article 3 — Account Registration & Security',
+      p('1. You agree to provide accurate and complete information at registration.') +
+      p('2. You are solely responsible for all activity that occurs under your account.') +
+      p('3. You must notify the Operator immediately of any unauthorized use of your account.') +
+      p('4. The Operator is NOT liable for any loss or damage arising from your failure to safeguard your credentials.')
+    ),
+    warn('Article 4 — Detox Feature: Assumption of Risk & Disclaimer ⚠️ IMPORTANT',
+      p(b('By enabling a Detox Session, you explicitly acknowledge, agree to, and assume full responsibility for ALL of the following:')) +
+      li([
+        b('Emergency alerts: ') + 'During an active session, you may fail to receive emergency broadcasts (J-Alert, earthquake warnings, tsunami alerts, Amber Alerts, etc.). The Operator bears ZERO liability for any injury, death, property damage, or loss resulting from a missed emergency alert.',
+        b('Missed communications: ') + 'You may miss phone calls, text messages, push notifications, or other communications from any person or service, including urgent or time-sensitive messages. The Operator bears ZERO liability for any consequence.',
+        b('Medical emergencies: ') + 'If you have a medical condition that may require urgent access to your device, you must NOT use the Detox blocking feature. Use of the feature is entirely at your own risk.',
+        b('No override guarantee: ') + 'The App uses standard OS-level features. The Operator does not guarantee that all notifications will be blocked, nor that all emergency systems will be suppressed.',
+        b('Your sole responsibility: ') + 'It is your sole responsibility to ensure access to alternative emergency communication means (e.g., a separate phone, notifying someone of your session) before activating a Detox Session.'
+      ]) +
+      p('<span class="text-amber-400 font-bold">TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE OPERATOR SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION PERSONAL INJURY OR DEATH, ARISING FROM OR RELATED TO YOUR USE OF THE DETOX FEATURE.</span>')
+    ),
+    sec('Article 5 — Premium Subscription',
+      p('1. Certain features require a paid subscription ("Premium").') +
+      p('2. Subscriptions are processed through Apple App Store or Google Play. Billing, refunds, and cancellations are governed solely by the respective platform\'s policies.') +
+      p('3. Subscriptions auto-renew unless cancelled at least 24 hours before the renewal date.') +
+      p('4. The Operator reserves the right to change pricing or features with reasonable notice.') +
+      p('5. No refunds will be issued by the Operator directly. All refund requests must be directed to the applicable platform.')
+    ),
+    sec('Article 6 — User Content',
+      p(b('License: ') + 'You retain ownership of content you post ("User Content"), but you grant the Operator a worldwide, royalty-free, perpetual, irrevocable, non-exclusive license to use, reproduce, display, distribute, modify, and create derivative works of your User Content for any purpose related to operating or improving the App.') +
+      p(b('Your warranties: ') + 'You represent that you own or have the right to post all User Content and that it does not infringe any third-party rights.') +
+      p(b('Indemnification: ') + 'You agree to indemnify, defend, and hold harmless the Operator from any claims, damages, or expenses arising from your User Content.')
+    ),
+    sec('Article 7 — Prohibited Conduct',
+      p('You must not, directly or indirectly:') +
+      li([
+        'Use the App for any unlawful purpose or in violation of any applicable laws',
+        'Post, transmit, or share content that is defamatory, obscene, harassing, threatening, or discriminatory',
+        'Impersonate any person or entity, or falsely represent your affiliation',
+        'Attempt to gain unauthorized access to any part of the App or its infrastructure',
+        'Use automated tools (bots, scrapers, crawlers) without prior written permission',
+        'Reverse-engineer, decompile, or disassemble any part of the App',
+        'Interfere with or disrupt the App or servers connected to it',
+        'Engage in any form of commercial solicitation without prior written consent',
+        'Attempt to circumvent any subscription or paywall mechanisms'
+      ]) +
+      p('Violation may result in immediate account suspension or termination, and may be reported to applicable law enforcement authorities.')
+    ),
+    sec('Article 8 — Intellectual Property',
+      p('All rights, title, and interest in and to the App, including but not limited to the name, logo, design, code, content, and branding of "(DIS)CONNECT," are and shall remain the exclusive property of the Operator. Nothing in these Terms grants you any right to use any of the Operator\'s intellectual property except as expressly permitted herein.')
+    ),
+    sec('Article 9 — Disclaimers & No Warranty',
+      p(b('THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.') + ' THE OPERATOR EXPRESSLY DISCLAIMS ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, ACCURACY, RELIABILITY, OR AVAILABILITY. THE OPERATOR DOES NOT WARRANT THAT THE APP WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS.')
+    ),
+    sec('Article 10 — Limitation of Liability',
+      p('TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:') +
+      li([
+        'The Operator\'s total aggregate liability to you for any claim arising out of or relating to the App shall not exceed JPY 1,000 (one thousand Japanese yen) or the amount you paid to the Operator in the 30 days preceding the claim, whichever is greater.',
+        'The Operator shall not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, loss of profits, loss of data, or loss of goodwill.',
+        'This limitation applies regardless of the legal theory (contract, tort, strict liability, or otherwise), even if the Operator has been advised of the possibility of such damages.'
+      ]) +
+      p('Some jurisdictions do not allow exclusion of certain warranties or limitation of liability. In such jurisdictions, liability is limited to the minimum extent permitted by law.')
+    ),
+    sec('Article 11 — Indemnification',
+      p('You agree to indemnify, defend, and hold harmless the Operator and any successors from and against any and all claims, liabilities, damages, losses, costs, and expenses (including reasonable attorneys\' fees) arising out of or in connection with: (a) your use of the App; (b) your User Content; (c) your violation of these Terms; or (d) your violation of any third-party rights.')
+    ),
+    sec('Article 12 — Service Modification & Termination',
+      p('The Operator reserves the right, at any time and without prior notice, to:') +
+      li([
+        'Modify, suspend, or discontinue any part of the App',
+        'Terminate or suspend your account for any reason, including violation of these Terms',
+        'Alter features included in the free or premium tiers'
+      ]) +
+      p('The Operator is not liable to you or any third party for any modification, suspension, or discontinuation of the App.')
+    ),
+    sec('Article 13 — Third-Party Services',
+      p('The App integrates with third-party services including Google Firebase. Your use of such services is subject to those services\' terms and privacy policies. The Operator is not responsible for the content, privacy practices, or availability of third-party services.')
+    ),
+    sec('Article 14 — Amendments to Terms',
+      p('The Operator may update these Terms at any time. Continued use of the App after updated Terms are posted constitutes your acceptance of the revised Terms. If you do not agree to the revised Terms, you must cease using the App.')
+    ),
+    sec('Article 15 — Severability & Entire Agreement',
+      p('If any provision of these Terms is found invalid or unenforceable, the remaining provisions shall continue in full force and effect. These Terms, together with the Privacy Policy, constitute the entire agreement between you and the Operator regarding the App and supersede all prior agreements.')
+    ),
+    sec('Article 16 — Governing Law & Jurisdiction',
+      p('These Terms shall be governed by and construed in accordance with the laws of Japan. All disputes arising out of or relating to the App shall be subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance.')
+    ),
+    sec('Article 17 — Contact',
+      p('For inquiries: <span class="text-white font-semibold">disconnect2026.official@gmail.com</span>')
+    ),
+    '<div class="card p-4 mt-2 text-center"><p class="text-xs text-gray-700">Terms of Service — (DIS)CONNECT &nbsp;|&nbsp; Effective January 4, 2026</p></div>'
+  ].join('\n');
 
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">Article 2 – Eligibility</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">1. The App is available only to users aged 13 or older. Users under 18 are assumed to have obtained parental consent.</p>
-        <p class="text-sm text-gray-400 leading-relaxed">2. Certain features (e.g., the "Campus" feed) may require verification via a method specified by the Operator (e.g., a university email address).</p>
-      </div>
+  const bodyJA = [
+    '<p class="text-xs text-gray-500">制定日: 2026年1月4日 &nbsp;|&nbsp; 最終更新: 2026年3月26日</p>',
+    '<p class="text-xs text-gray-400 leading-relaxed"><strong class="text-white">(DIS)CONNECT</strong>（以下「本アプリ」）は、個人の運営者（以下「運営者」）が提供するデジタルデトックス支援アプリケーションです。本アプリにアクセスまたは利用することにより、以下の利用規約（以下「本規約」）に無条件に同意したものとみなします。同意できない場合は、直ちに本アプリの利用を中止し、すべてのコピーを削除してください。</p>',
+    sec('第1条（サービスの内容）',
+      p('本アプリは、選択したアプリへのアクセスを一定時間遮断するデジタルデトックス機能、進捗の共有、フレンド・グループ機能、および有料プレミアム機能を提供します。本アプリは個人事業主が運営するサービスであり、法人ではありません。')
+    ),
+    sec('第2条（利用資格・年齢制限）',
+      p('1. 本アプリは13歳以上の方のみが利用できます。') +
+      p('2. 13歳以上18歳未満のユーザーは、保護者または法定代理人の明示的な同意を得た上で利用するものとします。') +
+      p('3. 登録することで、上記の要件を満たしていることを表明・保証したものとみなします。要件を満たさないと判明した場合、運営者は通知なくアカウントを停止・削除する権利を有します。')
+    ),
+    sec('第3条（アカウント登録・管理）',
+      p('1. ユーザーは正確かつ完全な情報を提供して登録するものとします。') +
+      p('2. ユーザーは自己のアカウントにおけるすべての活動について単独で責任を負います。') +
+      p('3. 不正アクセス等を発見した場合は直ちに運営者に通知するものとします。') +
+      p('4. 認証情報の管理を怠ったことによる損害について、運営者は一切の責任を負いません。')
+    ),
+    warn('第4条（デトックス機能・リスクの引受け・免責）⚠️ 重要',
+      p(b('デトックスセッションを有効にすることにより、ユーザーは以下のすべてを明示的に承認し、すべてのリスクを自己の責任として引き受けるものとします。')) +
+      li([
+        b('緊急速報・警報の不着: ') + 'セッション中は、緊急地震速報・Jアラート・津波警報・特別警報等を受信できない可能性があります。これにより生じた死亡・負傷・財産的損害・その他いかなる損失についても、運営者は一切の責任を負いません。',
+        b('通信の不達: ') + '電話・SMS・プッシュ通知・その他あらゆる通信を受信できない可能性があります。緊急・重要な連絡を含むあらゆる不達について、運営者は一切の責任を負いません。',
+        b('医療上のリスク: ') + '緊急時に端末へのアクセスが必要な医療的事情がある方は、遮断機能を使用してはなりません。使用は完全に自己の責任で行うものとします。',
+        b('完全な遮断の非保証: ') + '本アプリはOSの標準機能を利用しており、すべての通知が遮断されること、またはすべての緊急システムが抑制されることを保証しません。',
+        b('代替手段の確保: ') + 'セッション開始前に代替の緊急通信手段（別端末での連絡等）を確保することはユーザー自身の責任です。'
+      ]) +
+      p('<span class="text-amber-400 font-bold">適用法令が許容する最大限の範囲において、運営者はデトックス機能の利用に起因する死亡・身体的傷害を含む直接・間接・特別・偶発的・派生的・懲罰的損害について、一切の賠償責任を負いません。</span>')
+    ),
+    sec('第5条（有料サービス・プレミアム）',
+      p('1. 一部機能はプレミアムプラン（有料）のご利用が必要です。') +
+      p('2. 課金はApple App StoreまたはGoogle Playを通じて処理されます。課金・返金・解約はそれぞれのプラットフォームのポリシーに従います。') +
+      p('3. サブスクリプションは更新日の24時間前までにキャンセルされない限り自動更新されます。') +
+      p('4. 運営者は合理的な告知のもと、価格や機能を変更する権利を留保します。') +
+      p('5. 運営者への直接の返金要求には応じられません。返金はすべて各プラットフォームにお申し出ください。')
+    ),
+    sec('第6条（ユーザーコンテンツ）',
+      p(b('ライセンス: ') + 'ユーザーが投稿したコンテンツ（以下「ユーザーコンテンツ」）の著作権はユーザーに帰属します。ただし、ユーザーは運営者に対し、本アプリの運営・改善に関連するあらゆる目的のために、当該コンテンツを世界規模で、無償、非独占的、永続的、取消不能の方法で利用・複製・表示・配信・修正・二次著作物の作成ができるライセンスを付与するものとします。') +
+      p(b('ユーザーの保証: ') + 'ユーザーコンテンツの投稿権限を有すること、および第三者の権利を侵害しないことを表明・保証するものとします。') +
+      p(b('補償義務: ') + 'ユーザーコンテンツに関して生じたあらゆるクレーム・損害・費用について、ユーザーは運営者を補償・防御・免責する義務を負います。')
+    ),
+    sec('第7条（禁止事項）',
+      p('ユーザーは以下の行為を行ってはなりません。') +
+      li([
+        '法令または本規約に違反する目的での利用',
+        '誹謗中傷・わいせつ・差別・ハラスメント・脅迫に該当するコンテンツの投稿・送信',
+        '他者または他の組織になりすます行為',
+        '本アプリやそのインフラへの不正アクセスの試み',
+        '事前書面による許可なく自動化ツール（ボット・スクレイパー等）を使用する行為',
+        '本アプリのリバースエンジニアリング・逆コンパイル・逆アセンブル',
+        '本アプリやサーバーの運営を妨害する行為',
+        '事前書面による同意なく商業的勧誘を行う行為',
+        '有料機能の回避・迂回を試みる行為'
+      ]) +
+      p('違反した場合、予告なくアカウントを停止・削除することがあり、関係当局に通報する場合があります。')
+    ),
+    sec('第8条（知的財産権）',
+      p('本アプリに関するすべての権利（名称・ロゴ・デザイン・ソースコード・コンテンツ・ブランド等を含む）は運営者に帰属します。本規約はユーザーに対し、明示的に許可した範囲を超えて運営者の知的財産を使用する権利を一切付与しません。')
+    ),
+    sec('第9条（無保証・免責）',
+      p(b('本アプリは「現状のまま」「利用可能な状態で」提供されます。') + '運営者は、商品性・特定目的への適合性・非侵害性・正確性・信頼性・可用性に関するすべての保証（明示・黙示を問わず）を明示的に否認します。運営者は、本アプリが中断なく、エラーなく、またはウイルスその他の有害な要素なく提供されることを保証しません。')
+    ),
+    sec('第10条（損害賠償の制限）',
+      p('適用法令が許容する最大限の範囲において、以下を適用します。') +
+      li([
+        '運営者の総賠償責任は、請求の30日前に運営者に支払った金額または1,000円（千円）のいずれか大きい方を上限とします。',
+        '運営者は、間接損害・偶発的損害・特別損害・派生的損害・逸失利益・データ損失・信用損失について一切責任を負いません。',
+        '上記の制限は、法的根拠（契約・不法行為・厳格責任その他）の如何を問わず、かかる損害の可能性を通知されていた場合でも適用されます。'
+      ]) +
+      p('一部の法域では特定の免責事項または責任制限が認められない場合があります。そのような法域においては、法令が許容する最小限の範囲で責任を負います。')
+    ),
+    sec('第11条（ユーザーの補償義務）',
+      p('ユーザーは、(a)本アプリの利用、(b)ユーザーコンテンツ、(c)本規約の違反、(d)第三者の権利の侵害から生じるすべてのクレーム・責任・損害・損失・費用（合理的な弁護士費用を含む）について、運営者を補償・防御・免責するものとします。')
+    ),
+    sec('第12条（サービスの変更・停止・終了）',
+      p('運営者は、予告なく以下を行う権利を留保します。') +
+      li([
+        '本アプリの一部または全部の変更・一時停止・廃止',
+        '本規約違反その他の理由によるアカウントの停止・削除',
+        '無料・有料プランに含まれる機能の変更'
+      ]) +
+      p('これらの変更によりユーザーまたは第三者に生じた損害について、運営者は一切責任を負いません。')
+    ),
+    sec('第13条（第三者サービス）',
+      p('本アプリはGoogle Firebase等の第三者サービスを利用します。これらのサービスの利用は、各サービスの利用規約およびプライバシーポリシーに従います。運営者は第三者サービスのコンテンツ・プライバシー慣行・可用性について責任を負いません。')
+    ),
+    sec('第14条（規約の変更）',
+      p('運営者はいつでも本規約を変更することができます。変更後も本アプリを継続して利用することにより、変更後の規約に同意したものとみなされます。変更後の規約に同意できない場合は、本アプリの利用を中止してください。')
+    ),
+    sec('第15条（分離可能性・完全合意）',
+      p('本規約のいずれかの条項が無効または執行不能と判断された場合も、残りの条項は引き続き完全な効力を有します。本規約は、プライバシーポリシーとあわせて、本アプリに関するユーザーと運営者の完全な合意を構成し、従前のすべての合意に優先します。')
+    ),
+    sec('第16条（準拠法・管轄）',
+      p('本規約は日本法に準拠し、解釈されます。本アプリに関するすべての紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。')
+    ),
+    sec('第17条（お問い合わせ）',
+      p('本規約に関するお問い合わせ: <span class="text-white font-semibold">disconnect2026.official@gmail.com</span>')
+    ),
+    '<div class="card p-4 mt-2 text-center"><p class="text-xs text-gray-700">利用規約 — (DIS)CONNECT &nbsp;|&nbsp; 2026年1月4日 制定</p></div>'
+  ].join('\n');
 
-      <div class="space-y-2">
-        <div class="card p-4 border border-yellow-500/30 bg-yellow-500/5">
-          <h2 class="text-base font-bold text-yellow-400 mb-2">Article 3 – Detox Feature & Disclaimer ⚠️ Important</h2>
-          <p class="text-xs text-gray-400 leading-relaxed mb-3">The core feature of the App blocks or restricts access to other apps and notifications during a Detox Session. By using this feature, you acknowledge the following:</p>
-          <div class="space-y-2">
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">1. Missed communications:</span> During a session, you may miss important calls, messages, notifications, or emergency alerts.</p>
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">2. No liability:</span> The Operator is NOT liable for any damages resulting from your inability to access your device or other apps during a session.</p>
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">3. Your responsibility:</span> It is your responsibility to ensure access to emergency communication means.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 4 – Account Management</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">You are responsible for managing your account credentials. If false information is provided during registration, the Operator reserves the right to suspend or delete the account.</p>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">Article 5 – User Content</h2>
-        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">License:</span> You retain copyright over content you post, but grant the Operator a non-exclusive right to display and distribute such content within the App.</p>
-        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">Prohibited content:</span> Posting illegal, obscene, defamatory, or harassing content is strictly prohibited.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 6 – Service Changes & Termination</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">The Operator may modify, suspend, or discontinue the App at any time without prior notice. The Operator is not liable for any damages arising from such changes.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 7 – Limitation of Liability</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">Except in cases of intentional misconduct or gross negligence, the Operator is not liable for any damages incurred through use of the App. Any liability is limited to direct and ordinary damages.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 8 – Governing Law & Jurisdiction</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">These Terms are governed by the laws of Japan. All disputes relating to the App shall be subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">Article 9 – Contact</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">For inquiries regarding these Terms, please contact us at:</p>
-        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
-      </div>
-
-      <div class="card p-4 mt-4">
-        <p class="text-xs text-gray-600 text-center">Terms of Service / Effective Date: January 4, 2026</p>
-        <p class="text-xs text-gray-700 leading-relaxed mt-2">(DIS)CONNECT is a social digital detox application. By using the App, you acknowledge that you may miss calls, messages, and emergency alerts during a Detox Session. The Operator is NOT liable for any resulting damages. These Terms are governed by the laws of Japan.</p>
-      </div>
-    </div>
-  ` : `
-    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
-      <button id="terms-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-xl font-black text-white">利用規約</h1>
-    </div>
-    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
-      <p class="text-xs text-gray-500">制定日: 2026年1月4日</p>
-      <p class="text-sm text-gray-400 leading-relaxed">(DIS)CONNECT（以下「本アプリ」）へようこそ。本アプリのダウンロード、インストール、または利用を開始することにより、運営者との間の本利用規約に同意したものとみなされます。</p>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第1条（サービスの内容）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">本アプリは、ユーザーが特定のアプリケーションへのアクセスを一時的に制限し、その進捗を友人やコミュニティと共有することで、デジタルデトックスを支援するツールです。本アプリは個人によって開発・運営されています。</p>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">第2条（利用資格）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">1. 本アプリは、13歳以上の方のみが利用できます。18歳未満のユーザーは、保護者の許可を得た上で本アプリを利用しているものとみなします。</p>
-        <p class="text-sm text-gray-400 leading-relaxed">2. 特定の機能（「キャンパス」フィードなど）を利用するために、運営者が指定する方法（大学メールアドレス等）での認証を求める場合があります。</p>
-      </div>
-
-      <div class="space-y-2">
-        <div class="card p-4 border border-yellow-500/30 bg-yellow-500/5">
-          <h2 class="text-base font-bold text-yellow-400 mb-2">第3条（デトックス機能と免責事項）⚠️ 重要</h2>
-          <p class="text-xs text-gray-400 leading-relaxed mb-3">本アプリの主要機能は、端末上の他のアプリや通知へのアクセスを遮断または制限すること（デトックスセッション）です。この機能を利用することにより、ユーザーは以下の事項を承諾したものとします。</p>
-          <div class="space-y-2">
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">1. 通信の不達:</span> セッション中は、重要な電話、メッセージ、通知、または緊急速報（Jアラート等）を見逃す可能性があります。</p>
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">2. 免責:</span> 運営者は、セッション中にユーザーが端末や他のアプリにアクセスできなかったことに起因するいかなる損害についても一切の責任を負いません。</p>
-            <p class="text-xs text-gray-400 leading-relaxed"><span class="text-white font-semibold">3. 自己責任:</span> 緊急時の連絡手段の確保は、ユーザー自身の責任において行ってください。</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第4条（アカウント管理）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">ユーザーは、自己の責任においてアカウント情報を管理するものとします。また、登録情報に虚偽があった場合、運営者はアカウントを停止または削除する権利を有します。</p>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">第5条（ユーザーコンテンツ）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">ライセンス:</span> ユーザーが投稿したコンテンツの著作権はユーザーに帰属しますが、ユーザーは運営者に対し、本アプリ内で当該コンテンツを表示・配信するための非独占的な権利を許諾するものとします。</p>
-        <p class="text-sm text-gray-400 leading-relaxed"><span class="text-white font-semibold">禁止事項:</span> 違法、公序良俗に反する内容、他者への誹謗中傷、ハラスメント行為を含むコンテンツの投稿は禁止します。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第6条（サービスの変更・停止）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">運営者は、個人の判断により、事前の通知なく本アプリの機能変更、一時停止、または提供終了を行うことができるものとします。これに起因してユーザーに生じた損害について、運営者は責任を負いません。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第7条（損害賠償の制限）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">運営者は、本アプリの利用に関連してユーザーに生じた損害について、運営者に故意または重大な過失がある場合を除き、一切の責任を負いません。また、賠償責任を負う場合であっても、その範囲は通常生ずべき直接の損害に限られるものとします。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第8条（準拠法・管轄）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">本規約は日本法に準拠し、解釈されるものとします。本アプリに関わる一切の紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">第9条（お問い合わせ）</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">本規約に関するお問い合わせは、以下のメールアドレスまでご連絡ください。</p>
-        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
-      </div>
-
-      <div class="card p-4 mt-4">
-        <p class="text-xs text-gray-600 text-center">Terms of Service / Effective Date: January 4, 2026</p>
-        <p class="text-xs text-gray-700 leading-relaxed mt-2">(DIS)CONNECT is a social digital detox application. By using the App, you acknowledge that you may miss calls, messages, and emergency alerts during a Detox Session. The Operator is NOT liable for any resulting damages. These Terms are governed by the laws of Japan.</p>
-      </div>
-    </div>
-  `;
+  page.innerHTML = headerHTML + '<div class="px-5 pb-10 space-y-5 overflow-y-auto no-scrollbar flex-1">' + (isEn ? bodyEN : bodyJA) + '</div>';
   document.getElementById('terms-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); else if (p === 'profile') renderProfile(); goto(p); });
 }
 
@@ -3769,179 +4845,208 @@ function renderTerms() {
 function renderPrivacy() {
   const isEn = S.lang === 'en';
   const page = document.getElementById('page-privacy');
-  page.innerHTML = isEn ? `
-    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
-      <button id="privacy-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-xl font-black text-white">Privacy Policy</h1>
-    </div>
-    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
-      <p class="text-xs text-gray-500">Effective Date: January 4, 2026</p>
-      <p class="text-sm text-gray-400 leading-relaxed">The Operator of (DIS)CONNECT respects your privacy. This Policy explains how personal information is handled in this individually operated app.</p>
+  const BACK_PP = '<button id="privacy-back" class="text-gray-400 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>';
+  const headerPP = '<div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">' + BACK_PP + '<h1 class="text-xl font-black text-white">' + (isEn ? 'Privacy Policy' : 'プライバシーポリシー') + '</h1></div>';
+  const sp = (title, body) => '<div class="space-y-2"><h2 class="text-sm font-black text-white uppercase tracking-wide border-l-2 border-gray-600 pl-3">' + title + '</h2><div class="space-y-2 text-xs text-gray-400 leading-relaxed">' + body + '</div></div>';
+  const pp = (t) => '<p>' + t + '</p>';
+  const pb = (t) => '<span class="text-white font-semibold">' + t + '</span>';
+  const pli = (items) => '<ul class="space-y-1 pl-3">' + items.map(i => '<li class="flex gap-2"><span class="text-gray-600 flex-shrink-0">・</span><span>' + i + '</span></li>').join('') + '</ul>';
+  const ptbl = (rows) => '<div class="card p-3 space-y-2">' + rows.map(r => '<div class="flex gap-3"><span class="text-gray-500 flex-shrink-0 w-24">' + r[0] + '</span><span>' + r[1] + '</span></div>').join('') + '</div>';
 
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">1. Information We Collect</h2>
-        <div class="card p-4 space-y-3">
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">Information you provide</p>
-            <p class="text-xs text-gray-400 leading-relaxed">Account details (name, email, profile image, etc.), campus verification credentials, user-generated content (posts, messages)</p>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">Automatically collected information</p>
-            <p class="text-xs text-gray-400 leading-relaxed">Usage data (detox duration, status), device information (model, OS), push notification tokens</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <p class="text-sm font-semibold text-white mb-1">App usage detection</p>
-            <p class="text-xs text-gray-400 leading-relaxed">The App detects which apps you attempt to open during a session. However, we <span class="text-white">never collect or store the content of messages</span> from LINE, messaging apps, or similar services.</p>
-          </div>
-        </div>
-      </div>
+  const privacyEN = [
+    '<p class="text-xs text-gray-500">Effective Date: January 4, 2026 | Last Updated: March 26, 2026</p>',
+    '<p class="text-xs text-gray-400 leading-relaxed">This Privacy Policy explains how the individual operator of <strong class="text-white">(DIS)CONNECT</strong> (the "Operator") collects, uses, stores, and protects your personal information. By using the App, you agree to the practices described in this Policy.</p>',
+    sp('1. Operator Information',
+      ptbl([
+        ['Service name', '(DIS)CONNECT'],
+        ['Operator type', 'Individual developer'],
+        ['Contact', 'disconnect2026.official@gmail.com'],
+        ['Jurisdiction', 'Japan']
+      ])
+    ),
+    sp('2. Information We Collect',
+      pp(pb('Information you provide directly:')) +
+      pli([
+        'Account information: display name, username (handle), email address',
+        'Profile information: bio text, profile image URL',
+        'User-generated content: posts, comments, direct messages',
+        'Session data: detox goals, duration, completion status'
+      ]) +
+      pp(pb('Information collected automatically:')) +
+      pli([
+        'App interaction data: features used, session frequency and duration',
+        'Device identifiers and OS information (via Firebase)',
+        'Push notification tokens (for opt-in notifications only)',
+        'Browser/localStorage data for session continuity'
+      ]) +
+      pp(pb('What we do NOT collect:')) +
+      pli([
+        'Contents of your messages in any other application (LINE, Messages, etc.)',
+        'Location data or GPS coordinates',
+        'Contacts, photos, or files from your device (unless explicitly uploaded by you)',
+        'Financial or payment data (handled solely by Apple/Google)'
+      ])
+    ),
+    sp('3. Legal Basis & Purpose of Processing',
+      ptbl([
+        ['Contract', 'Providing and maintaining App features you registered for'],
+        ['Legitimate interest', 'Improving the App, preventing abuse, ensuring security'],
+        ['Consent', 'Sending push notifications (opt-in only)'],
+        ['Legal obligation', 'Responding to lawful requests from authorities']
+      ]) +
+      pp('We will NEVER sell, rent, or trade your personal information to third parties for marketing purposes.')
+    ),
+    sp('4. Data Sharing & Third-Party Services',
+      pp(pb('Google Firebase (Google LLC):')) +
+      pp('The App uses Firebase for authentication, database storage (Firestore), and optionally analytics. Your data is processed by Google and may be stored on servers outside Japan. Google LLC participates in the EU-U.S. Data Privacy Framework and applies Standard Contractual Clauses for international transfers.') +
+      pp('<a href="https://policies.google.com/privacy" class="text-gray-500 underline">Google Privacy Policy</a>') +
+      pp(pb('Between users:')) +
+      pp('Your public profile, posts, and detox status may be visible to other users based on your privacy settings within the App.') +
+      pp(pb('Legal disclosure:')) +
+      pp('We may disclose information to comply with applicable laws, court orders, or lawful government requests. We will notify you of such requests to the extent permitted by law.')
+    ),
+    sp('5. International Data Transfers',
+      pp('By using the App, you acknowledge that your data may be transferred to and processed in countries outside Japan, including the United States, where Google Firebase servers are located. Such transfers are made subject to appropriate safeguards including Standard Contractual Clauses or equivalent mechanisms.')
+    ),
+    sp('6. Data Retention',
+      ptbl([
+        ['Account data', 'Until account deletion request'],
+        ['Posts & content', 'Until deleted by user or account termination'],
+        ['Session logs', '12 months from creation'],
+        ['Firebase Auth tokens', 'Managed by Google per their retention policy'],
+        ['Backup/logs', 'Up to 90 days after deletion']
+      ])
+    ),
+    sp('7. Your Rights',
+      pp('Subject to applicable law, you have the following rights:') +
+      pli([
+        pb('Access: ') + 'Request a copy of personal data we hold about you',
+        pb('Correction: ') + 'Request correction of inaccurate data',
+        pb('Deletion: ') + 'Request deletion of your account and associated data (available in App Settings)',
+        pb('Portability: ') + 'Request a machine-readable copy of your data',
+        pb('Objection: ') + 'Object to processing based on legitimate interests',
+        pb('Withdraw consent: ') + 'Disable push notifications at any time in device settings'
+      ]) +
+      pp('To exercise these rights, contact: <span class="text-white font-semibold">disconnect2026.official@gmail.com</span>. We will respond within 30 days.')
+    ),
+    sp('8. Security',
+      pp('The Operator implements reasonable technical and organizational measures to protect your personal information, including use of Firebase security rules and encrypted data transmission (HTTPS/TLS).') +
+      pp('As this is an individually operated service, we cannot guarantee absolute security. In the event of a data breach that poses a significant risk to you, we will notify affected users as required by applicable law.')
+    ),
+    sp('9. Cookies & Local Storage',
+      pp('The App uses browser localStorage (not cookies) to store session preferences and user state locally on your device. This data does not leave your device unless explicitly synced with Firebase. You can clear this data by clearing your browser data or uninstalling the App.')
+    ),
+    sp('10. Children\'s Privacy',
+      pp('The App is not directed at children under 13. We do not knowingly collect personal information from children under 13. If we become aware that we have collected data from a child under 13 without parental consent, we will delete it promptly. If you believe we have collected such data, please contact us immediately.')
+    ),
+    sp('11. Changes to This Policy',
+      pp('We may update this Privacy Policy at any time. We will post the updated Policy within the App. Continued use of the App after the updated Policy is posted constitutes your acceptance of the revised Policy.')
+    ),
+    sp('12. Contact & Privacy Requests',
+      pp('For any privacy-related inquiries, data access requests, or complaints:') +
+      pp('<span class="text-white font-semibold">disconnect2026.official@gmail.com</span>') +
+      pp('Response time: within 30 days of receipt.')
+    ),
+    '<div class="card p-4 mt-2 text-center"><p class="text-xs text-gray-700">Privacy Policy — (DIS)CONNECT | Effective January 4, 2026</p></div>'
+  ].join('\n');
 
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">2. How We Use Your Information</h2>
-        <div class="space-y-1">
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To provide, maintain, and improve the App</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To enable social features between users</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To verify student status</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">To send important notices and event notifications</p></div>
-        </div>
-        <div class="card p-3 flex items-center gap-3 mt-2">
-          <span class="text-xl">🚫</span>
-          <p class="text-sm text-gray-300 font-semibold">We will <span class="text-white">never sell</span> your personal data to third parties</p>
-        </div>
-      </div>
+  const privacyJA = [
+    '<p class="text-xs text-gray-500">制定日: 2026年1月4日 | 最終更新: 2026年3月26日</p>',
+    '<p class="text-xs text-gray-400 leading-relaxed"><strong class="text-white">(DIS)CONNECT</strong>（以下「本アプリ」）の運営者（個人）は、ユーザーの個人情報を適切に取り扱うことを重視します。本プライバシーポリシーは、個人情報保護法（以下「法」）その他関連法令を遵守し、個人情報の収集・利用・管理・第三者提供に関する方針を定めるものです。本アプリを利用することにより、本ポリシーに同意したものとみなします。</p>',
+    sp('第1条（運営者情報）',
+      ptbl([
+        ['サービス名', '(DIS)CONNECT'],
+        ['運営形態', '個人事業主'],
+        ['お問い合わせ', 'disconnect2026.official@gmail.com'],
+        ['所在地', '日本']
+      ])
+    ),
+    sp('第2条（収集する個人情報）',
+      pp(pb('ユーザーが直接提供する情報:')) +
+      pli([
+        'アカウント情報: 表示名、ユーザー名（ハンドル）、メールアドレス',
+        'プロフィール情報: 自己紹介文、プロフィール画像のURL',
+        'ユーザーコンテンツ: 投稿、コメント、ダイレクトメッセージ',
+        'セッションデータ: デトックス目標・時間・完了状況'
+      ]) +
+      pp(pb('自動的に収集される情報:')) +
+      pli([
+        'アプリ利用データ: 使用機能、セッション頻度・時間',
+        '端末識別情報およびOS情報（Firebase経由）',
+        'プッシュ通知用トークン（オプトイン時のみ）',
+        'セッション継続のためのブラウザ/ローカルストレージデータ'
+      ]) +
+      pp(pb('収集しない情報:')) +
+      pli([
+        '他のアプリ（LINE・メッセージ等）のメッセージ内容',
+        '位置情報・GPS座標',
+        '端末内の連絡先・写真・ファイル（ユーザーが明示的にアップロードした場合を除く）',
+        '支払い情報・クレジットカード情報（Apple/Googleが管理）'
+      ])
+    ),
+    sp('第3条（利用目的）',
+      ptbl([
+        ['契約の履行', '登録機能の提供・維持'],
+        ['正当な利益', '品質改善・不正防止・セキュリティ確保'],
+        ['同意', 'プッシュ通知の送信（オプトイン時のみ）'],
+        ['法的義務', '行政機関・裁判所等からの適法な要請への対応']
+      ]) +
+      pp('取得した個人情報を、ユーザーの同意なく第三者にマーケティング目的で販売・賃貸・提供することはありません。')
+    ),
+    sp('第4条（第三者提供・外部サービス）',
+      pp(pb('Google Firebase（Google LLC）:')) +
+      pp('本アプリは認証・データベース（Firestore）・分析のためにFirebaseを利用しています。データはGoogleにより処理され、日本国外（米国等）のサーバーに保存される場合があります。Google LLCはEU-米国データプライバシーフレームワークに参加しており、標準契約条項（SCC）等の適切な保護措置を適用しています。') +
+      pp('<span class="text-gray-500">Google プライバシーポリシー: https://policies.google.com/privacy</span>') +
+      pp(pb('ユーザー間:')) +
+      pp('公開設定に基づき、プロフィール・投稿・デトックスステータスが他のユーザーに表示される場合があります。') +
+      pp(pb('法令に基づく開示:')) +
+      pp('法令・裁判所命令・適法な行政機関の要請に基づく場合、個人情報を開示することがあります。法令が許容する範囲でユーザーに通知します。')
+    ),
+    sp('第5条（海外への個人情報の移転）',
+      pp('本アプリの利用により、ユーザーの個人情報がGoogle FirebaseのサーバーがあるアメリカなどのFirebase運営国に転送・処理される場合があることを承諾するものとします。かかる移転は、標準契約条項等の適切な保護措置のもとに行われます。')
+    ),
+    sp('第6条（保管期間）',
+      ptbl([
+        ['アカウントデータ', 'アカウント削除申請まで'],
+        ['投稿・コンテンツ', 'ユーザーによる削除またはアカウント停止まで'],
+        ['セッションログ', '作成から12ヶ月'],
+        ['Firebase Authトークン', 'Googleのポリシーに従い管理'],
+        ['バックアップ・ログ', '削除後最大90日']
+      ])
+    ),
+    sp('第7条（ユーザーの権利）',
+      pp('適用法令の範囲内で、以下の権利を有します。') +
+      pli([
+        pb('開示: ') + '保有する個人情報の開示請求',
+        pb('訂正: ') + '不正確な情報の訂正請求',
+        pb('削除: ') + 'アカウントおよびデータの削除（アプリ内設定から可能）',
+        pb('利用停止: ') + '個人情報の利用停止・第三者提供停止請求',
+        pb('同意の撤回: ') + 'プッシュ通知はいつでも端末設定から無効化可能'
+      ]) +
+      pp('権利行使は <span class="text-white font-semibold">disconnect2026.official@gmail.com</span> へご連絡ください。受領後30日以内に対応します。')
+    ),
+    sp('第8条（安全管理措置）',
+      pp('運営者は、個人情報の漏洩・滅失・毀損を防止するため、Firebase セキュリティルールおよびHTTPS/TLSによる暗号化通信等の合理的な技術的・組織的措置を講じます。') +
+      pp('個人運営のサービスであるため、企業と同等の完全なセキュリティを保証するものではありません。重大なリスクをもたらす情報漏洩が発生した場合、法令に従い影響を受けるユーザーに通知します。')
+    ),
+    sp('第9条（Cookie・ローカルストレージ）',
+      pp('本アプリはCookieを使用せず、ブラウザのlocalStorageを使用してセッション設定・ユーザー状態をお使いの端末上に保存します。このデータはFirebaseと明示的に同期されない限り端末外に送信されません。ブラウザデータの消去またはアプリのアンインストールにより削除できます。')
+    ),
+    sp('第10条（未成年者のプライバシー）',
+      pp('本アプリは13歳未満の方を対象としていません。13歳未満の方から保護者の同意なく個人情報を収集した事実が判明した場合、速やかに削除します。該当すると思われる場合は直ちにご連絡ください。')
+    ),
+    sp('第11条（プライバシーポリシーの変更）',
+      pp('本ポリシーはいつでも変更することがあります。変更後のポリシーは本アプリ内に掲載します。変更後も本アプリを継続して利用することにより、変更後のポリシーに同意したものとみなされます。')
+    ),
+    sp('第12条（個人情報に関するお問い合わせ・苦情窓口）',
+      pp('個人情報の取り扱いに関するご質問・開示請求・苦情等は以下にご連絡ください。') +
+      pp('<span class="text-white font-semibold">disconnect2026.official@gmail.com</span>') +
+      pp('受領後30日以内に回答します。')
+    ),
+    '<div class="card p-4 mt-2 text-center"><p class="text-xs text-gray-700">プライバシーポリシー — (DIS)CONNECT | 2026年1月4日 制定</p></div>'
+  ].join('\n');
 
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">3. Information Sharing & Third-Party Services</h2>
-        <div class="card p-4 space-y-3">
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">Between users</p>
-            <p class="text-xs text-gray-400 leading-relaxed">Your profile and posts may be visible to other users based on app settings.</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-base">🔥</span>
-              <p class="text-sm font-semibold text-white">Google Firebase</p>
-            </div>
-            <p class="text-xs text-gray-400 leading-relaxed">The App uses Google Firebase for data storage, authentication, and analytics. Your data may be stored and processed on Firebase servers, including servers outside Japan.</p>
-            <p class="text-xs text-gray-600 mt-1">Google Privacy Policy: https://policies.google.com/privacy</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <p class="text-sm font-semibold text-white mb-1">Legal requirements</p>
-            <p class="text-xs text-gray-400">We may disclose information when required to do so by law.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">4. Data Security</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">The Operator strives to implement appropriate security measures to prevent data breaches or loss. Please note that, as an individually operated service, we cannot guarantee the same level of security as a corporation.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">5. Data Deletion</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">You may delete your account and associated data at any time through the App settings.</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">6. Contact</h2>
-        <p class="text-sm text-gray-400">For questions about this Privacy Policy, please contact us at:</p>
-        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
-      </div>
-
-      <div class="card p-4 mt-4">
-        <p class="text-xs text-gray-600 text-center">Privacy Policy / Effective Date: January 4, 2026</p>
-        <p class="text-xs text-gray-700 leading-relaxed mt-2">We use Google Firebase to host data, manage authentication, and analyze app usage. We do NOT sell your personal data. You may request deletion of your account and data at any time through the App settings.</p>
-      </div>
-    </div>
-  ` : `
-    <div class="flex items-center px-4 pt-6 pb-2 gap-3 flex-shrink-0">
-      <button id="privacy-back" class="text-gray-400 p-1">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h1 class="text-xl font-black text-white">プライバシーポリシー</h1>
-    </div>
-    <div class="px-5 pb-10 space-y-6 overflow-y-auto no-scrollbar flex-1">
-      <p class="text-xs text-gray-500">制定日: 2026年1月4日</p>
-      <p class="text-sm text-gray-400 leading-relaxed">(DIS)CONNECTの運営者は、ユーザーのプライバシーを尊重します。本ポリシーは、個人運営のアプリにおける個人情報の取り扱いについて説明するものです。</p>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">1. 収集する情報</h2>
-        <div class="card p-4 space-y-3">
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">提供される情報</p>
-            <p class="text-xs text-gray-400 leading-relaxed">アカウント情報（名前、メールアドレス、プロフィール画像等）、キャンパス機能用の認証情報、ユーザーコンテンツ（投稿、メッセージ）</p>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">自動収集される情報</p>
-            <p class="text-xs text-gray-400 leading-relaxed">利用データ（デトックス時間、ステータス）、端末情報（機種、OS）、プッシュ通知用トークン</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <p class="text-sm font-semibold text-white mb-1">アプリ利用状況の検知について</p>
-            <p class="text-xs text-gray-400 leading-relaxed">本アプリは機能上、セッション中にユーザーがどのアプリを起動しようとしたかを検知します。ただし、LINEやメッセージアプリ等の<span class="text-white">「内容（トーク内容）」を収集・保存することは一切ありません。</span></p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">2. 利用目的</h2>
-        <div class="space-y-1">
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">本アプリの機能提供、維持、改善のため</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">ユーザー間のソーシャル機能の提供のため</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">学生認証の確認のため</p></div>
-          <div class="flex items-start gap-2"><span class="text-gray-600 mt-1 flex-shrink-0">•</span><p class="text-sm text-gray-400">重要なお知らせやイベント通知の配信のため</p></div>
-        </div>
-        <div class="card p-3 flex items-center gap-3 mt-2">
-          <span class="text-xl">🚫</span>
-          <p class="text-sm text-gray-300 font-semibold">ユーザーの個人情報を第三者に<span class="text-white">販売することはありません</span></p>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <h2 class="text-base font-bold text-white">3. 情報の共有と外部サービス</h2>
-        <div class="card p-4 space-y-3">
-          <div>
-            <p class="text-sm font-semibold text-white mb-1">ユーザー間</p>
-            <p class="text-xs text-gray-400 leading-relaxed">プロフィールや投稿は、アプリの仕様に基づき他のユーザーに公開されます。</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-base">🔥</span>
-              <p class="text-sm font-semibold text-white">Google Firebase</p>
-            </div>
-            <p class="text-xs text-gray-400 leading-relaxed">本アプリは、データの保管、認証、分析のためにGoogle社が提供する「Firebase」を使用しています。ユーザーの情報はFirebaseのサーバー（海外を含む）に保存・処理される場合があります。</p>
-            <p class="text-xs text-gray-600 mt-1">Google Privacy Policy: https://policies.google.com/privacy</p>
-          </div>
-          <div class="border-t border-white/5 pt-3">
-            <p class="text-sm font-semibold text-white mb-1">法令</p>
-            <p class="text-xs text-gray-400">法令に基づき開示が必要な場合、情報を開示することがあります。</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">4. 個人情報の管理</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">運営者は、個人情報の漏洩や滅失を防ぐために適切なセキュリティ対策を講じるよう努めます。ただし、個人運営であるため、企業と同等の完全なセキュリティ体制を保証するものではないことをご了承ください。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">5. データの削除</h2>
-        <p class="text-sm text-gray-400 leading-relaxed">ユーザーは、アプリ内の設定からいつでもアカウントおよびデータを削除することができます。</p>
-      </div>
-
-      <div class="space-y-1">
-        <h2 class="text-base font-bold text-white">6. お問い合わせ</h2>
-        <p class="text-sm text-gray-400">プライバシーポリシーに関するご質問は、以下までご連絡ください。</p>
-        <p class="text-sm text-white font-medium">disconnect2026.official@gmail.com</p>
-      </div>
-
-      <div class="card p-4 mt-4">
-        <p class="text-xs text-gray-600 text-center">Privacy Policy / Effective Date: January 4, 2026</p>
-        <p class="text-xs text-gray-700 leading-relaxed mt-2">We use Google Firebase to host data, manage authentication, and analyze app usage. We do NOT sell your personal data. You may request deletion of your account and data at any time through the App settings.</p>
-      </div>
-    </div>
-  `;
+  page.innerHTML = headerPP + '<div class="px-5 pb-10 space-y-5 overflow-y-auto no-scrollbar flex-1">' + (isEn ? privacyEN : privacyJA) + '</div>';
   document.getElementById('privacy-back').addEventListener('click', () => { const p = S._prevPage || 'register'; if (p === 'settings') renderSettings(); else if (p === 'profile') renderProfile(); goto(p); });
 }
 
@@ -3953,7 +5058,8 @@ function renderPremium() {
   const FEATURES = [
     { icon: '🔥', title: t('ストリークバッジ','Streak Badges'), desc: t('連続記録を特別なバッジでアピール','Show off your streaks with special badges'), locked: true },
     { icon: '📊', title: t('詳細アナリティクス','Detailed Analytics'), desc: t('月次・年次の統計データを表示','View monthly and yearly stats'), locked: true },
-    { icon: '👥', title: t('グループ無制限作成','Unlimited Groups'), desc: t('複数グループを自由に作成・管理','Create and manage multiple groups freely'), locked: true },
+    { icon: '👥', title: t('グループ無制限参加','Unlimited Group Joins'), desc: t('グループ参加数の上限なし（無料は3グループまで）','No limit on groups joined — free plan is capped at 3'), locked: true },
+    { icon: '⏱️', title: t('グループデトックス回数無制限','Unlimited Group Detox Sessions'), desc: t('1日のグループデトックス回数が無制限（無料は1日2回まで）','Unlimited daily group detox sessions — free plan is capped at 2/day'), locked: true },
     { icon: '🎨', title: t('カスタムテーマ','Custom Themes'), desc: t('プロフィールカラーと背景をカスタマイズ','Customize profile colors and backgrounds'), locked: true },
     { icon: '🔔', title: t('スマートリマインダー','Smart Reminders'), desc: t('AIが最適なデトックス時間を提案','AI suggests the best detox times for you'), locked: true },
     { icon: '🏆', title: t('リーダーボード','Leaderboard'), desc: t('フレンドとのランキング比較','Compare rankings with friends'), locked: true },
@@ -4001,6 +5107,264 @@ function renderPremium() {
 }
 
 // ================================================================
+// SURVEY (post-registration segmentation)
+// ================================================================
+function renderSurvey() {
+  const page = document.getElementById('page-survey');
+
+  const occupations = [
+    { v: 'student',    ja: '学生',         en: 'Student' },
+    { v: 'employee',   ja: '会社員',       en: 'Office Worker' },
+    { v: 'freelance',  ja: 'フリーランス', en: 'Freelancer' },
+    { v: 'homemaker',  ja: '主婦・主夫',   en: 'Homemaker' },
+    { v: 'other',      ja: 'その他',       en: 'Other' },
+  ];
+  const goals = [
+    { v: 'sns',        ja: 'SNS・動画依存を減らす',   en: 'Reduce SNS / video addiction' },
+    { v: 'focus',      ja: '仕事・勉強の集中力アップ', en: 'Improve focus at work/study' },
+    { v: 'exam',       ja: '受験・資格勉強',           en: 'Exam / certification study' },
+    { v: 'sleep',      ja: '睡眠の質を上げる',         en: 'Better sleep' },
+    { v: 'family',     ja: '家族・子どもへの影響',     en: 'Family / parenting concern' },
+    { v: 'health',     ja: '心身の健康管理',           en: 'Mental & physical health' },
+    { v: 'other',      ja: 'その他',                   en: 'Other' },
+  ];
+  const usages = [
+    { v: 'lt2',  ja: '2時間未満',  en: 'Under 2h' },
+    { v: '2to4', ja: '2〜4時間',   en: '2–4h' },
+    { v: '4to6', ja: '4〜6時間',   en: '4–6h' },
+    { v: 'gt6',  ja: '6時間以上',  en: '6h+' },
+  ];
+
+  let selOccupation = null, selGoals = new Set(), selUsage = null;
+
+  function chip(label, active, onclick) {
+    return `<button onclick="${onclick}" style="padding:10px 16px;border-radius:9999px;border:1.5px solid ${active?'white':'#3a3a3c'};background:${active?'white':'transparent'};color:${active?'black':'#9ca3af'};font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">${label}</button>`;
+  }
+
+  function render() {
+    page.innerHTML = `
+      <div class="mb-8">
+        <p class="text-xs text-gray-600 font-bold uppercase tracking-widest mb-1">${t('ステップ 2 / 3','Step 2 of 3')}</p>
+        <h2 class="text-2xl font-black text-white leading-tight">${t('あなたのことを\n教えてください','Tell us about\nyourself').replace(/\n/g,'<br>')}</h2>
+        <p class="text-gray-600 text-sm mt-2">${t('アプリをより良くするために使います','Used to improve your experience')}</p>
+      </div>
+
+      <div class="mb-6">
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-3">${t('職業','Occupation')}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${occupations.map(o => chip(t(o.ja,o.en), selOccupation===o.v, `window._surveyOcc('${o.v}')`)).join('')}
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-3">${t('デトックスの目的','Detox Goal')} <span class="text-gray-700 normal-case">${t('（複数可）','(multiple ok)')}</span></p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${goals.map(g => chip(t(g.ja,g.en), selGoals.has(g.v), `window._surveyGoal('${g.v}')`)).join('')}
+        </div>
+      </div>
+
+      <div class="mb-10">
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-3">${t('1日の平均スマホ使用時間','Avg. Daily Phone Use')}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${usages.map(u => chip(t(u.ja,u.en), selUsage===u.v, `window._surveyUsage('${u.v}')`)).join('')}
+        </div>
+      </div>
+
+      <button id="survey-next" class="w-full bg-white text-black font-bold py-4 rounded-full text-base active:bg-gray-200 transition">
+        ${t('次へ','Next')}
+      </button>
+      <button id="survey-skip" class="w-full text-gray-700 font-semibold py-3 text-sm mt-1">
+        ${t('スキップ','Skip')}
+      </button>
+    `;
+
+    document.getElementById('survey-next').addEventListener('click', async () => {
+      const u = getUser() || {};
+      const segment = { occupation: selOccupation, goals: [...selGoals], dailyUsage: selUsage };
+      u.segment = segment;
+      saveUser(u);
+      if (db && u.uid) {
+        try { await db.collection('users').doc(u.uid).update({ segment }); } catch(e) {}
+      }
+      renderOnboarding();
+    });
+    document.getElementById('survey-skip').addEventListener('click', () => renderOnboarding());
+  }
+
+  window._surveyOcc   = v => { selOccupation = selOccupation === v ? null : v; render(); };
+  window._surveyGoal  = v => { selGoals.has(v) ? selGoals.delete(v) : selGoals.add(v); render(); };
+  window._surveyUsage = v => { selUsage = selUsage === v ? null : v; render(); };
+
+  render();
+  goto('survey');
+}
+
+// ================================================================
+// ONBOARDING
+// ================================================================
+function renderOnboarding(fromSettings = false) {
+  let current = 0;
+  let _ob_timer = null;
+  function _clearOb() { if (_ob_timer) { clearInterval(_ob_timer); _ob_timer = null; } }
+
+  // ── Slide UIs ──────────────────────────────────────────
+  function slide1() { return `
+    <div class="ob-phone">
+      <div style="padding:14px 12px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+        <div style="width:38px;height:38px;border-radius:12px;background:#1C1C1E;display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/></svg>
+        </div>
+        <div style="font-size:20px;font-weight:900;color:white;font-family:sans-serif;letter-spacing:1px;">01:00:00</div>
+        <div style="font-size:8px;color:#6b7280;font-family:sans-serif;">YouTube · Instagram · X</div>
+        <div style="width:126px;height:34px;background:#1C1C1E;border-radius:17px;position:relative;margin-top:6px;overflow:hidden;">
+          <div style="position:absolute;left:3px;top:3px;width:28px;height:28px;background:white;border-radius:50%;animation:ob-swipe 2.2s ease-in-out infinite;"></div>
+          <span style="position:absolute;width:100%;text-align:center;line-height:34px;font-size:8px;font-weight:700;color:#6b7280;font-family:sans-serif;">${t('スワイプして(DIS)CONNECT','Swipe to (DIS)CONNECT')}</span>
+        </div>
+      </div>
+    </div>`; }
+
+  function slide2() { return `
+    <div class="ob-phone">
+      <div style="padding:12px 10px;height:100%;display:flex;flex-direction:column;gap:7px;justify-content:center;">
+        ${[
+          {n:'Alice', c:'#3b82f6', s0:t('デトックス中','Detoxing'), s1:t('オンライン','Online'), d:'0'},
+          {n:'Ben',   c:'#f97316', s0:t('オンライン','Online'), s1:t('デトックス中','Detoxing'), d:'0.6s'},
+          {n:'Chloe', c:'#ec4899', s0:t('デトックス中','Detoxing'), s1:t('オンライン','Online'), d:'1.2s'},
+        ].map(f => `
+          <div style="display:flex;align-items:center;gap:8px;background:#1C1C1E;border-radius:12px;padding:7px 8px;">
+            <div style="width:26px;height:26px;border-radius:50%;background:${f.c};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;">${f.n[0]}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:10px;font-weight:700;color:white;font-family:sans-serif;">${f.n}</div>
+              <div style="font-size:8px;font-family:sans-serif;animation:ob-status-cycle 3s ${f.d} infinite;">
+                <span style="color:#22c55e;">● ${f.s0}</span>
+              </div>
+            </div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:ob-pulse-ring 1.5s ${f.d} infinite;"></div>
+          </div>`).join('')}
+      </div>
+    </div>`; }
+
+  function slide3() { return `
+    <div class="ob-phone">
+      <div style="padding:12px 10px;height:100%;display:flex;flex-direction:column;gap:6px;justify-content:center;">
+        <div style="font-size:10px;font-weight:700;color:white;font-family:sans-serif;margin-bottom:2px;">🌅 ${t('朝活デトックス部','Morning Detox')}</div>
+        ${[
+          {n:'Alice',c:'#3b82f6',d:'0s'},
+          {n:'Ben',  c:'#f97316',d:'0.7s'},
+          {n:'Chloe',c:'#ec4899',d:'1.4s'},
+          {n:'You',  c:'#6366f1',d:'2.1s'},
+        ].map(f=>`
+          <div style="display:flex;align-items:center;gap:7px;background:#1C1C1E;border-radius:10px;padding:6px 8px;animation:ob-fadein-up 0.5s ${f.d} both;">
+            <div style="width:22px;height:22px;border-radius:50%;background:${f.c};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;">${f.n[0]}</div>
+            <div style="font-size:9px;color:white;font-family:sans-serif;flex:1;">${f.n}</div>
+            <div style="font-size:8px;color:#22c55e;font-family:sans-serif;animation:ob-checkin 4s ${f.d} infinite;">✓ ${t('準備完了','Ready')}</div>
+          </div>`).join('')}
+      </div>
+    </div>`; }
+
+  function slide4() {
+    return `
+    <div class="ob-phone">
+      <div style="padding:14px 12px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+        <div style="font-size:9px;color:#f59e0b;font-weight:700;font-family:sans-serif;letter-spacing:1px;">🌍 ${t('本日の一斉デトックス','TODAY\'S GLOBAL DETOX')}</div>
+        <div style="font-size:11px;color:#6b7280;font-family:sans-serif;">19:00 〜</div>
+        <div id="ob-clock" style="font-size:26px;font-weight:900;color:white;font-family:monospace;letter-spacing:2px;">00:59</div>
+        <div style="font-size:8px;color:#6b7280;font-family:sans-serif;">${t('参加者','Participants')} <span style="color:white;font-weight:700;">1,247</span></div>
+        <div style="display:flex;gap:-6px;">
+          ${['#3b82f6','#f97316','#ec4899','#22c55e','#6366f1'].map((c,i)=>`<div style="width:18px;height:18px;border-radius:50%;background:${c};border:1.5px solid black;margin-left:${i?-4:0}px;"></div>`).join('')}
+        </div>
+      </div>
+    </div>`; }
+
+  function slide5() { return `
+    <div class="ob-phone">
+      <div style="padding:12px 10px;height:100%;display:flex;flex-direction:column;gap:0;justify-content:center;">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;">A</div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:white;font-family:sans-serif;">Alice</div>
+            <div style="font-size:7px;color:#6b7280;font-family:sans-serif;">2${t('時間前','h ago')}</div>
+          </div>
+        </div>
+        <div style="background:#1C1C1E;border-radius:10px;padding:8px;margin-bottom:8px;display:flex;align-items:center;gap:7px;">
+          <div style="width:28px;height:28px;border-radius:8px;background:#2C2C2E;display:flex;align-items:center;justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:white;font-family:sans-serif;">2${t('時間','h')}</div>
+            <div style="font-size:7px;color:#6b7280;font-family:sans-serif;">${t('読書・英単語','Reading · Vocab')}</div>
+          </div>
+        </div>
+        <div style="font-size:8px;color:#d1d5db;font-family:sans-serif;margin-bottom:8px;">${t('久しぶりに集中できた！','Best focus session in a while!')}</div>
+        <div style="display:flex;gap:14px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="1.5" style="animation:ob-heart-pop 2s ease-in-out infinite;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <span id="ob-likes" style="font-size:9px;color:#ef4444;font-family:sans-serif;font-weight:700;">12</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <span style="font-size:9px;color:#6b7280;font-family:sans-serif;">2</span>
+          </div>
+        </div>
+      </div>
+    </div>`; }
+
+  const slideContent = [slide1, slide2, slide3, slide4, slide5];
+  const slideMeta = [
+    { title: t('スワイプしてデトックス開始','Swipe to Start Detox'),       desc: t('アプリを制限する時間をセットしてスワイプするだけ。','Set your apps and duration, then swipe to begin.') },
+    { title: t('フレンドのデトックスがわかる','See Friends Detoxing'),       desc: t('フレンドがデトックス中かリアルタイムで確認できます。','See who is currently in a detox session in real time.') },
+    { title: t('グループでデトックス','Group Detox Together'),               desc: t('グループを作ってメンバー全員でデトックスに挑戦。','Create a group and start a detox session together.') },
+    { title: t('毎日の一斉デトックス','Daily Global Detox'),                 desc: t('毎日決まった時間に全ユーザーと一緒にデトックス。','Join thousands of users in a daily detox at the same time.') },
+    { title: t('達成をフィードでシェア','Share Your Achievement'),            desc: t('デトックス完了後に投稿してフレンドと繋がろう。','Post your results and get likes and comments from friends.') },
+  ];
+
+  function render() {
+    _clearOb();
+    const s = slideMeta[current];
+    const isLast = current === slideContent.length - 1;
+    const dots = slideContent.map((_,i) => `<div style="height:5px;border-radius:3px;transition:all .3s;background:${i===current?'white':'#374151'};width:${i===current?'20px':'5px'};"></div>`).join('');
+    document.getElementById('page-onboarding').innerHTML = `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;gap:20px;">
+        <div style="display:flex;gap:6px;">${dots}</div>
+        ${slideContent[current]()}
+        <div style="text-align:center;padding:0 8px;">
+          <h2 style="font-size:1.2rem;font-weight:900;color:white;margin-bottom:6px;line-height:1.3;">${s.title}</h2>
+          <p style="font-size:0.8rem;color:#9ca3af;line-height:1.5;">${s.desc}</p>
+        </div>
+      </div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
+        <button id="ob-next" class="w-full bg-white text-black font-bold py-4 rounded-full text-base active:bg-gray-200 transition">
+          ${isLast ? t('始める',"Let's Go") : t('次へ','Next')}
+        </button>
+        ${!isLast ? `<button id="ob-skip" style="width:100%;color:#6b7280;font-weight:600;padding:10px;font-size:0.85rem;background:none;border:none;cursor:pointer;">${t('スキップ','Skip')}</button>` : ''}
+      </div>
+    `;
+    // slide4: live countdown
+    if (current === 3) {
+      let sec = 59;
+      const el = document.getElementById('ob-clock');
+      if (el) _ob_timer = setInterval(() => {
+        sec = sec > 0 ? sec - 1 : 59;
+        const e = document.getElementById('ob-clock');
+        if (e) e.textContent = `00:${String(sec).padStart(2,'0')}`;
+      }, 1000);
+    }
+    document.getElementById('ob-next').addEventListener('click', () => {
+      _clearOb();
+      if (isLast) { if (fromSettings) { renderSettings(); goto('settings'); } else { goto('home'); } }
+      else { current++; render(); }
+    });
+    document.getElementById('ob-skip')?.addEventListener('click', () => {
+      _clearOb();
+      if (fromSettings) { renderSettings(); goto('settings'); } else { goto('home'); }
+    });
+  }
+
+  render();
+  goto('onboarding');
+}
+
+// ================================================================
 // BOOT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -4016,20 +5380,51 @@ document.addEventListener('DOMContentLoaded', () => {
     S.globalDetoxTime = slots[Math.floor(Math.random() * slots.length)];
   })();
 
+  // Restore saved language
+  const savedLang = localStorage.getItem('to_lang');
+  if (savedLang === 'en' || savedLang === 'ja') S.lang = savedLang;
+
   renderLogin();
   renderRegister();
   renderInterruptPage();
   renderStaticLabels();
   updateUnreadDots();
 
-  const u = getUser();
-  if (u) {
-    if (!maybeRestoreSession()) {
-      goto('home');
-    }
-  } else {
-    goto('login');
+  // Firebase Auth state check
+  if (!auth) {
+    const u = getUser();
+    if (u) { if (!maybeRestoreSession()) goto('home'); }
+    else if (!savedLang) { renderLangSelect(); goto('lang'); }
+    else goto('login');
+    return;
   }
+  auth.onAuthStateChanged(async (firebaseUser) => {
+    if (firebaseUser) {
+      let u = getUser();
+      if (!u || u.uid !== firebaseUser.uid) {
+        if (db) {
+          const snap = await db.collection('users').doc(firebaseUser.uid).get();
+          if (snap.exists) {
+            u = { ...snap.data(), uid: firebaseUser.uid };
+            saveUser(u);
+          }
+        }
+      }
+      if (u) {
+        if (S._justRegistered) {
+          S._justRegistered = false;
+          return; // onboarding is already showing for new user
+        }
+        if (!maybeRestoreSession()) {
+          goto('home');
+        }
+      } else {
+        if (!savedLang) { renderLangSelect(); goto('lang'); } else goto('login');
+      }
+    } else {
+      if (!savedLang) { renderLangSelect(); goto('lang'); } else goto('login');
+    }
+  });
 });
 </script>
 </body>
