@@ -211,7 +211,7 @@ exports.notifyGroupDetoxStart = functions.pubsub
       .collection("groupDetox")
       .doc(todayJST)
       .collection("reservations")
-      .where("cancelled", "!=", true)
+      .where("cancelled", "==", false)
       .get();
 
     if (reservationsSnap.empty) {
@@ -220,11 +220,31 @@ exports.notifyGroupDetoxStart = functions.pubsub
       return null;
     }
 
-    const tokens = [];
+    // Collect tokens: prefer token stored on reservation, fall back to users collection
+    const tokenSet = new Set();
+    const userFetchPromises = [];
+
     reservationsSnap.forEach((doc) => {
-      const fcmToken = doc.data().fcmToken;
-      if (fcmToken) tokens.push(fcmToken);
+      const data = doc.data();
+      if (data.fcmToken) {
+        tokenSet.add(data.fcmToken);
+      } else if (doc.id) {
+        // doc.id is the userId for this reservation subcollection
+        userFetchPromises.push(
+          db.collection("users").doc(doc.id).get().then((userDoc) => {
+            if (userDoc.exists && userDoc.data().fcmToken) {
+              tokenSet.add(userDoc.data().fcmToken);
+            }
+          })
+        );
+      }
     });
+
+    if (userFetchPromises.length > 0) {
+      await Promise.all(userFetchPromises);
+    }
+
+    const tokens = Array.from(tokenSet);
 
     const startLabel = `${schedule.startHour}:${String(schedule.startMin).padStart(2, "0")}`;
     const endTotalMin = schedule.startHour * 60 + schedule.startMin + schedule.duration;
