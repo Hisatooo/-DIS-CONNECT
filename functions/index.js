@@ -159,10 +159,10 @@ exports.updateDailySchedule = functions.pubsub
         const message = {
             topic: "daily_schedule",
             notification: {
-                title: "今日の一斉デトックス時間が決まりました 📵",
+                title: "🎯 今日の一斉デトックス時間、決定！",
                 body:
-                    `${startLabel} 〜 ${endLabel}（${duration}分間）\n` +
-                    "予約して一緒にデトックスしよう！",
+                    `⏰ ${startLabel}〜${endLabel}（${duration}分間）\n` +
+                    "今すぐ予約して仲間と一緒にデトックスしよう 👊",
             },
             data: {
                 type: "daily_schedule",
@@ -319,8 +319,8 @@ exports.notifyGroupDetoxStart = functions.pubsub
             const multicast = {
                 tokens: chunk,
                 notification: {
-                    title: "一斉デトックスが始まりました 📵",
-                    body: `${startLabel} 〜 ${endLabel} アプリがブロックされます`,
+                    title: "🔥 スタート！みんなで一斉デトックス！",
+                    body: `${reservationsSnap.size}人が参加中 💪 ${startLabel}〜${endLabel} さあ、乗り越えよう 📵`,
                 },
                 data: {
                     type: "group_detox_start",
