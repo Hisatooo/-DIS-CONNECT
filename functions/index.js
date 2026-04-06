@@ -7,105 +7,7 @@ const db = admin.firestore();
 const messaging = admin.messaging();
 
 // ─────────────────────────────────────────────
-// 1. チャットメッセージ着信時にプッシュ通知を送信
-//    Triggered when a new chat message is created
-// ─────────────────────────────────────────────
-exports.sendNewMessageNotification = functions.firestore
-    .document("chats/{chatId}/messages/{messageId}")
-    .onCreate(async (snap, context) => {
-        const message = snap.data();
-        const {chatId} = context.params;
-
-        if (!message || !message.senderId) return null;
-
-        // チャット情報を取得
-        const chatDoc = await db.collection("chats").doc(chatId).get();
-        if (!chatDoc.exists) return null;
-        const chat = chatDoc.data();
-
-        // メンバー全員に通知（送信者以外）
-        const members = chat.members || [];
-        const recipients = members.filter(
-            (uid) => uid !== message.senderId
-        );
-        if (recipients.length === 0) return null;
-
-        // 送信者の表示名を取得
-        const senderDoc = await db
-            .collection("users")
-            .doc(message.senderId)
-            .get();
-        const senderName = senderDoc.exists ?
-            senderDoc.data().displayName || "Someone" :
-            "Someone";
-
-        // 受信者のFCMトークンを取得
-        const tokenPromises = recipients.map((uid) =>
-            db.collection("users").doc(uid).get()
-        );
-        const userDocs = await Promise.all(tokenPromises);
-
-        const tokens = [];
-        userDocs.forEach((doc) => {
-            if (doc.exists && doc.data().fcmToken) {
-                tokens.push(doc.data().fcmToken);
-            }
-        });
-
-        if (tokens.length === 0) return null;
-
-        const payload = {
-            notification: {
-                title: senderName,
-                body: message.text || "📷 Image",
-            },
-            data: {
-                type: "chat",
-                chatId,
-                senderId: message.senderId,
-            },
-        };
-
-        return messaging.sendEachForMulticast({tokens, ...payload});
-    });
-
-// ─────────────────────────────────────────────
-// 2. アプリ内通知をプッシュ通知として送信
-//    Send in-app notification as push notification
-// ─────────────────────────────────────────────
-exports.sendAppNotification = functions.firestore
-    .document("notifications/{userId}/items/{notifId}")
-    .onCreate(async (snap, context) => {
-        const notif = snap.data();
-        const {userId} = context.params;
-
-        if (!notif) return null;
-
-        const userDoc = await db.collection("users").doc(userId).get();
-        if (!userDoc.exists) return null;
-
-        const fcmToken = userDoc.data().fcmToken;
-        if (!fcmToken) return null;
-
-        const payload = {
-            token: fcmToken,
-            notification: {
-                title: notif.title || "(DIS)CONNECT",
-                body: notif.body || "",
-            },
-            data: {
-                type: notif.type || "general",
-                targetId: notif.targetId || "",
-            },
-        };
-
-        return messaging.send(payload).catch((err) => {
-            console.error("sendAppNotification error:", err);
-        });
-    });
-
-// ─────────────────────────────────────────────
-// 3. 毎日 07:00 JST にランダムなデトックススケジュールを決定・配信
+// 1. 毎日 07:00 JST にランダムなデトックススケジュールを決定・配信
 //    Daily random detox schedule broadcast via FCM topic
 //    Runs every day at 07:00 JST
 // ─────────────────────────────────────────────
@@ -187,7 +89,7 @@ exports.updateDailySchedule = functions.pubsub
     });
 
 // ─────────────────────────────────────────────
-// 4. 毎日 00:00 JST にストリークをリセット
+// 2. 毎日 00:00 JST にストリークをリセット
 //    Daily streak reset cron at midnight JST
 // ─────────────────────────────────────────────
 exports.resetDailyStreaks = functions.pubsub
@@ -223,7 +125,7 @@ exports.resetDailyStreaks = functions.pubsub
     });
 
 // ─────────────────────────────────────────────
-// 5. 5分ごとに一斉デトックス開始チェック
+// 3. 5分ごとに一斉デトックス開始チェック
 //    Every 5 min: check if group detox is starting now,
 //    notify reserved users and trigger app blocking
 // ─────────────────────────────────────────────
