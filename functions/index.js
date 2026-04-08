@@ -255,3 +255,55 @@ exports.notifyGroupDetoxStart = functions.pubsub
         );
         return null;
     });
+
+// ─────────────────────────────────────────────
+// グループデトックス失敗通知
+// detoxStatus が "failed" になったとき全メンバーに通知
+// ─────────────────────────────────────────────
+exports.onGroupDetoxFailed = functions.firestore
+    .document("groups/{groupId}")
+    .onUpdate(async (change, context) => {
+        const before = change.before.data();
+        const after  = change.after.data();
+
+        if (before.detoxStatus !== "failed" && after.detoxStatus === "failed") {
+            const cancelledByUid = after.detoxCancelledBy || "";
+            const memberUIDs     = after.memberUIDs || [];
+            const groupName      = after.name || "グループ";
+
+            let cancellerName = "メンバー";
+            try {
+                const userDoc = await db.collection("users").doc(cancelledByUid).get();
+                if (userDoc.exists) {
+                    cancellerName = userDoc.data().username ||
+                                   userDoc.data().displayName ||
+                                   cancellerName;
+                }
+            } catch (e) { /* ignore */ }
+
+            const tokens = [];
+            for (const uid of memberUIDs) {
+                try {
+                    const u = await db.collection("users").doc(uid).get();
+                    if (u.exists) {
+                        const token = u.data().fcmToken;
+                        if (token) tokens.push(token);
+                    }
+                } catch (e) { /* ignore */ }
+            }
+
+            if (tokens.length === 0) return null;
+
+            await messaging.sendEachForMulticast({
+                notification: {
+                    title: `😞 ${groupName} デトックス失敗`,
+                    body:  `${cancellerName}が中断したため、グループデトックスが失敗しました。`,
+                },
+                tokens,
+            }).catch((err) => {
+                console.error("onGroupDetoxFailed error:", err);
+            });
+        }
+
+        return null;
+    });
