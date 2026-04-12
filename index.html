@@ -981,6 +981,7 @@ const S = {
   friendsTimerId: null,
   selectedApps: new Set(['YouTube', 'Instagram', 'X']),
   groupSelectedApps: new Set(['YouTube', 'Instagram', 'X']),
+  currentGroupId: null,  // 現在表示中のグループID
   groupDetox: null,      // { groupId, duration, readyMembers:[], allMembers:[], startTime, failed, failedBy, initiatedBy, apps:[] }
   globalDetoxTime: null, // { h, m } — today's all-user detox time (12:30–22:00, 15min slots, max 3h duration)
   globalDetoxReserved: false,
@@ -1038,6 +1039,18 @@ const saveDM     = (id, msgs) => localStorage.setItem(`to_dm_${id}`, JSON.string
 const getGroupChat  = (gid) => JSON.parse(localStorage.getItem(`to_group_chat_${gid}`)) || (MOCK_GROUP_CHATS[gid] ? [...MOCK_GROUP_CHATS[gid]] : []);
 const saveGroupChat = (gid, msgs) => localStorage.setItem(`to_group_chat_${gid}`, JSON.stringify(msgs));
 const isPremium = () => localStorage.getItem('to_premium') === 'true';
+
+// グループごとのデトックスアプリ設定をlocalStorageに永続化
+function getGroupDetoxApps(gid) {
+  const data = JSON.parse(localStorage.getItem('to_group_detox_apps') || '{}');
+  return data[gid] || null;
+}
+function saveGroupDetoxApps(gid, apps) {
+  const data = JSON.parse(localStorage.getItem('to_group_detox_apps') || '{}');
+  data[gid] = apps;
+  localStorage.setItem('to_group_detox_apps', JSON.stringify(data));
+}
+
 function getGroupDetoxCount() {
   const today = new Date().toDateString();
   const data = JSON.parse(localStorage.getItem('to_group_detox_count') || '{}');
@@ -2876,8 +2889,14 @@ function renderGroupDetail(groupId) {
       });
     }
   } else {
-    // Load this group's saved detox apps (fall back to global selection if none saved)
-    if (g.detoxApps && g.detoxApps.length > 0) {
+    // 現在のグループIDを記録（アプリピッカー保存時に使用）
+    S.currentGroupId = groupId;
+    // localStorageから保存済みアプリを読み込む（なければg.detoxAppsのデフォルト値）
+    const savedApps = getGroupDetoxApps(groupId);
+    if (savedApps && savedApps.length > 0) {
+      S.groupSelectedApps = new Set(savedApps);
+      g.detoxApps = savedApps;
+    } else if (g.detoxApps && g.detoxApps.length > 0) {
       S.groupSelectedApps = new Set(g.detoxApps);
     }
     initGroupDetoxPicker();
@@ -2888,8 +2907,9 @@ function renderGroupDetail(groupId) {
       const gdH = getPickerValue('gd-picker-hours');
       const gdM = getPickerValue('gd-picker-minutes');
       const gdSelectedDur = Math.max(300, gdH * 3600 + gdM * 60);
-      // Save selected apps to the group for future sessions
+      // グループのアプリ設定を保存（localStorageとメモリ両方）
       g.detoxApps = [...S.groupSelectedApps];
+      saveGroupDetoxApps(groupId, g.detoxApps);
       S.groupDetox = {
         groupId,
         duration: gdSelectedDur,
@@ -4427,6 +4447,12 @@ function openAppPicker(mode) {
     if (mode === 'group') {
       S.groupSelectedApps = new Set(tempSet);
       updateAppPickerSummary('gd-app-picker-summary', S.groupSelectedApps);
+      // アプリ選択確定時点でlocalStorageに保存
+      if (S.currentGroupId) {
+        saveGroupDetoxApps(S.currentGroupId, [...S.groupSelectedApps]);
+        const g = MOCK_GROUPS.find(x => x.id === S.currentGroupId);
+        if (g) g.detoxApps = [...S.groupSelectedApps];
+      }
     } else {
       S.selectedApps = new Set(tempSet);
       updateAppPickerSummary('app-picker-summary', S.selectedApps);
