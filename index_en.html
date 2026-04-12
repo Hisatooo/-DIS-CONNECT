@@ -692,6 +692,8 @@ const MOCK_GROUPS = [
     activeSince: Date.now() - 1200000,
     isActive: true,
     streak: 5,
+    detoxApps: ['YouTube', 'Instagram', 'X'],
+    pendingMembers: [],
   },
   {
     id: 'g2', name: '週末チャレンジ', emoji: '🏔️',
@@ -704,6 +706,8 @@ const MOCK_GROUPS = [
     activeSince: null,
     isActive: false,
     streak: 2,
+    detoxApps: ['TikTok', 'YouTube'],
+    pendingMembers: [],
   },
   {
     id: 'g3', name: 'スタディグループ', emoji: '📚',
@@ -716,6 +720,8 @@ const MOCK_GROUPS = [
     activeSince: null,
     isActive: false,
     streak: 0,
+    detoxApps: [],
+    pendingMembers: [],
   },
   {
     id: 'g4', name: '夜活瞑想部', emoji: '🌙',
@@ -729,6 +735,8 @@ const MOCK_GROUPS = [
     isActive: false,
     pendingInvite: { from: 'alice' },
     streak: 0,
+    detoxApps: [],
+    pendingMembers: [],
   },
 ];
 
@@ -1365,6 +1373,27 @@ function renderRegister() {
         btn.textContent = t('登録する','Sign Up');
       });
   });
+}
+
+// ================================================================
+// TOAST
+// ================================================================
+function showToast(msg) {
+  let el = document.getElementById('app-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'app-toast';
+    el.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#2C2C2E;color:#E2E2E2;font-size:13px;font-weight:600;padding:10px 20px;border-radius:999px;z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;border:1px solid rgba(255,255,255,0.08);';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  el.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 2200);
 }
 
 // ================================================================
@@ -2183,6 +2212,7 @@ function renderGroupsList() {
           return `<div class="relative"><img src="${getAvatarSrc(f, 28)}" class="w-7 h-7 rounded-full ${isOn?'':'opacity-40'}" alt="${f.name}">${isOn ? '<div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#1C1C1E]"></div>' : ''}</div>`;
         }).join('')}
         ${activeMembers.length > 0 ? `<span class="text-xs text-gray-500 ml-1">${activeMembers.length}${t('人がデトックス中',' detoxing')}</span>` : `<span class="text-xs text-gray-700 ml-1">${t('待機中','Waiting')}</span>`}
+        ${(g.pendingMembers && g.pendingMembers.length > 0) ? `<span class="text-xs font-semibold ml-auto" style="color:${g.color}">${g.pendingMembers.length}${t('人招待中',' invited')}</span>` : ''}
       </div>
     `;
     card.addEventListener('click', () => renderGroupDetail(g.id));
@@ -2620,6 +2650,19 @@ function renderGroupDetail(groupId) {
                 <div class="flex items-center">${badge}${kickBtn}</div>
               </div>`;
           }).join('')}
+          ${(g.pendingMembers || []).map(id => {
+            const f = friendById(id);
+            const name = f ? f.name : id;
+            const avatar = getAvatarSrc(f || {name:id}, 40);
+            return `
+              <div class="flex items-center justify-between py-2 opacity-50">
+                <div class="flex items-center gap-3">
+                  <img src="${avatar}" class="w-9 h-9 rounded-full" alt="${name}">
+                  <p class="text-sm font-semibold text-white">${name}</p>
+                </div>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#2C2C2E] text-gray-500">${t('招待中','Invited')}</span>
+              </div>`;
+          }).join('')}
         </div>
       </div>
 
@@ -2730,6 +2773,9 @@ function renderGroupDetail(groupId) {
       });
     }
   } else {
+    if (g.detoxApps && g.detoxApps.length > 0) {
+      S.groupSelectedApps = new Set(g.detoxApps);
+    }
     initGroupDetoxPicker();
     updateAppPickerSummary('gd-app-picker-summary', S.groupSelectedApps);
     document.getElementById('open-gd-app-picker-btn').onclick = () => openAppPicker('group');
@@ -2738,6 +2784,7 @@ function renderGroupDetail(groupId) {
       const gdH = getPickerValue('gd-picker-hours');
       const gdM = getPickerValue('gd-picker-minutes');
       const gdSelectedDur = Math.max(300, gdH * 3600 + gdM * 60);
+      g.detoxApps = [...S.groupSelectedApps];
       S.groupDetox = {
         groupId,
         duration: gdSelectedDur,
@@ -4465,9 +4512,15 @@ function renderInviteSheet(group) {
     `).join('');
     friendsList.querySelectorAll('.invite-send-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        const uid = btn.dataset.uid;
+        if (!group.pendingMembers) group.pendingMembers = [];
+        if (!group.pendingMembers.includes(uid)) {
+          group.pendingMembers.push(uid);
+        }
         btn.textContent = t('招待済み','Invited');
         btn.disabled = true;
         btn.style.opacity = '0.5';
+        showToast(t('招待を送りました', 'Invitation sent'));
       });
     });
   }
@@ -4594,10 +4647,28 @@ function renderCreateGroup() {
   document.getElementById('cg-create').addEventListener('click', () => {
     const name = document.getElementById('cg-name').value.trim();
     if (!name) { document.getElementById('cg-name').classList.add('shake'); setTimeout(() => document.getElementById('cg-name').classList.remove('shake'), 500); return; }
-    const newGroup = { id: `g${Date.now()}`, name, emoji: selectedEmoji, color: selectedColor, members: [...selectedInvites], maxMembers: 5, inviteOnly: true, owner: 'me', description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'), activeSince: null, isActive: false };
+    const newGroup = {
+      id: `g${Date.now()}`,
+      name,
+      emoji: selectedEmoji,
+      color: selectedColor,
+      members: [],
+      pendingMembers: [...selectedInvites],
+      maxMembers: 5,
+      inviteOnly: true,
+      owner: 'me',
+      description: document.getElementById('cg-desc').value.trim() || t('グループの説明なし','No description'),
+      activeSince: null,
+      isActive: false,
+      detoxApps: [],
+      streak: 0,
+    };
     MOCK_GROUPS.push(newGroup);
-    goto('friends');
-    setTimeout(() => document.getElementById('tab-groups-btn')?.click(), 50);
+    if (selectedInvites.size > 0) {
+      showToast(t(`${selectedInvites.size}人に招待を送りました`, `Invitation sent to ${selectedInvites.size} friend${selectedInvites.size > 1 ? 's' : ''}`));
+    }
+    S.groupDetailTab = 'detox';
+    renderGroupDetail(newGroup.id);
   });
   page.querySelectorAll('.cg-emoji-btn').forEach(btn => {
     btn.addEventListener('click', () => {
