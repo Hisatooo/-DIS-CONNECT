@@ -12,53 +12,92 @@ struct PostComposerView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                Divider()
+            ZStack {
+                Color.black.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        TextEditor(text: $bodyText)
-                            .frame(minHeight: 150)
-                            .padding(.horizontal)
-                            .scrollContentBackground(.hidden)
+                VStack(spacing: 0) {
+                    // ── ヘッダー ──
+                    HStack {
+                        Button("キャンセル") { dismiss() }
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                        Spacer()
+                        Button {
+                            Task { await postNewPost() }
+                        } label: {
+                            Text("投稿")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 8)
+                                .background(Color.white)
+                                .clipShape(Capsule())
+                        }
+                        .disabled(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isPosting)
+                        .opacity(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
 
-                        if !lasttuneTime.isEmpty {
-                            Button {
-                                attachDetoxTime.toggle()
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: attachDetoxTime ? "checkmark.circle.fill" : "circle")
-                                        .foregroundStyle(attachDetoxTime ? .blue : .secondary)
-                                    Text("デトックス時間を添付 · \(formatTime(lasttuneTime))")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                    Divider().background(Color.white.opacity(0.08))
+
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            // テキスト入力（テキストのみ）
+                            TextEditor(text: $bodyText)
+                                .frame(minHeight: 180)
+                                .scrollContentBackground(.hidden)
+                                .foregroundColor(.white)
+                                .font(.system(size: 16))
+                                .tint(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 16)
+
+                            // デトックス時間添付トグル（前回セッションがある場合のみ表示）
+                            if !lasttuneTime.isEmpty {
+                                Button {
+                                    attachDetoxTime.toggle()
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: attachDetoxTime ? "checkmark.circle.fill" : "circle")
+                                            .font(.system(size: 22))
+                                            .foregroundColor(attachDetoxTime ? .blue : Color(hex: "6B7280"))
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("デトックス時間を添付")
+                                                .font(.system(size: 14, weight: .medium))
+                                                .foregroundColor(.white)
+                                            Text(formatTime(lasttuneTime))
+                                                .font(.system(size: 13))
+                                                .foregroundColor(Color(hex: "6B7280"))
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(14)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(attachDetoxTime ? 0.08 : 0.04))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(
+                                                        attachDetoxTime ? Color.blue.opacity(0.5) : Color.white.opacity(0.08),
+                                                        lineWidth: 1
+                                                    )
+                                            )
+                                    )
                                 }
-                                .padding(.horizontal)
+                                .buttonStyle(.plain)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 16)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
-                    .padding(.vertical)
-                }
-
-                Divider()
-            }
-            .navigationTitle("新規投稿")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("キャンセル") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("投稿") {
-                        Task { await postNewPost() }
-                    }
-                    .disabled(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isPosting)
-                    .fontWeight(.bold)
                 }
             }
-            .onAppear { loadLasttuneTime() }
+            .navigationBarHidden(true)
         }
+        .preferredColorScheme(.dark)
+        .onAppear { loadLasttuneTime() }
     }
 
     private func loadLasttuneTime() {
