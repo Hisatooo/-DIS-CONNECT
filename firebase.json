@@ -31,7 +31,11 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "/waitlist",
+        "destination": "/waitlist.html"
+      },
+      {
+        "source": "!(**.html|**.js|**.css|**.png|**.jpg|**.ico|**.svg|**.json|**.txt)",
         "destination": "/index.html"
       }
     ]
