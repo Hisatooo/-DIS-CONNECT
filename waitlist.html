@@ -2,242 +2,620 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>(DIS)CONNECT — Waitlist</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>(DIS)CONNECT</title>
   <link rel="icon" type="image/png" href="/icon.png">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: 'Sora', sans-serif; background: #000; color: #fff; min-height: 100vh; margin: 0; }
-    .grain {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000;
+      --fg: #fff;
+      --muted: #282828;
+      --faint: #111;
     }
-    .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
-    .btn-main { background: white; color: black; font-weight: 800; border: none; border-radius: 9999px; cursor: pointer; transition: opacity .2s, transform .1s; }
-    .btn-main:hover { opacity: .88; }
-    .btn-main:active { transform: scale(.97); }
-    .btn-main:disabled { opacity: .4; cursor: not-allowed; }
-    .input-field { background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 14px; color: white; outline: none; font-family: 'Sora', sans-serif; transition: border-color .2s; }
-    .input-field:focus { border-color: #636366; }
-    .input-field::placeholder { color: #636366; }
-    .badge { display: inline-flex; align-items: center; gap: 6px; background: #ffffff0f; border: 1px solid #ffffff18; border-radius: 9999px; padding: 6px 14px; font-size: 12px; font-weight: 600; color: #9ca3af; }
-    .feature-card { background: #111; border: 1px solid #1f1f1f; border-radius: 20px; padding: 24px; }
-    @keyframes fadeUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
-    .fade-up  { animation: fadeUp .7s ease forwards; }
-    .fade-up-2 { animation: fadeUp .7s .15s ease both; }
-    .fade-up-3 { animation: fadeUp .7s .3s ease both; }
-    .fade-up-4 { animation: fadeUp .7s .45s ease both; }
-    #success-msg { display: none; }
-    .lang-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #111; border-top: 1px solid #1f1f1f; display: flex; padding: 8px 16px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); gap: 8px; }
-    .lang-btn { flex: 1; background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 10px; color: #6b7280; font-size: 13px; font-weight: 700; padding: 9px 10px; cursor: pointer; transition: all .2s; font-family: 'Sora', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; }
-    .lang-btn.active { background: white; color: black; border-color: white; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      overflow-x: hidden;
+    }
+
+    /* ── Grain ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.022;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Orbs ── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(130px);
+      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .orb-1 {
+      width: 720px; height: 720px;
+      top: -280px; left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(29,78,216,0.11) 0%, transparent 70%);
+      animation: driftA 20s ease-in-out infinite alternate;
+    }
+    .orb-2 {
+      width: 540px; height: 540px;
+      bottom: -180px; right: -120px;
+      background: radial-gradient(circle, rgba(109,40,217,0.09) 0%, transparent 70%);
+      animation: driftB 26s ease-in-out infinite alternate;
+    }
+    @keyframes driftA {
+      from { transform: translateX(-55%) translateY(0px); }
+      to   { transform: translateX(-45%) translateY(60px); }
+    }
+    @keyframes driftB {
+      from { transform: translateX(0) translateY(0); }
+      to   { transform: translateX(-50px) translateY(-70px); }
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 80px 28px 100px;
+      text-align: center;
+    }
+
+    .hero-inner {
+      will-change: transform, opacity;
+    }
+
+    /* Title character animation */
+    .wordmark {
+      font-size: clamp(52px, 14vw, 168px);
+      font-weight: 900;
+      letter-spacing: -0.045em;
+      line-height: 0.92;
+      margin-bottom: 22px;
+      white-space: nowrap;
+    }
+
+    .c-wrap {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: top;
+      line-height: 1.05;
+    }
+
+    .c {
+      display: inline-block;
+      transform: translateY(105%);
+      animation: charUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes charUp {
+      to { transform: translateY(0); }
+    }
+
+    .paren { color: #1c1c1c; }
+    .dis   { color: #2c2c2c; }
+
+    .tagline {
+      font-size: clamp(18px, 4vw, 52px);
+      font-weight: 200;
+      letter-spacing: -0.01em;
+      color: #3a3a3a;
+      font-style: italic;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeSlide 0.9s 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeSlide {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scroll cue */
+    .scroll-cue {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      animation: appear 0.5s 2.4s forwards;
+    }
+
+    @keyframes appear { to { opacity: 1; } }
+
+    .scroll-cue-inner {
+      width: 1px;
+      height: 52px;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.12));
+      animation: scrollPulse 2.5s 2.4s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 1; }
+    }
+
+    /* ── MARQUEE ── */
+    .marquee-wrap {
+      border-top: 1px solid #0d0d0d;
+      border-bottom: 1px solid #0d0d0d;
+      padding: 36px 0;
+      overflow: hidden;
+      mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+      opacity: 0;
+      transition: opacity 1.2s;
+    }
+    .marquee-wrap.vis { opacity: 1; }
+
+    .marquee-track {
+      display: flex;
+      white-space: nowrap;
+      animation: marqueeRoll 40s linear infinite;
+    }
+
+    @keyframes marqueeRoll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .m-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 28px;
+      padding: 0 28px;
+      font-size: clamp(14px, 2.5vw, 20px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: #161616;
+      flex-shrink: 0;
+    }
+
+    .m-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: #141414;
+      flex-shrink: 0;
+    }
+
+    /* ── FORM SECTION ── */
+    .form-section {
+      max-width: 440px;
+      margin: 0 auto;
+      padding: 88px 24px 200px;
+    }
+
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #222;
+      margin-bottom: 36px;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.9s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .eyebrow.vis { opacity: 1; transform: translateY(0); }
+
+    .fields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.9s 0.08s, transform 0.9s 0.08s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .fields.vis { opacity: 1; transform: translateY(0); }
+
+    .field {
+      background: #050505;
+      border: 1px solid #131313;
+      border-radius: 14px;
+      color: #fff;
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      padding: 16px 18px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.25s, background 0.25s;
+      -webkit-appearance: none;
+    }
+    .field:focus { border-color: #262626; background: #080808; }
+    .field.err   { border-color: #5c1111; }
+    .field::placeholder { color: #1e1e1e; }
+
+    .btn-join {
+      background: #fff;
+      color: #000;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 14px;
+      padding: 18px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 4px;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-join:hover   { opacity: 0.88; }
+    .btn-join:active  { transform: scale(0.98); }
+    .btn-join:disabled { opacity: 0.2; cursor: not-allowed; transform: none; }
+
+    .hint {
+      font-size: 11px;
+      color: #161616;
+      text-align: center;
+      margin-top: 14px;
+      letter-spacing: 0.04em;
+    }
+
+    /* Counter */
+    .counter {
+      font-size: 11px;
+      color: #1c1c1c;
+      text-align: center;
+      letter-spacing: 0.1em;
+      margin-top: 32px;
+      opacity: 0;
+      transition: opacity 0.6s 0.2s;
+    }
+    .counter.vis { opacity: 1; }
+
+    /* ── SUCCESS ── */
+    .success {
+      display: none;
+      text-align: center;
+      padding: 24px 0;
+    }
+    .success.show {
+      display: block;
+      animation: fadeSlide 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .success-mark {
+      display: block;
+      font-size: 42px;
+      margin-bottom: 18px;
+      animation: popIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes popIn {
+      from { transform: scale(0) rotate(-15deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .success-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .success-body {
+      font-size: 14px;
+      color: #333;
+      line-height: 1.75;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      opacity: 0;
+      transition: opacity 1.2s;
+    }
+    .footer.vis { opacity: 1; }
+    .footer p {
+      font-size: 10px;
+      color: #111;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    /* ── LANG BAR ── */
+    .lang-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 500;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border-top: 1px solid #0e0e0e;
+      display: flex;
+      padding: 10px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      gap: 8px;
+    }
+    .lang-btn {
+      flex: 1;
+      background: transparent;
+      border: 1px solid #131313;
+      border-radius: 10px;
+      color: #222;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 11px 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Sora', sans-serif;
+    }
+    .lang-btn.active {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+    }
   </style>
 </head>
 <body>
 
-<div class="grain"></div>
-<div class="glow-orb" style="width:600px;height:600px;top:-200px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,#3b82f622,transparent 70%);"></div>
-<div class="glow-orb" style="width:400px;height:400px;bottom:-100px;right:-100px;background:radial-gradient(circle,#8b5cf614,transparent 70%);"></div>
+<div class="orb orb-1" id="orb1"></div>
+<div class="orb orb-2" id="orb2"></div>
 
-<!-- Lang switcher bar (fixed bottom) -->
+<!-- Lang bar -->
 <div class="lang-bar">
   <button class="lang-btn active" id="lang-ja-btn" onclick="setLang('ja')">🇯🇵 日本語</button>
   <button class="lang-btn" id="lang-en-btn" onclick="setLang('en')">🇺🇸 English</button>
 </div>
 
-<div style="position:relative;z-index:1;max-width:480px;margin:0 auto;padding:32px 24px 120px;">
-
-  <!-- Logo -->
-  <div class="fade-up text-center mb-12">
-    <div style="display:inline-flex;align-items:center;gap:12px;margin-bottom:32px;">
-      <img src="/icon.png" alt="(DIS)CONNECT" style="width:48px;height:48px;border-radius:12px;">
-      <span style="font-size:20px;font-weight:900;letter-spacing:-0.5px;">(DIS)CONNECT</span>
-    </div>
-
-    <div class="badge mb-6">
-      <span style="width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;"></span>
-      <span id="txt-badge"></span>
-    </div>
-
-    <h1 id="txt-headline" style="font-size:clamp(28px,8vw,44px);font-weight:900;line-height:1.15;letter-spacing:-1.5px;margin:0 0 16px;"></h1>
-    <p id="txt-sub" style="color:#6b7280;font-size:15px;line-height:1.7;margin:0;"></p>
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-inner" id="heroInner">
+    <div class="wordmark" id="wordmark" aria-label="(DIS)CONNECT"></div>
+    <p class="tagline">to Reconnect.</p>
   </div>
-
-  <!-- Waitlist Form -->
-  <div class="fade-up-2 feature-card mb-6" id="form-card">
-    <p id="txt-form-label" style="font-size:13px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin:0 0 16px;"></p>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <input id="wl-name" class="input-field" type="text" style="padding:14px 16px;font-size:15px;width:100%;">
-      <input id="wl-email" class="input-field" type="email" style="padding:14px 16px;font-size:15px;width:100%;">
-      <button id="wl-btn" class="btn-main" style="padding:16px;font-size:16px;width:100%;margin-top:4px;"></button>
-    </div>
-    <p id="txt-no-spam" style="color:#4b5563;font-size:12px;text-align:center;margin:12px 0 0;"></p>
+  <div class="scroll-cue">
+    <div class="scroll-cue-inner"></div>
   </div>
+</section>
 
-  <!-- Success message -->
-  <div class="feature-card mb-6 text-center" id="success-msg">
-    <div style="font-size:40px;margin-bottom:12px;">🎉</div>
-    <p id="txt-success-title" style="font-weight:800;font-size:18px;margin:0 0 8px;"></p>
-    <p id="txt-success-sub" style="color:#6b7280;font-size:14px;margin:0;"></p>
-  </div>
-
-  <!-- Counter -->
-  <p class="fade-up-2 text-center" style="color:#4b5563;font-size:13px;margin-bottom:32px;" id="wl-count"></p>
-
-  <!-- Features -->
-  <div class="fade-up-3" style="display:flex;flex-direction:column;gap:12px;margin-bottom:48px;" id="features-list"></div>
-
-  <!-- Footer -->
-  <div class="fade-up-4 text-center">
-    <p style="color:#374151;font-size:12px;margin-bottom:10px;">© 2026 (DIS)CONNECT</p>
-    <a href="/index.html" id="txt-try-app" style="display:inline-flex;align-items:center;gap:6px;color:#9ca3af;font-size:14px;font-weight:600;text-decoration:none;background:#1c1c1e;border:1px solid #3a3a3c;border-radius:9999px;padding:10px 20px;"></a>
-  </div>
-
+<!-- ── MARQUEE ── -->
+<div class="marquee-wrap" id="marqueeWrap">
+  <div class="marquee-track" id="marqueeTrack"></div>
 </div>
 
+<!-- ── FORM ── -->
+<section class="form-section">
+  <p class="eyebrow" id="eyebrow" data-rev></p>
+
+  <div id="formState">
+    <div class="fields" id="fields" data-rev>
+      <input id="wl-name"  class="field" type="text"  autocomplete="name">
+      <input id="wl-email" class="field" type="email" inputmode="email" autocomplete="email">
+      <button id="wl-btn" class="btn-join"></button>
+    </div>
+    <p class="hint" id="hint"></p>
+  </div>
+
+  <div class="success" id="successMsg">
+    <span class="success-mark">✦</span>
+    <p class="success-title" id="successTitle"></p>
+    <p class="success-body"  id="successBody"></p>
+  </div>
+
+  <p class="counter" id="counter"></p>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer class="footer" id="footer" data-rev>
+  <p>© 2026 (DIS)CONNECT</p>
+</footer>
+
 <script>
-  const COPY = {
-    ja: {
-      badge:        'まもなくリリース / Coming Soon',
-      headline:     'Disconnect to\nReconnect.',
-      sub:          'デジタルデトックスをフレンドと共有する\nまったく新しいSNS体験。',
-      formLabel:    'ウェイトリストに登録',
-      namePh:       '名前（任意）',
-      emailPh:      'メールアドレス *',
-      btnText:      'ウェイトリストに参加する',
-      btnLoading:   '登録中...',
-      noSpam:       'スパムは送りません。大切なお知らせのみご連絡します。',
-      successTitle: '登録完了！',
-      successSub:   'リリース時にご連絡します。\n楽しみにお待ちください！',
-      counter:      n => `すでに ${n} 人が登録済み`,
-      errMsg:       'エラーが発生しました。もう一度お試しください。',
-      tryApp:       'アプリを試す',
-      features: [
-        { icon: '📵', title: 'デジタルデトックス',       desc: '選んだアプリを一定時間ブロック。自分のペースで始められる。' },
-        { icon: '👥', title: 'フレンドと一緒に',         desc: 'グループデトックスでお互いに励まし合い、達成感を共有。' },
-        { icon: '📊', title: 'スクリーンタイムを可視化', desc: 'デトックスで削減した時間をグラフで確認。成長が見える。' },
-      ]
-    },
-    en: {
-      badge:        'Coming Soon',
-      headline:     'Disconnect to\nReconnect.',
-      sub:          'A brand new social experience\nfor digital detox with friends.',
-      formLabel:    'Join the Waitlist',
-      namePh:       'Name (optional)',
-      emailPh:      'Email address *',
-      btnText:      'Join the Waitlist',
-      btnLoading:   'Joining...',
-      noSpam:       'No spam. We\'ll only reach out with important updates.',
-      successTitle: 'You\'re on the list!',
-      successSub:   'We\'ll let you know when we launch.\nStay tuned!',
-      counter:      n => `${n} people already signed up`,
-      errMsg:       'Something went wrong. Please try again.',
-      tryApp:       'Try the app',
-      features: [
-        { icon: '📵', title: 'Digital Detox',       desc: 'Block chosen apps for a set time. Start at your own pace.' },
-        { icon: '👥', title: 'Detox with Friends',  desc: 'Group detox sessions — motivate each other and share the win.' },
-        { icon: '📊', title: 'Visualize Screen Time', desc: 'See how much time you\'ve saved. Watch yourself grow.' },
-      ]
-    }
-  };
-
-  let lang = (navigator.language || 'ja').startsWith('ja') ? 'ja' : 'en';
-  let countCache = 0;
-
-  function setLang(l) {
-    lang = l;
-    document.getElementById('lang-ja-btn').classList.toggle('active', l === 'ja');
-    document.getElementById('lang-en-btn').classList.toggle('active', l === 'en');
-    renderCopy();
+// ── COPY ──────────────────────────────────────────────
+const COPY = {
+  ja: {
+    eyebrow:      'ウェイトリストに登録',
+    namePh:       '名前（任意）',
+    emailPh:      'メールアドレス',
+    btn:          '参加する',
+    btnLoading:   '送信中...',
+    hint:         'スパムは送りません',
+    successTitle: '登録完了',
+    successBody:  'リリース時にご連絡します。',
+    counter:      n => `${n} 人が登録済み`,
+    err:          'エラーが発生しました。再度お試しください。',
+  },
+  en: {
+    eyebrow:      'Join the waitlist',
+    namePh:       'Name (optional)',
+    emailPh:      'Email address',
+    btn:          'Join',
+    btnLoading:   'Joining...',
+    hint:         'No spam, ever.',
+    successTitle: 'You\'re on the list.',
+    successBody:  'We\'ll reach out when we launch.',
+    counter:      n => `${n} people signed up`,
+    err:          'Something went wrong. Try again.',
   }
+};
 
-  function renderCopy() {
-    const c = COPY[lang];
-    document.getElementById('txt-badge').textContent       = c.badge;
-    document.getElementById('txt-headline').innerHTML      = c.headline.replace(/\n/g,'<br>');
-    document.getElementById('txt-sub').innerHTML           = c.sub.replace(/\n/g,'<br>');
-    document.getElementById('txt-form-label').textContent  = c.formLabel;
-    document.getElementById('wl-name').placeholder         = c.namePh;
-    document.getElementById('wl-email').placeholder        = c.emailPh;
-    document.getElementById('wl-btn').textContent          = c.btnText;
-    document.getElementById('txt-no-spam').textContent     = c.noSpam;
-    document.getElementById('txt-success-title').textContent = c.successTitle;
-    document.getElementById('txt-success-sub').innerHTML   = c.successSub.replace(/\n/g,'<br>');
-    document.getElementById('txt-try-app').innerHTML        = c.tryApp + ' →';
-    if (countCache > 0) document.getElementById('wl-count').textContent = c.counter(countCache);
+let lang = (navigator.language || 'ja').startsWith('ja') ? 'ja' : 'en';
+let countCache = 0;
 
-    const fl = document.getElementById('features-list');
-    fl.innerHTML = c.features.map(f => `
-      <div class="feature-card" style="display:flex;align-items:flex-start;gap:16px;padding:20px;">
-        <span style="font-size:24px;flex-shrink:0;">${f.icon}</span>
-        <div>
-          <p style="font-weight:700;font-size:14px;margin:0 0 4px;">${f.title}</p>
-          <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">${f.desc}</p>
-        </div>
-      </div>`).join('');
+function setLang(l) {
+  lang = l;
+  document.getElementById('lang-ja-btn').classList.toggle('active', l === 'ja');
+  document.getElementById('lang-en-btn').classList.toggle('active', l === 'en');
+  render();
+}
+
+function render() {
+  const c = COPY[lang];
+  document.getElementById('eyebrow').textContent  = c.eyebrow;
+  document.getElementById('wl-name').placeholder  = c.namePh;
+  document.getElementById('wl-email').placeholder = c.emailPh;
+  document.getElementById('wl-btn').textContent   = c.btn;
+  document.getElementById('hint').textContent     = c.hint;
+  document.getElementById('successTitle').textContent = c.successTitle;
+  document.getElementById('successBody').textContent  = c.successBody;
+  if (countCache > 0) {
+    document.getElementById('counter').textContent = c.counter(countCache);
+    document.getElementById('counter').classList.add('vis');
   }
+  buildMarquee();
+}
 
-  // Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyBhhdcJ7Yigw5VGxuJxXSicqqHPe2xNcCY",
-    authDomain: "tuneout-a7c7b.firebaseapp.com",
-    projectId: "tuneout-a7c7b",
-    storageBucket: "tuneout-a7c7b.firebasestorage.app",
-    messagingSenderId: "798608722916",
-    appId: "1:798608722916:web:95d9766c02bdcfd52455f1"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+// ── HERO TITLE ────────────────────────────────────────
+function buildTitle() {
+  const wm = document.getElementById('wordmark');
+  const chars = ['(', 'D', 'I', 'S', ')', 'C', 'O', 'N', 'N', 'E', 'C', 'T'];
+  wm.innerHTML = '';
 
-  db.collection('waitlist').get().then(snap => {
-    countCache = snap.size;
-    if (countCache > 0) {
-      document.getElementById('wl-count').textContent = COPY[lang].counter(countCache);
+  chars.forEach((ch, i) => {
+    const wrap = document.createElement('span');
+    wrap.className = 'c-wrap';
+
+    const inner = document.createElement('span');
+    inner.className = 'c';
+    inner.textContent = ch;
+    inner.style.animationDelay = `${0.04 + i * 0.048}s`;
+
+    // Visual hierarchy: parens are near-invisible, DIS is dark, CONNECT is white
+    if (ch === '(' || ch === ')') {
+      inner.style.color = '#191919';
+    } else if (i >= 1 && i <= 3) {
+      inner.style.color = '#2a2a2a';
     }
-  }).catch(() => {});
 
-  document.getElementById('wl-btn').addEventListener('click', async () => {
-    const email = document.getElementById('wl-email').value.trim();
-    const name  = document.getElementById('wl-name').value.trim();
-    const c     = COPY[lang];
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      document.getElementById('wl-email').style.borderColor = '#ef4444';
-      document.getElementById('wl-email').focus();
-      return;
-    }
-    document.getElementById('wl-email').style.borderColor = '';
-    const btn = document.getElementById('wl-btn');
-    btn.disabled = true;
-    btn.textContent = c.btnLoading;
-    try {
-      const exists = await db.collection('waitlist').where('email','==',email).get();
-      if (!exists.empty) {
-        document.getElementById('form-card').style.display = 'none';
-        document.getElementById('success-msg').style.display = 'block';
-        return;
-      }
-      await db.collection('waitlist').add({
-        email,
-        name: name || null,
-        registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lang
-      });
-      document.getElementById('form-card').style.display = 'none';
-      document.getElementById('success-msg').style.display = 'block';
-    } catch(e) {
-      console.error(e);
-      btn.disabled = false;
-      btn.textContent = c.btnText;
-      alert(c.errMsg);
+    wrap.appendChild(inner);
+    wm.appendChild(wrap);
+  });
+}
+
+// ── MARQUEE ───────────────────────────────────────────
+function buildMarquee() {
+  const track = document.getElementById('marqueeTrack');
+  const chunk = Array(10).fill(null).map(() =>
+    `<span class="m-item">(DIS)CONNECT to Reconnect<span class="m-dot"></span></span>`
+  ).join('');
+  track.innerHTML = chunk + chunk;
+}
+
+// ── PARALLAX ──────────────────────────────────────────
+const heroInner = document.getElementById('heroInner');
+const orb1 = document.getElementById('orb1');
+const orb2 = document.getElementById('orb2');
+let raf = false;
+
+window.addEventListener('scroll', () => {
+  if (!raf) {
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      const vh = window.innerHeight;
+      heroInner.style.transform = `translateY(${y * 0.38}px)`;
+      heroInner.style.opacity   = Math.max(0, 1 - (y / (vh * 0.65)));
+      raf = false;
+    });
+    raf = true;
+  }
+}, { passive: true });
+
+// Mouse parallax on orbs (desktop only)
+window.addEventListener('mousemove', (e) => {
+  const mx = (e.clientX / window.innerWidth - 0.5) * 40;
+  const my = (e.clientY / window.innerHeight - 0.5) * 28;
+  orb1.style.transform = `translateX(calc(-50% + ${mx}px)) translateY(${my}px)`;
+  orb2.style.transform = `translateX(${-mx * 0.4}px) translateY(${-my * 0.4}px)`;
+}, { passive: true });
+
+// ── SCROLL REVEAL ─────────────────────────────────────
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('vis');
+      revealObserver.unobserve(e.target);
     }
   });
+}, { threshold: 0.08 });
 
-  // Init
-  renderCopy();
+document.querySelectorAll('[data-rev]').forEach(el => revealObserver.observe(el));
+revealObserver.observe(document.getElementById('marqueeWrap'));
+revealObserver.observe(document.getElementById('footer'));
+
+// ── FIREBASE ──────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBhhdcJ7Yigw5VGxuJxXSicqqHPe2xNcCY",
+  authDomain: "tuneout-a7c7b.firebaseapp.com",
+  projectId: "tuneout-a7c7b",
+  storageBucket: "tuneout-a7c7b.firebasestorage.app",
+  messagingSenderId: "798608722916",
+  appId: "1:798608722916:web:95d9766c02bdcfd52455f1"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+db.collection('waitlist').get().then(snap => {
+  countCache = snap.size;
+  if (countCache > 0) {
+    const el = document.getElementById('counter');
+    el.textContent = COPY[lang].counter(countCache);
+    el.classList.add('vis');
+  }
+}).catch(() => {});
+
+document.getElementById('wl-btn').addEventListener('click', async () => {
+  const emailEl = document.getElementById('wl-email');
+  const email   = emailEl.value.trim();
+  const name    = document.getElementById('wl-name').value.trim();
+  const c       = COPY[lang];
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    emailEl.classList.add('err');
+    emailEl.focus();
+    setTimeout(() => emailEl.classList.remove('err'), 2200);
+    return;
+  }
+
+  const btn = document.getElementById('wl-btn');
+  btn.disabled = true;
+  btn.textContent = c.btnLoading;
+
+  try {
+    const dup = await db.collection('waitlist').where('email', '==', email).get();
+    if (!dup.empty) { showSuccess(); return; }
+
+    await db.collection('waitlist').add({
+      email,
+      name: name || null,
+      registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lang
+    });
+    showSuccess();
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = c.btn;
+    alert(c.err);
+  }
+});
+
+function showSuccess() {
+  document.getElementById('formState').style.display = 'none';
+  document.getElementById('successMsg').classList.add('show');
+}
+
+// ── INIT ──────────────────────────────────────────────
+buildTitle();
+render();
 </script>
 </body>
 </html>
