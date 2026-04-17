@@ -5,143 +5,474 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>(DIS)CONNECT — Waitlist</title>
   <link rel="icon" type="image/png" href="/icon.png">
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: 'Sora', sans-serif; background: #000; color: #fff; min-height: 100vh; margin: 0; }
-    .grain {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #3b82f6;
+      --violet: #8b5cf6;
+      --white: #ffffff;
+      --gray: #6b7280;
     }
-    .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
-    .btn-main { background: white; color: black; font-weight: 800; border: none; border-radius: 9999px; cursor: pointer; transition: opacity .2s, transform .1s; }
-    .btn-main:hover { opacity: .88; }
-    .btn-main:active { transform: scale(.97); }
-    .btn-main:disabled { opacity: .4; cursor: not-allowed; }
-    .input-field { background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 14px; color: white; outline: none; font-family: 'Sora', sans-serif; transition: border-color .2s; }
-    .input-field:focus { border-color: #636366; }
-    .input-field::placeholder { color: #636366; }
-    .badge { display: inline-flex; align-items: center; gap: 6px; background: #ffffff0f; border: 1px solid #ffffff18; border-radius: 9999px; padding: 6px 14px; font-size: 12px; font-weight: 600; color: #9ca3af; }
-    .feature-card { background: #111; border: 1px solid #1f1f1f; border-radius: 20px; padding: 24px; }
-    @keyframes fadeUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
-    .fade-up  { animation: fadeUp .7s ease forwards; }
-    .fade-up-2 { animation: fadeUp .7s .15s ease both; }
-    .fade-up-3 { animation: fadeUp .7s .3s ease both; }
-    .fade-up-4 { animation: fadeUp .7s .45s ease both; }
-    #success-msg { display: none; }
-    .lang-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #111; border-top: 1px solid #1f1f1f; display: flex; padding: 8px 16px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); gap: 8px; }
-    .lang-btn { flex: 1; background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 10px; color: #6b7280; font-size: 13px; font-weight: 700; padding: 9px 10px; cursor: pointer; transition: all .2s; font-family: 'Sora', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* ── Grain ── */
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1;
+      opacity: .45;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+
+    /* ── Orbs ── */
+    .orb {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+      will-change: transform;
+      transition: transform .1s linear;
+    }
+    .orb-1 {
+      width: 700px; height: 700px;
+      top: -200px; left: 50%; transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(59,130,246,.18) 0%, transparent 70%);
+      filter: blur(60px);
+    }
+    .orb-2 {
+      width: 500px; height: 500px;
+      bottom: 20vh; right: -150px;
+      background: radial-gradient(circle, rgba(139,92,246,.14) 0%, transparent 70%);
+      filter: blur(80px);
+    }
+    .orb-3 {
+      width: 400px; height: 400px;
+      bottom: 10vh; left: -100px;
+      background: radial-gradient(circle, rgba(59,130,246,.1) 0%, transparent 70%);
+      filter: blur(100px);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative; z-index: 2;
+      min-height: 100svh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 60px 24px;
+      text-align: center;
+    }
+
+    .hero-icon {
+      width: 64px; height: 64px; border-radius: 16px;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: fadeScale .8s .2s cubic-bezier(.22,1,.36,1) forwards;
+    }
+
+    /* Big title */
+    .title-wrap {
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .title-dis {
+      display: block;
+      font-size: clamp(52px, 14vw, 120px);
+      font-weight: 900;
+      letter-spacing: -4px;
+      line-height: .95;
+      color: #fff;
+      opacity: 0;
+      transform: translateY(110%);
+      animation: slideUp .9s .35s cubic-bezier(.22,1,.36,1) forwards;
+      position: relative;
+    }
+    .title-dis .dis {
+      color: transparent;
+      -webkit-text-stroke: 1.5px rgba(255,255,255,.35);
+      position: relative;
+    }
+    .title-connect {
+      display: block;
+      font-size: clamp(52px, 14vw, 120px);
+      font-weight: 900;
+      letter-spacing: -4px;
+      line-height: .95;
+      opacity: 0;
+      transform: translateY(110%);
+      animation: slideUp .9s .5s cubic-bezier(.22,1,.36,1) forwards;
+    }
+
+    .to-reconnect {
+      font-size: clamp(14px, 3vw, 18px);
+      font-weight: 500;
+      color: rgba(255,255,255,.45);
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      margin-top: 28px;
+      opacity: 0;
+      animation: fadeUp .7s .75s ease forwards;
+    }
+
+    /* Scroll indicator */
+    .scroll-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      opacity: 0;
+      animation: fadeUp .7s 1.1s ease forwards;
+    }
+    .scroll-hint span {
+      font-size: 10px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+      font-weight: 600;
+    }
+    .scroll-line {
+      width: 1px; height: 48px;
+      background: linear-gradient(to bottom, rgba(255,255,255,.3), transparent);
+      animation: scrollPulse 2s 1.3s ease-in-out infinite;
+    }
+
+    /* ── Form section ── */
+    .form-section {
+      position: relative; z-index: 2;
+      min-height: 100svh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 80px 24px 140px;
+    }
+
+    .section-inner {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity .8s cubic-bezier(.22,1,.36,1), transform .8s cubic-bezier(.22,1,.36,1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: .1s; }
+    .reveal-delay-2 { transition-delay: .2s; }
+    .reveal-delay-3 { transition-delay: .35s; }
+
+    .form-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.35);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .form-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 24px;
+      padding: 32px 28px;
+      backdrop-filter: blur(20px);
+    }
+
+    .input-field {
+      width: 100%;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      color: white;
+      outline: none;
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      padding: 15px 18px;
+      transition: border-color .2s, background .2s;
+    }
+    .input-field:focus {
+      border-color: rgba(255,255,255,.3);
+      background: rgba(255,255,255,.08);
+    }
+    .input-field::placeholder { color: rgba(255,255,255,.25); }
+
+    .inputs-stack { display: flex; flex-direction: column; gap: 12px; }
+
+    .btn-join {
+      width: 100%;
+      background: #fff;
+      color: #000;
+      font-family: 'Sora', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 17px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity .2s, transform .15s;
+      letter-spacing: -.01em;
+    }
+    .btn-join:hover { opacity: .88; }
+    .btn-join:active { transform: scale(.98); }
+    .btn-join:disabled { opacity: .35; cursor: not-allowed; }
+
+    .no-spam {
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,.2);
+      margin-top: 14px;
+      letter-spacing: .01em;
+    }
+
+    /* Counter */
+    .counter-text {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,.2);
+      margin-top: 20px;
+      letter-spacing: .03em;
+    }
+
+    /* Success */
+    #success-msg {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+      animation: pop .5s cubic-bezier(.22,1,.36,1);
+    }
+    #success-msg h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    #success-msg p {
+      color: rgba(255,255,255,.45);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      position: relative; z-index: 2;
+      text-align: center;
+      padding: 20px 24px 100px;
+    }
+    .footer p { font-size: 11px; color: rgba(255,255,255,.15); }
+    .footer a {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,.3);
+      font-size: 13px; font-weight: 600;
+      text-decoration: none;
+      margin-top: 12px;
+      transition: color .2s;
+    }
+    .footer a:hover { color: rgba(255,255,255,.6); }
+
+    /* ── Lang bar ── */
+    .lang-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(0,0,0,.8);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,.06);
+      display: flex; padding: 10px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      gap: 8px;
+    }
+    .lang-btn {
+      flex: 1;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      color: rgba(255,255,255,.35);
+      font-size: 13px; font-weight: 700;
+      padding: 9px 10px;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: 'Sora', sans-serif;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
     .lang-btn.active { background: white; color: black; border-color: white; }
+
+    /* ── Keyframes ── */
+    @keyframes slideUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeScale {
+      from { opacity: 0; transform: scale(.8); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: .4; transform: scaleY(1); transform-origin: top; }
+      50%       { opacity: .9; transform: scaleY(1.3); transform-origin: top; }
+    }
+    @keyframes pop {
+      from { transform: scale(.5); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    @keyframes glitch {
+      0%, 95%, 100% { clip-path: none; transform: none; }
+      96% { clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%); transform: translateX(-3px); }
+      97% { clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%); transform: translateX(3px); }
+      98% { clip-path: none; transform: none; }
+    }
+
+    /* Glitch on DIS */
+    .title-dis::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0; top: 0;
+      color: rgba(139,92,246,.5);
+      animation: glitch 6s 2s infinite;
+      pointer-events: none;
+    }
+
+    /* Floating particles */
+    .particles {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 2px; height: 2px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.4);
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translateY(-10vh) translateX(var(--drift)); opacity: 0; }
+    }
+
+    /* Horizontal divider line */
+    .divider {
+      position: relative; z-index: 2;
+      width: 1px; height: 80px;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,.12), transparent);
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body>
 
 <div class="grain"></div>
-<div class="glow-orb" style="width:600px;height:600px;top:-200px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,#3b82f622,transparent 70%);"></div>
-<div class="glow-orb" style="width:400px;height:400px;bottom:-100px;right:-100px;background:radial-gradient(circle,#8b5cf614,transparent 70%);"></div>
+<div class="orb orb-1" id="orb1"></div>
+<div class="orb orb-2" id="orb2"></div>
+<div class="orb orb-3" id="orb3"></div>
+<div class="particles" id="particles"></div>
 
-<!-- Lang switcher bar (fixed bottom) -->
+<!-- Lang bar -->
 <div class="lang-bar">
   <button class="lang-btn active" id="lang-ja-btn" onclick="setLang('ja')">🇯🇵 日本語</button>
   <button class="lang-btn" id="lang-en-btn" onclick="setLang('en')">🇺🇸 English</button>
 </div>
 
-<div style="position:relative;z-index:1;max-width:480px;margin:0 auto;padding:32px 24px 120px;">
+<!-- ── Hero ── -->
+<section class="hero">
+  <img src="/icon.png" alt="(DIS)CONNECT" class="hero-icon">
 
-  <!-- Logo -->
-  <div class="fade-up text-center mb-12">
-    <div style="display:inline-flex;align-items:center;gap:12px;margin-bottom:32px;">
-      <img src="/icon.png" alt="(DIS)CONNECT" style="width:48px;height:48px;border-radius:12px;">
-      <span style="font-size:20px;font-weight:900;letter-spacing:-0.5px;">(DIS)CONNECT</span>
+  <div>
+    <div class="title-wrap">
+      <span class="title-dis" id="hero-dis" data-text="">(DIS)</span>
+    </div>
+    <div class="title-wrap">
+      <span class="title-connect">CONNECT</span>
+    </div>
+  </div>
+
+  <p class="to-reconnect" id="txt-to-reconnect">to Reconnect</p>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>scroll</span>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider"></div>
+
+<!-- ── Form ── -->
+<section class="form-section">
+  <div class="section-inner">
+
+    <p class="form-eyebrow reveal reveal-delay-1" id="txt-eyebrow"></p>
+
+    <!-- Form card -->
+    <div class="form-card reveal reveal-delay-2" id="form-card">
+      <div class="inputs-stack">
+        <input id="wl-name" class="input-field" type="text">
+        <input id="wl-email" class="input-field" type="email">
+        <button id="wl-btn" class="btn-join"></button>
+      </div>
+      <p class="no-spam" id="txt-no-spam"></p>
     </div>
 
-    <div class="badge mb-6">
-      <span style="width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;"></span>
-      <span id="txt-badge"></span>
+    <!-- Success -->
+    <div id="success-msg" class="form-card">
+      <span class="success-icon">🎉</span>
+      <h2 id="txt-success-title"></h2>
+      <p id="txt-success-sub"></p>
     </div>
 
-    <h1 id="txt-headline" style="font-size:clamp(28px,8vw,44px);font-weight:900;line-height:1.15;letter-spacing:-1.5px;margin:0 0 16px;"></h1>
-    <p id="txt-sub" style="color:#6b7280;font-size:15px;line-height:1.7;margin:0;"></p>
+    <p class="counter-text reveal reveal-delay-3" id="wl-count"></p>
+
   </div>
+</section>
 
-  <!-- Waitlist Form -->
-  <div class="fade-up-2 feature-card mb-6" id="form-card">
-    <p id="txt-form-label" style="font-size:13px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin:0 0 16px;"></p>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <input id="wl-name" class="input-field" type="text" style="padding:14px 16px;font-size:15px;width:100%;">
-      <input id="wl-email" class="input-field" type="email" style="padding:14px 16px;font-size:15px;width:100%;">
-      <button id="wl-btn" class="btn-main" style="padding:16px;font-size:16px;width:100%;margin-top:4px;"></button>
-    </div>
-    <p id="txt-no-spam" style="color:#4b5563;font-size:12px;text-align:center;margin:12px 0 0;"></p>
-  </div>
-
-  <!-- Success message -->
-  <div class="feature-card mb-6 text-center" id="success-msg">
-    <div style="font-size:40px;margin-bottom:12px;">🎉</div>
-    <p id="txt-success-title" style="font-weight:800;font-size:18px;margin:0 0 8px;"></p>
-    <p id="txt-success-sub" style="color:#6b7280;font-size:14px;margin:0;"></p>
-  </div>
-
-  <!-- Counter -->
-  <p class="fade-up-2 text-center" style="color:#4b5563;font-size:13px;margin-bottom:32px;" id="wl-count"></p>
-
-  <!-- Features -->
-  <div class="fade-up-3" style="display:flex;flex-direction:column;gap:12px;margin-bottom:48px;" id="features-list"></div>
-
-  <!-- Footer -->
-  <div class="fade-up-4 text-center">
-    <p style="color:#374151;font-size:12px;margin-bottom:10px;">© 2026 (DIS)CONNECT</p>
-    <a href="/index.html" id="txt-try-app" style="display:inline-flex;align-items:center;gap:6px;color:#9ca3af;font-size:14px;font-weight:600;text-decoration:none;background:#1c1c1e;border:1px solid #3a3a3c;border-radius:9999px;padding:10px 20px;"></a>
-  </div>
-
-</div>
+<!-- ── Footer ── -->
+<footer class="footer">
+  <p>© 2026 (DIS)CONNECT</p>
+  <a href="/index.html" id="txt-try-app"></a>
+</footer>
 
 <script>
+  /* ── Copy ── */
   const COPY = {
     ja: {
-      badge:        'まもなくリリース / Coming Soon',
-      headline:     'Disconnect to\nReconnect.',
-      sub:          'デジタルデトックスをフレンドと共有する\nまったく新しいSNS体験。',
-      formLabel:    'ウェイトリストに登録',
+      eyebrow:      'ウェイトリストに登録',
       namePh:       '名前（任意）',
       emailPh:      'メールアドレス *',
       btnText:      'ウェイトリストに参加する',
       btnLoading:   '登録中...',
-      noSpam:       'スパムは送りません。大切なお知らせのみご連絡します。',
+      noSpam:       'スパムは送りません。大切なお知らせのみ。',
       successTitle: '登録完了！',
       successSub:   'リリース時にご連絡します。\n楽しみにお待ちください！',
       counter:      n => `すでに ${n} 人が登録済み`,
       errMsg:       'エラーが発生しました。もう一度お試しください。',
-      tryApp:       'アプリを試す',
-      features: [
-        { icon: '📵', title: 'デジタルデトックス',       desc: '選んだアプリを一定時間ブロック。自分のペースで始められる。' },
-        { icon: '👥', title: 'フレンドと一緒に',         desc: 'グループデトックスでお互いに励まし合い、達成感を共有。' },
-        { icon: '📊', title: 'スクリーンタイムを可視化', desc: 'デトックスで削減した時間をグラフで確認。成長が見える。' },
-      ]
+      tryApp:       'アプリを試す →',
     },
     en: {
-      badge:        'Coming Soon',
-      headline:     'Disconnect to\nReconnect.',
-      sub:          'A brand new social experience\nfor digital detox with friends.',
-      formLabel:    'Join the Waitlist',
+      eyebrow:      'Join the Waitlist',
       namePh:       'Name (optional)',
       emailPh:      'Email address *',
       btnText:      'Join the Waitlist',
       btnLoading:   'Joining...',
-      noSpam:       'No spam. We\'ll only reach out with important updates.',
-      successTitle: 'You\'re on the list!',
-      successSub:   'We\'ll let you know when we launch.\nStay tuned!',
+      noSpam:       'No spam. Important updates only.',
+      successTitle: "You're on the list!",
+      successSub:   "We'll let you know when we launch.\nStay tuned!",
       counter:      n => `${n} people already signed up`,
       errMsg:       'Something went wrong. Please try again.',
-      tryApp:       'Try the app',
-      features: [
-        { icon: '📵', title: 'Digital Detox',       desc: 'Block chosen apps for a set time. Start at your own pace.' },
-        { icon: '👥', title: 'Detox with Friends',  desc: 'Group detox sessions — motivate each other and share the win.' },
-        { icon: '📊', title: 'Visualize Screen Time', desc: 'See how much time you\'ve saved. Watch yourself grow.' },
-      ]
+      tryApp:       'Try the app →',
     }
   };
 
@@ -157,31 +488,58 @@
 
   function renderCopy() {
     const c = COPY[lang];
-    document.getElementById('txt-badge').textContent       = c.badge;
-    document.getElementById('txt-headline').innerHTML      = c.headline.replace(/\n/g,'<br>');
-    document.getElementById('txt-sub').innerHTML           = c.sub.replace(/\n/g,'<br>');
-    document.getElementById('txt-form-label').textContent  = c.formLabel;
-    document.getElementById('wl-name').placeholder         = c.namePh;
-    document.getElementById('wl-email').placeholder        = c.emailPh;
-    document.getElementById('wl-btn').textContent          = c.btnText;
-    document.getElementById('txt-no-spam').textContent     = c.noSpam;
+    document.getElementById('txt-eyebrow').textContent     = c.eyebrow;
+    document.getElementById('wl-name').placeholder          = c.namePh;
+    document.getElementById('wl-email').placeholder         = c.emailPh;
+    document.getElementById('wl-btn').textContent           = c.btnText;
+    document.getElementById('txt-no-spam').textContent      = c.noSpam;
     document.getElementById('txt-success-title').textContent = c.successTitle;
-    document.getElementById('txt-success-sub').innerHTML   = c.successSub.replace(/\n/g,'<br>');
-    document.getElementById('txt-try-app').innerHTML        = c.tryApp + ' →';
+    document.getElementById('txt-success-sub').innerHTML    = c.successSub.replace(/\n/g,'<br>');
+    document.getElementById('txt-try-app').textContent      = c.tryApp;
     if (countCache > 0) document.getElementById('wl-count').textContent = c.counter(countCache);
-
-    const fl = document.getElementById('features-list');
-    fl.innerHTML = c.features.map(f => `
-      <div class="feature-card" style="display:flex;align-items:flex-start;gap:16px;padding:20px;">
-        <span style="font-size:24px;flex-shrink:0;">${f.icon}</span>
-        <div>
-          <p style="font-weight:700;font-size:14px;margin:0 0 4px;">${f.title}</p>
-          <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">${f.desc}</p>
-        </div>
-      </div>`).join('');
   }
 
-  // Firebase
+  /* ── Particles ── */
+  (function spawnParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 28; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 2 + 1;
+      p.style.cssText = `
+        left: ${Math.random() * 100}%;
+        width: ${size}px;
+        height: ${size}px;
+        opacity: ${Math.random() * .5 + .1};
+        --drift: ${(Math.random() - .5) * 120}px;
+        animation-duration: ${Math.random() * 18 + 12}s;
+        animation-delay: ${Math.random() * 16}s;
+      `;
+      container.appendChild(p);
+    }
+  })();
+
+  /* ── Parallax orbs on scroll ── */
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    document.getElementById('orb1').style.transform = `translateX(-50%) translateY(${y * .15}px)`;
+    document.getElementById('orb2').style.transform = `translateY(${-y * .08}px)`;
+    document.getElementById('orb3').style.transform = `translateY(${-y * .05}px)`;
+  }, { passive: true });
+
+  /* ── Scroll reveal ── */
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: .15 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  /* ── Firebase ── */
   const firebaseConfig = {
     apiKey: "AIzaSyBhhdcJ7Yigw5VGxuJxXSicqqHPe2xNcCY",
     authDomain: "tuneout-a7c7b.firebaseapp.com",
@@ -205,8 +563,9 @@
     const name  = document.getElementById('wl-name').value.trim();
     const c     = COPY[lang];
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      document.getElementById('wl-email').style.borderColor = '#ef4444';
-      document.getElementById('wl-email').focus();
+      const el = document.getElementById('wl-email');
+      el.style.borderColor = '#ef4444';
+      el.focus();
       return;
     }
     document.getElementById('wl-email').style.borderColor = '';
@@ -236,7 +595,6 @@
     }
   });
 
-  // Init
   renderCopy();
 </script>
 </body>
