@@ -35,22 +35,28 @@
       transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
     }
     .orb-1 {
-      width: 800px; height: 800px;
-      top: -320px; left: 50%; transform: translateX(-52%);
-      background: radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 65%);
+      width: 900px; height: 900px;
+      top: -360px; left: 50%; transform: translateX(-52%);
+      background: radial-gradient(circle, rgba(37,99,235,0.24) 0%, rgba(96,165,250,0.08) 45%, transparent 65%);
       animation: driftA 22s ease-in-out infinite alternate;
     }
     .orb-2 {
-      width: 600px; height: 600px;
-      bottom: -200px; right: -140px;
-      background: radial-gradient(circle, rgba(124,58,237,0.14) 0%, transparent 65%);
+      width: 650px; height: 650px;
+      bottom: -220px; right: -160px;
+      background: radial-gradient(circle, rgba(124,58,237,0.18) 0%, rgba(167,139,250,0.06) 50%, transparent 65%);
       animation: driftB 28s ease-in-out infinite alternate;
     }
     .orb-3 {
-      width: 400px; height: 400px;
-      top: 40%; left: -100px;
-      background: radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 70%);
+      width: 500px; height: 500px;
+      top: 40%; left: -120px;
+      background: radial-gradient(circle, rgba(16,185,129,0.09) 0%, transparent 70%);
       animation: driftC 35s ease-in-out infinite alternate;
+    }
+    .orb-4 {
+      width: 700px; height: 700px;
+      bottom: -300px; left: -200px;
+      background: radial-gradient(circle, rgba(251,146,60,0.08) 0%, rgba(249,115,22,0.04) 40%, transparent 65%);
+      animation: driftB 40s ease-in-out infinite alternate-reverse;
     }
     @keyframes driftA {
       from { transform: translateX(-58%) translateY(0px) scale(1); }
@@ -79,11 +85,11 @@
 
     /* Title */
     .wordmark {
-      font-size: clamp(58px, 15vw, 180px);
+      font-size: clamp(68px, 17vw, 210px);
       font-weight: 900;
       letter-spacing: -0.045em;
       line-height: 0.9;
-      margin-bottom: 28px;
+      margin-bottom: 32px;
       white-space: nowrap;
     }
 
@@ -97,26 +103,26 @@
     .c {
       display: inline-block;
       transform: translateY(110%);
-      filter: blur(8px);
-      animation: charReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      filter: blur(10px);
+      animation: charReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     @keyframes charReveal {
       to { transform: translateY(0); filter: blur(0); }
     }
 
-    .paren { color: rgba(255,255,255,0.38); }
-    .dis   { color: rgba(255,255,255,0.58); }
+    .paren { color: rgba(255,255,255,0.5); }
+    .dis   { color: rgba(255,255,255,0.7); }
 
     /* Subtitle */
     .reconnect {
       display: block;
-      font-size: clamp(24px, 5.5vw, 64px);
+      font-size: clamp(28px, 6.5vw, 76px);
       font-weight: 300;
-      letter-spacing: -0.015em;
-      color: rgba(255,255,255,0.72);
+      letter-spacing: -0.02em;
+      color: rgba(255,255,255,0.88);
       font-style: italic;
-      margin-bottom: 40px;
+      margin-bottom: 44px;
       opacity: 0;
       transform: translateY(20px);
       animation: fadeUp 1s 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -124,10 +130,10 @@
 
     /* Waseda tagline */
     .waseda-line {
-      font-size: clamp(13px, 2.2vw, 16px);
+      font-size: clamp(14px, 2.4vw, 18px);
       font-weight: 500;
-      letter-spacing: 0.05em;
-      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.65);
       line-height: 1.8;
       opacity: 0;
       transform: translateY(12px);
@@ -150,12 +156,12 @@
 
     .scroll-cue-line {
       width: 1px; height: 56px;
-      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.2));
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.35));
       animation: linePulse 2.8s 2.8s ease-in-out infinite;
     }
     @keyframes linePulse {
-      0%, 100% { opacity: 0.25; transform: scaleY(0.8); }
-      50%       { opacity: 1;   transform: scaleY(1); }
+      0%, 100% { opacity: 0.3; transform: scaleY(0.8); }
+      50%       { opacity: 1;  transform: scaleY(1); }
     }
 
     /* ── MARQUEE ── */
@@ -205,7 +211,7 @@
     .eyebrow {
       font-size: 11px; font-weight: 700;
       letter-spacing: 0.24em; text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
+      color: rgba(255,255,255,0.62);
       margin-bottom: 40px;
       opacity: 0; transform: translateY(16px);
       transition: opacity 1s, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
@@ -274,7 +280,7 @@
     }
 
     .hint {
-      font-size: 11px; color: rgba(255,255,255,0.28);
+      font-size: 11px; color: rgba(255,255,255,0.42);
       text-align: center; margin-top: 16px;
       letter-spacing: 0.05em;
       opacity: 0; transform: translateY(8px);
@@ -284,7 +290,7 @@
 
     /* Counter */
     .counter {
-      font-size: 11px; color: rgba(255,255,255,0.32);
+      font-size: 11px; color: rgba(255,255,255,0.48);
       text-align: center; letter-spacing: 0.12em;
       margin-top: 36px;
       opacity: 0; transition: opacity 0.8s 0.4s;
@@ -319,7 +325,7 @@
       opacity: 0; transition: opacity 1.4s;
     }
     .footer.vis { opacity: 1; }
-    .footer p { font-size: 10px; color: rgba(255,255,255,0.16); letter-spacing: 0.2em; text-transform: uppercase; }
+    .footer p { font-size: 10px; color: rgba(255,255,255,0.28); letter-spacing: 0.2em; text-transform: uppercase; }
 
     /* ── CANVAS (rain) ── */
     #bgCanvas {
@@ -334,10 +340,11 @@
       position: absolute; top: -30px;
       border-radius: 150% 0% 150% 0% / 150% 0% 150% 0%;
       background: linear-gradient(135deg,
-        rgba(255,192,203,0.55) 0%,
-        rgba(255,218,225,0.35) 50%,
-        rgba(255,240,245,0.15) 100%
+        rgba(255,192,203,0.7) 0%,
+        rgba(255,218,225,0.5) 50%,
+        rgba(255,240,245,0.25) 100%
       );
+      box-shadow: 0 0 10px rgba(255,182,193,0.4), 0 2px 6px rgba(255,182,193,0.2);
       animation: petalFall linear infinite;
       pointer-events: none;
     }
@@ -355,18 +362,19 @@
     #kanji { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
     .kanji-char {
       position: absolute;
-      font-family: 'Sora', 'Hiragino Sans', sans-serif;
+      font-family: 'Hiragino Sans', 'Yu Gothic', 'Sora', sans-serif;
       font-weight: 900;
-      color: rgba(255,255,255,0.055);
+      color: rgba(255,255,255,0.1);
       pointer-events: none;
       user-select: none;
+      text-shadow: 0 0 40px rgba(200,220,255,0.25), 0 0 80px rgba(200,220,255,0.1);
       animation: kanjiFly linear infinite;
     }
     @keyframes kanjiFly {
       0%   { transform: translateY(0)     scale(1);    opacity: 0; }
-      12%  { opacity: 1; }
-      88%  { opacity: 1; }
-      100% { transform: translateY(-35vh) scale(1.12); opacity: 0; }
+      10%  { opacity: 1; }
+      85%  { opacity: 1; }
+      100% { transform: translateY(-40vh) scale(1.15); opacity: 0; }
     }
 
     /* ── LANG BAR ── */
@@ -399,6 +407,7 @@
 <div class="orb orb-1" id="orb1"></div>
 <div class="orb orb-2" id="orb2"></div>
 <div class="orb orb-3"></div>
+<div class="orb orb-4"></div>
 
 <!-- Lang bar -->
 <div class="lang-bar">
@@ -648,38 +657,82 @@ function showSuccess() {
   document.getElementById('successMsg').classList.add('show');
 }
 
-// ── RAIN CANVAS ───────────────────────────────────────
+// ── RAIN CANVAS + BOKEH ───────────────────────────────
 (function initRain() {
   const canvas = document.getElementById('bgCanvas');
   const ctx    = canvas.getContext('2d');
   const isMobile = window.innerWidth < 768;
-  const COUNT  = isMobile ? 60 : 130;
+  const DROP_COUNT  = isMobile ? 70 : 150;
+  const BOKEH_COUNT = isMobile ? 22 : 45;
 
-  let W, H, drops;
+  let W, H, drops, bokeh;
 
   function resize() {
     W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
-    drops = Array.from({ length: COUNT }, () => mkDrop());
+    drops = Array.from({ length: DROP_COUNT }, () => mkDrop());
+    bokeh = Array.from({ length: BOKEH_COUNT }, () => mkBokeh());
   }
 
   function mkDrop() {
     return {
       x:     Math.random() * (W + 200) - 100,
       y:     Math.random() * H,
-      speed: 2.5 + Math.random() * 4.5,
-      len:   10 + Math.random() * 22,
-      wind:  0.25 + Math.random() * 0.35,
-      alpha: 0.025 + Math.random() * 0.055,
+      speed: 2.5 + Math.random() * 5,
+      len:   12 + Math.random() * 26,
+      wind:  0.25 + Math.random() * 0.4,
+      alpha: 0.03 + Math.random() * 0.08,
+      bright: Math.random() < 0.07,
+    };
+  }
+
+  const BOKEH_HUES = [200, 215, 255, 45, 280, 170];
+  function mkBokeh() {
+    return {
+      x:     Math.random() * W,
+      y:     Math.random() * H,
+      r:     2 + Math.random() * 5,
+      speed: 0.06 + Math.random() * 0.18,
+      drift: (Math.random() - 0.5) * 0.12,
+      hue:   BOKEH_HUES[Math.floor(Math.random() * BOKEH_HUES.length)],
+      alpha: 0.07 + Math.random() * 0.18,
+      pulse: Math.random() * Math.PI * 2,
     };
   }
 
   function frame() {
     ctx.clearRect(0, 0, W, H);
-    ctx.lineWidth = 0.6;
-    drops.forEach(d => {
+
+    // Bokeh city lights
+    bokeh.forEach(b => {
+      b.pulse += 0.007;
+      const a = b.alpha * (0.7 + 0.3 * Math.sin(b.pulse));
+      const grad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * 7);
+      grad.addColorStop(0,   `hsla(${b.hue},90%,80%,${a})`);
+      grad.addColorStop(0.35,`hsla(${b.hue},90%,75%,${a * 0.35})`);
+      grad.addColorStop(1,   `hsla(${b.hue},90%,70%,0)`);
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(180,215,255,${d.alpha})`;
+      ctx.fillStyle = grad;
+      ctx.arc(b.x, b.y, b.r * 7, 0, Math.PI * 2);
+      ctx.fill();
+      b.y -= b.speed;
+      b.x += b.drift;
+      if (b.y < -50) { b.y = H + 50; b.x = Math.random() * W; }
+    });
+
+    // Rain drops with glow
+    ctx.lineWidth = 0.7;
+    drops.forEach(d => {
+      if (d.bright) {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = `rgba(210,235,255,0.9)`;
+        ctx.strokeStyle = `rgba(230,245,255,${d.alpha * 2.8})`;
+      } else {
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = `rgba(180,215,255,0.5)`;
+        ctx.strokeStyle = `rgba(180,215,255,${d.alpha})`;
+      }
+      ctx.beginPath();
       ctx.moveTo(d.x, d.y);
       ctx.lineTo(d.x - d.len * d.wind, d.y - d.len);
       ctx.stroke();
@@ -687,6 +740,8 @@ function showSuccess() {
       d.x += d.wind;
       if (d.y > H + 20) { d.y = -20; d.x = Math.random() * (W + 200) - 100; }
     });
+    ctx.shadowBlur = 0;
+
     requestAnimationFrame(frame);
   }
 
@@ -698,12 +753,12 @@ function showSuccess() {
 // ── SAKURA PETALS ─────────────────────────────────────
 (function initPetals() {
   const container = document.getElementById('petals');
-  const COUNT = window.innerWidth < 768 ? 10 : 18;
+  const COUNT = window.innerWidth < 768 ? 12 : 22;
   for (let i = 0; i < COUNT; i++) {
     const el   = document.createElement('div');
     el.className = 'petal';
-    const size = 7 + Math.random() * 9;
-    const dur  = 10 + Math.random() * 14;
+    const size = 8 + Math.random() * 11;
+    const dur  = 10 + Math.random() * 16;
     const delay = -(Math.random() * dur);
     el.style.cssText = [
       `width:${size}px`,
@@ -725,8 +780,8 @@ function showSuccess() {
     const el  = document.createElement('div');
     el.className = 'kanji-char';
     el.textContent = ch;
-    const size = 28 + Math.random() * 52;
-    const dur  = 18 + Math.random() * 22;
+    const size = 36 + Math.random() * 64;
+    const dur  = 20 + Math.random() * 24;
     el.style.cssText = [
       `font-size:${size}px`,
       `left:${4 + Math.random() * 88}%`,
