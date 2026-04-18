@@ -38,11 +38,13 @@
       padding: 80px 24px 120px;
       text-align: center;
       position: relative; z-index: 1;
+      max-width: 390px;
+      margin: 0 auto;
     }
     .hero-inner { will-change: transform, opacity; }
 
     .wordmark {
-      font-size: clamp(64px, 17vw, 200px);
+      font-size: clamp(56px, 14.5vw, 390px);
       font-weight: 900;
       letter-spacing: -0.045em;
       line-height: 0.9;
@@ -112,7 +114,7 @@
 
     /* ── FORM SECTION ── */
     .form-section {
-      max-width: 420px;
+      max-width: 390px;
       margin: 0 auto;
       padding: 0 16px 180px;
       position: relative; z-index: 1;
@@ -385,7 +387,7 @@ const COPY = {
     emailPh:      '例) abc@mail.com',
     btn:          '参加する',
     btnLoading:   '送信中',
-    hint:         'スパムは送りません。いつでも退会できます。',
+    hint:         '重要なお知らせのみをお送りします。',
     successTitle: '登録完了',
     successBody:  'リリース時にご連絡します。',
     counter:      n => `${n} 人が登録済み`,
@@ -400,7 +402,7 @@ const COPY = {
     emailPh:      'you@example.com',
     btn:          'Join Waitlist',
     btnLoading:   'Joining',
-    hint:         'No spam, ever. Unsubscribe anytime.',
+    hint:         'Important updates only. No spam.',
     successTitle: "You're on the list.",
     successBody:  "We'll reach out when we launch.",
     counter:      n => `${n} people signed up`,
