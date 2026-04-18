@@ -5,95 +5,184 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>(DIS)CONNECT</title>
   <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
       background: #000;
       color: #fff;
       min-height: 100svh;
-      -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── LAYOUT ── */
-    .screen {
-      max-width: 390px;
-      margin: 0 auto;
-      padding: 0 0 calc(100px + env(safe-area-inset-bottom));
+    /* 淡いグラデーション背景 */
+    .bg-glow {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% -5%,
+        rgba(90,90,200,0.13) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
     }
 
-    /* ── HEADER ── */
-    .header {
-      padding: 60px 20px 8px;
-      opacity: 0;
-      animation: fadeIn 0.35s 0.1s ease both;
+    /* ── HERO ── */
+    .hero {
+      min-height: 100svh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 80px 24px 120px;
+      text-align: center;
+      position: relative; z-index: 1;
     }
+    .hero-inner { will-change: transform, opacity; }
 
-    .large-title {
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: 0.37px;
-      line-height: 1.18;
-      margin-bottom: 6px;
+    .wordmark {
+      font-size: clamp(64px, 17vw, 200px);
+      font-weight: 900;
+      letter-spacing: -0.045em;
+      line-height: 0.9;
+      margin-bottom: 28px;
+      white-space: nowrap;
     }
-
-    .paren { color: rgba(255,255,255,0.45); }
-
-    .subtitle {
-      font-size: 15px;
-      color: rgba(235,235,245,0.6);
-      line-height: 1.5;
-      margin-bottom: 2px;
-    }
-
-    .badge {
+    .c-wrap { display: inline-block; overflow: hidden; vertical-align: top; line-height: 1.08; }
+    .c {
       display: inline-block;
-      font-size: 12px;
-      color: rgba(235,235,245,0.4);
-      letter-spacing: 0.01em;
-      margin-top: 4px;
+      transform: translateY(110%);
+      animation: charReveal 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes charReveal { to { transform: translateY(0); } }
+    .paren { color: rgba(255,255,255,0.45); }
+    .dis   { color: rgba(255,255,255,0.75); }
+
+    .reconnect {
+      display: block;
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(18px, 4.5vw, 54px);
+      font-weight: 200;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.92);
+      font-style: italic;
+      margin-bottom: 24px;
+      position: relative;
+      opacity: 0; transform: translateY(16px);
+      animation: fadeUp 0.9s 1.3s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .reconnect::after {
+      content: '';
+      position: absolute; bottom: -5px; left: 0;
+      height: 1px; width: 0;
+      background: linear-gradient(to right, rgba(255,255,255,0.45), transparent);
+      animation: brushLine 1s 2.3s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes brushLine { to { width: 100%; } }
+
+    .waseda-line {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(12px, 2vw, 15px);
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.9;
+      opacity: 0; transform: translateY(10px);
+      animation: fadeUp 0.8s 1.8s cubic-bezier(0.16,1,0.3,1) forwards;
     }
 
-    /* ── SECTION LABEL ── */
-    .section-label {
-      font-size: 13px;
-      font-weight: 400;
-      color: rgba(235,235,245,0.55);
-      letter-spacing: 0.01em;
-      padding: 16px 20px 6px;
-      text-transform: uppercase;
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    .scroll-cue {
+      position: absolute; bottom: 36px; left: 50%;
+      transform: translateX(-50%);
+      opacity: 0; animation: appear 0.5s 2.6s forwards;
+    }
+    @keyframes appear { to { opacity: 1; } }
+    .scroll-cue-line {
+      width: 1px; height: 48px;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.28));
+      animation: linePulse 2.4s 2.6s ease-in-out infinite;
+    }
+    @keyframes linePulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(0.8); }
+      50%       { opacity: 1;  transform: scaleY(1); }
+    }
+
+    /* ── FORM SECTION ── */
+    .form-section {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 0 16px 180px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── GLASS CARD ── */
+    .glass-card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+      border-radius: 20px;
+      padding: 28px 20px 24px;
+      position: relative; overflow: hidden;
       opacity: 0;
-      animation: fadeIn 0.35s 0.2s ease both;
+      transform: translateY(28px) scale(0.97);
+      transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.9s cubic-bezier(0.16,1,0.3,1);
+    }
+    .glass-card.vis { opacity: 1; transform: translateY(0) scale(1); }
+    .glass-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.055) 0%, transparent 55%);
+      border-radius: inherit; pointer-events: none;
+    }
+    .glass-card::after {
+      content: ''; position: absolute; inset: 0;
+      border-radius: inherit; padding: 1px;
+      background: linear-gradient(135deg,
+        rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.12) 100%);
+      -webkit-mask: linear-gradient(#fff,#fff) content-box, linear-gradient(#fff,#fff);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none;
     }
 
-    /* ── INSET GROUPED LIST ── */
-    .list-card {
-      margin: 0 16px;
-      background: #1C1C1E;
+    /* ── EYEBROW ── */
+    .eyebrow {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.55);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.6s 0.1s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.6s 0.1s cubic-bezier(0.16,1,0.3,1);
+    }
+    .eyebrow.vis { opacity: 1; transform: translateY(0); }
+
+    /* ── iOS INSET LIST INSIDE CARD ── */
+    .list-block {
+      background: rgba(255,255,255,0.06);
       border-radius: 12px;
       overflow: hidden;
-      opacity: 0;
-      animation: fadeIn 0.35s 0.25s ease both;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.6s 0.22s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.6s 0.22s cubic-bezier(0.16,1,0.3,1);
     }
+    .list-block.vis { opacity: 1; transform: translateY(0); }
 
     .list-row {
       display: flex;
       align-items: center;
       min-height: 44px;
-      padding: 11px 16px;
-      border-bottom: 0.5px solid rgba(60,60,67,0.36);
+      padding: 11px 14px;
+      border-bottom: 0.5px solid rgba(255,255,255,0.1);
     }
     .list-row:last-child { border-bottom: none; }
 
     .row-label {
       font-size: 17px;
-      font-weight: 400;
-      color: #fff;
-      min-width: 72px;
+      color: rgba(255,255,255,0.9);
+      min-width: 64px;
       flex-shrink: 0;
     }
 
@@ -104,69 +193,60 @@
       background: transparent;
       border: none;
       outline: none;
-      color: rgba(235,235,245,0.9);
+      color: rgba(235,235,245,0.75);
       text-align: right;
       -webkit-appearance: none;
       min-width: 0;
     }
-    .row-input::placeholder { color: rgba(235,235,245,0.3); }
+    .row-input::placeholder { color: rgba(255,255,255,0.22); }
     .row-input.err { color: #FF453A; }
 
-    /* ── BUTTON ── */
+    /* ── iOS BLUE BUTTON ── */
     .btn-wrap {
-      padding: 0 16px;
-      margin-top: 20px;
-      opacity: 0;
-      animation: fadeIn 0.35s 0.32s ease both;
+      margin-top: 16px;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.6s 0.32s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.6s 0.32s cubic-bezier(0.16,1,0.3,1);
     }
+    .btn-wrap.vis { opacity: 1; transform: translateY(0); }
 
     .btn-join {
-      display: block;
-      width: 100%;
+      display: block; width: 100%;
       background: #007AFF;
       color: #fff;
       font-family: inherit;
-      font-size: 17px;
-      font-weight: 600;
+      font-size: 17px; font-weight: 600;
       letter-spacing: -0.01em;
-      border: none;
-      border-radius: 14px;
+      border: none; border-radius: 14px;
       padding: 15px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       transition: opacity 0.15s;
-      position: relative;
-      overflow: hidden;
     }
     .btn-join:active:not(:disabled) { opacity: 0.75; }
     .btn-join:disabled { opacity: 0.35; cursor: not-allowed; }
 
     /* ── HINT ── */
-    .hint-text {
-      font-size: 13px;
-      color: rgba(235,235,245,0.4);
-      text-align: center;
-      padding: 8px 20px 0;
-      line-height: 1.5;
-      opacity: 0;
-      animation: fadeIn 0.35s 0.38s ease both;
+    .hint {
+      font-size: 12px; color: rgba(235,235,245,0.4);
+      text-align: center; margin-top: 14px; letter-spacing: 0.02em;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.6s 0.42s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.6s 0.42s;
     }
+    .hint.vis { opacity: 1; transform: translateY(0); }
 
     /* ── COUNTER ── */
     .counter-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 16px 20px 0;
-      opacity: 0;
-      transition: opacity 0.5s;
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; margin-top: 20px;
+      opacity: 0; transition: opacity 0.6s;
     }
     .counter-row.vis { opacity: 1; }
     .counter-dot { width: 6px; height: 6px; background: #30D158; border-radius: 50%; flex-shrink: 0; }
-    .counter-text { font-size: 13px; color: rgba(235,235,245,0.55); }
+    .counter-text { font-size: 13px; color: rgba(235,235,245,0.5); }
 
-    /* ── DOTS ANIMATION ── */
+    /* ── DOTS ── */
     .dots::after { content: ''; animation: dots 1.2s steps(4,end) infinite; }
     @keyframes dots {
       0%  { content: ''; }  25% { content: '.'; }
@@ -174,48 +254,41 @@
     }
 
     /* ── SUCCESS ── */
-    .success-screen {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 60px 32px;
-      min-height: 60svh;
-      opacity: 0;
-      animation: fadeIn 0.4s ease both;
+    .success {
+      display: none; text-align: center; padding: 16px 0;
     }
-    .success-screen.show { display: flex; }
-
+    .success.show { display: block; animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; }
     .success-icon {
-      width: 72px; height: 72px;
-      background: #30D158;
-      border-radius: 50%;
+      width: 64px; height: 64px;
+      background: #30D158; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
+      margin: 0 auto 16px;
       animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
     }
-    .success-icon svg { width: 36px; height: 36px; }
+    .success-icon svg { width: 32px; height: 32px; }
     @keyframes popIn {
       from { transform: scale(0.4); opacity: 0; }
       to   { transform: scale(1);   opacity: 1; }
     }
-    .success-title {
-      font-size: 22px; font-weight: 700;
-      letter-spacing: 0.35px;
-      margin-bottom: 8px;
-    }
-    .success-body {
-      font-size: 15px; color: rgba(235,235,245,0.6);
-      line-height: 1.6;
-    }
+    .success-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .success-body  { font-size: 14px; color: rgba(235,235,245,0.6); line-height: 1.7; }
 
-    /* ── LANG BAR (Segmented Control style) ── */
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      position: relative; z-index: 1;
+      opacity: 0; transition: opacity 1.2s;
+    }
+    .footer.vis { opacity: 1; }
+    .footer p { font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 0.2em; text-transform: uppercase; }
+
+    /* ── LANG BAR ── */
     .lang-bar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
-      background: rgba(28,28,30,0.94);
+      background: rgba(0,0,0,0.88);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-top: 0.5px solid rgba(60,60,67,0.36);
+      border-top: 0.5px solid rgba(255,255,255,0.08);
       padding: 10px 16px;
       padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
@@ -227,75 +300,20 @@
       gap: 2px;
     }
     .seg-btn {
-      flex: 1;
-      border: none;
-      border-radius: 7px;
+      flex: 1; border: none; border-radius: 7px;
       background: transparent;
       color: rgba(235,235,245,0.6);
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 400;
-      padding: 6px 0;
-      cursor: pointer;
+      font-family: inherit; font-size: 13px; font-weight: 400;
+      padding: 6px 0; cursor: pointer;
       transition: background 0.2s, color 0.2s;
       -webkit-tap-highlight-color: transparent;
     }
-    .seg-btn.active {
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      font-weight: 600;
-    }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .seg-btn.active { background: rgba(255,255,255,0.14); color: #fff; font-weight: 600; }
   </style>
 </head>
 <body>
 
-<div class="screen">
-  <!-- MAIN FORM -->
-  <div id="mainView">
-    <div class="header">
-      <h1 class="large-title"><span class="paren">(</span>DIS<span class="paren">)</span>CONNECT</h1>
-      <p class="subtitle" id="subtitle"></p>
-      <span class="badge" id="badge"></span>
-    </div>
-
-    <p class="section-label" id="sectionLabel"></p>
-
-    <div class="list-card">
-      <div class="list-row">
-        <span class="row-label" id="label-name"></span>
-        <input id="wl-name" class="row-input" type="text" placeholder=" " autocomplete="name">
-      </div>
-      <div class="list-row">
-        <span class="row-label" id="label-email"></span>
-        <input id="wl-email" class="row-input" type="email" inputmode="email" placeholder=" " autocomplete="email">
-      </div>
-    </div>
-
-    <div class="btn-wrap">
-      <button id="wl-btn" class="btn-join"></button>
-    </div>
-
-    <p class="hint-text" id="hint"></p>
-
-    <div class="counter-row" id="counterRow">
-      <span class="counter-dot"></span>
-      <span class="counter-text" id="counter"></span>
-    </div>
-  </div>
-
-  <!-- SUCCESS -->
-  <div class="success-screen" id="successMsg">
-    <div class="success-icon">
-      <svg viewBox="0 0 36 36" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="7,18 14,25 29,11"/>
-      </svg>
-    </div>
-    <p class="success-title" id="successTitle"></p>
-    <p class="success-body"  id="successBody"></p>
-  </div>
-</div>
+<div class="bg-glow"></div>
 
 <!-- LANG BAR -->
 <div class="lang-bar">
@@ -305,12 +323,62 @@
   </div>
 </div>
 
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner" id="heroInner">
+    <div class="wordmark" id="wordmark" aria-label="(DIS)CONNECT"></div>
+    <span class="reconnect">to Reconnect.</span>
+    <p class="waseda-line" id="wasedaLine"></p>
+  </div>
+  <div class="scroll-cue"><div class="scroll-cue-line"></div></div>
+</section>
+
+<!-- FORM -->
+<section class="form-section">
+  <div class="glass-card" id="glassCard">
+    <p class="eyebrow" id="eyebrow"></p>
+    <div id="formState">
+      <div class="list-block" id="listBlock">
+        <div class="list-row">
+          <span class="row-label" id="label-name"></span>
+          <input id="wl-name" class="row-input" type="text" placeholder=" " autocomplete="name">
+        </div>
+        <div class="list-row">
+          <span class="row-label" id="label-email"></span>
+          <input id="wl-email" class="row-input" type="email" inputmode="email" placeholder=" " autocomplete="email">
+        </div>
+      </div>
+      <div class="btn-wrap" id="btnWrap">
+        <button id="wl-btn" class="btn-join"></button>
+      </div>
+      <p class="hint" id="hint"></p>
+      <div class="counter-row" id="counterRow">
+        <span class="counter-dot"></span>
+        <span class="counter-text" id="counter"></span>
+      </div>
+    </div>
+    <div class="success" id="successMsg">
+      <div class="success-icon">
+        <svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6,16 12,22 26,10"/>
+        </svg>
+      </div>
+      <p class="success-title" id="successTitle"></p>
+      <p class="success-body"  id="successBody"></p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer" id="footer">
+  <p>© 2026 (DIS)CONNECT</p>
+</footer>
+
 <script>
 const COPY = {
   ja: {
-    subtitle:     '早稲田生が本気で取り組む、社会課題を解決するアプリ。',
-    badge:        '早稲田大学発',
-    sectionLabel: 'ウェイトリスト',
+    waseda:       '早稲田生が本気で取り組む、社会課題を解決するアプリ。',
+    eyebrow:      'ウェイトリスト',
     nameLabel:    '名前',
     emailLabel:   'メール',
     namePh:       '任意',
@@ -319,14 +387,13 @@ const COPY = {
     btnLoading:   '送信中',
     hint:         'スパムは送りません。いつでも退会できます。',
     successTitle: '登録完了',
-    successBody:  'リリース時にご連絡します。\nお楽しみに。',
+    successBody:  'リリース時にご連絡します。',
     counter:      n => `${n} 人が登録済み`,
     err:          'エラーが発生しました。もう一度お試しください。',
   },
   en: {
-    subtitle:     'Built by Waseda students, solving real social problems.',
-    badge:        'Waseda University',
-    sectionLabel: 'Waitlist',
+    waseda:       'Built by Waseda students, solving real social problems.',
+    eyebrow:      'Waitlist',
     nameLabel:    'Name',
     emailLabel:   'Email',
     namePh:       'Optional',
@@ -335,7 +402,7 @@ const COPY = {
     btnLoading:   'Joining',
     hint:         'No spam, ever. Unsubscribe anytime.',
     successTitle: "You're on the list.",
-    successBody:  "We'll reach out when we launch.\nStay tuned.",
+    successBody:  "We'll reach out when we launch.",
     counter:      n => `${n} people signed up`,
     err:          'Something went wrong. Please try again.',
   }
@@ -353,9 +420,8 @@ function setLang(l) {
 
 function render() {
   const c = COPY[lang];
-  document.getElementById('subtitle').textContent    = c.subtitle;
-  document.getElementById('badge').textContent       = c.badge;
-  document.getElementById('sectionLabel').textContent = c.sectionLabel;
+  document.getElementById('wasedaLine').textContent  = c.waseda;
+  document.getElementById('eyebrow').textContent     = c.eyebrow;
   document.getElementById('label-name').textContent  = c.nameLabel;
   document.getElementById('label-email').textContent = c.emailLabel;
   document.getElementById('wl-name').placeholder     = c.namePh;
@@ -371,6 +437,59 @@ function render() {
   }
 }
 
+function buildTitle() {
+  const wm = document.getElementById('wordmark');
+  const chars = [
+    { ch: '(', cls: 'paren' }, { ch: 'D', cls: 'dis' }, { ch: 'I', cls: 'dis' },
+    { ch: 'S', cls: 'dis' },   { ch: ')', cls: 'paren' },
+    { ch: 'C', cls: '' }, { ch: 'O', cls: '' }, { ch: 'N', cls: '' },
+    { ch: 'N', cls: '' }, { ch: 'E', cls: '' }, { ch: 'C', cls: '' }, { ch: 'T', cls: '' },
+  ];
+  wm.innerHTML = '';
+  chars.forEach(({ ch, cls }, i) => {
+    const wrap = document.createElement('span'); wrap.className = 'c-wrap';
+    const inner = document.createElement('span');
+    inner.className = 'c' + (cls ? ' ' + cls : '');
+    inner.textContent = ch;
+    inner.style.animationDelay = `${0.05 + i * 0.048}s`;
+    wrap.appendChild(inner); wm.appendChild(wrap);
+  });
+}
+
+// Scroll reveal
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); }
+  });
+}, { threshold: 0.08 });
+obs.observe(document.getElementById('glassCard'));
+obs.observe(document.getElementById('footer'));
+
+// Stagger form elements
+new IntersectionObserver(([e]) => {
+  if (!e.isIntersecting) return;
+  setTimeout(() => document.getElementById('eyebrow').classList.add('vis'),   80);
+  setTimeout(() => document.getElementById('listBlock').classList.add('vis'), 200);
+  setTimeout(() => document.getElementById('btnWrap').classList.add('vis'),   310);
+  setTimeout(() => document.getElementById('hint').classList.add('vis'),      400);
+}, { threshold: 0.08 }).observe(document.getElementById('glassCard'));
+
+// Hero parallax
+const heroInner = document.getElementById('heroInner');
+let raf = false;
+window.addEventListener('scroll', () => {
+  if (!raf) {
+    requestAnimationFrame(() => {
+      const y = window.scrollY, vh = window.innerHeight;
+      heroInner.style.transform = `translateY(${y * 0.28}px)`;
+      heroInner.style.opacity   = Math.max(0, 1 - y / (vh * 0.65));
+      raf = false;
+    });
+    raf = true;
+  }
+}, { passive: true });
+
+// Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyBhhdcJ7Yigw5VGxuJxXSicqqHPe2xNcCY",
   authDomain: "tuneout-a7c7b.firebaseapp.com",
@@ -419,10 +538,11 @@ document.getElementById('wl-btn').addEventListener('click', async () => {
 });
 
 function showSuccess() {
-  document.getElementById('mainView').style.display = 'none';
+  document.getElementById('formState').style.display = 'none';
   document.getElementById('successMsg').classList.add('show');
 }
 
+buildTitle();
 render();
 </script>
 </body>
