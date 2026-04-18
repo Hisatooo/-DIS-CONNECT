@@ -17,58 +17,16 @@
       font-family: 'Sora', sans-serif;
       background: #000;
       color: #fff;
+      min-height: 100svh;
       overflow-x: hidden;
     }
 
-    /* ── Grain ── */
-    body::before {
-      content: '';
+    /* 単一の淡いグラデーション */
+    .bg-glow {
       position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-      opacity: 0.028; pointer-events: none; z-index: 9999;
-    }
-
-    /* ── Background orbs ── */
-    .orb {
-      position: fixed; border-radius: 50%; pointer-events: none;
-      filter: blur(140px);
-      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-    .orb-1 {
-      width: 900px; height: 900px;
-      top: -360px; left: 50%; transform: translateX(-52%);
-      background: radial-gradient(circle, rgba(37,99,235,0.24) 0%, rgba(96,165,250,0.08) 45%, transparent 65%);
-      animation: driftA 22s ease-in-out infinite alternate;
-    }
-    .orb-2 {
-      width: 650px; height: 650px;
-      bottom: -220px; right: -160px;
-      background: radial-gradient(circle, rgba(124,58,237,0.18) 0%, rgba(167,139,250,0.06) 50%, transparent 65%);
-      animation: driftB 28s ease-in-out infinite alternate;
-    }
-    .orb-3 {
-      width: 500px; height: 500px;
-      top: 40%; left: -120px;
-      background: radial-gradient(circle, rgba(16,185,129,0.09) 0%, transparent 70%);
-      animation: driftC 35s ease-in-out infinite alternate;
-    }
-    .orb-4 {
-      width: 700px; height: 700px;
-      bottom: -300px; left: -200px;
-      background: radial-gradient(circle, rgba(251,146,60,0.08) 0%, rgba(249,115,22,0.04) 40%, transparent 65%);
-      animation: driftB 40s ease-in-out infinite alternate-reverse;
-    }
-    @keyframes driftA {
-      from { transform: translateX(-58%) translateY(0px) scale(1); }
-      to   { transform: translateX(-44%) translateY(70px) scale(1.06); }
-    }
-    @keyframes driftB {
-      from { transform: translateX(0) translateY(0) scale(1); }
-      to   { transform: translateX(-60px) translateY(-80px) scale(0.94); }
-    }
-    @keyframes driftC {
-      from { transform: translateX(0) translateY(0); }
-      to   { transform: translateX(40px) translateY(-50px); }
+      background: radial-gradient(ellipse 70% 50% at 50% -5%,
+        rgba(90,90,200,0.13) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
     }
 
     /* ── HERO ── */
@@ -76,220 +34,115 @@
       min-height: 100svh;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      position: relative;
-      padding: 100px 28px 120px;
+      padding: 80px 24px 120px;
       text-align: center;
+      position: relative; z-index: 1;
     }
 
-    /* Ensō — thin white circle behind title */
-    .enso {
-      position: absolute;
-      width: min(74vw, 540px); height: min(74vw, 540px);
-      border-radius: 50%;
-      border: 0.5px solid rgba(255,255,255,0.045);
-      pointer-events: none; z-index: 1;
-      opacity: 0;
-      animation: ensoIn 3.5s 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
-    }
-    .enso::after {
-      content: '';
-      position: absolute; inset: 18px;
-      border-radius: 50%;
-      border: 0.5px solid rgba(255,255,255,0.022);
-    }
-    @keyframes ensoIn {
-      from { opacity: 0; transform: scale(0.88) rotate(-8deg); }
-      to   { opacity: 1; transform: scale(1) rotate(0deg); }
-    }
+    .hero-inner { will-change: transform, opacity; }
 
-    .hero-inner { will-change: transform, opacity; position: relative; z-index: 2; }
-
-    /* Title */
     .wordmark {
-      font-size: clamp(68px, 17vw, 210px);
+      font-size: clamp(64px, 17vw, 200px);
       font-weight: 900;
       letter-spacing: -0.045em;
       line-height: 0.9;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
       white-space: nowrap;
     }
 
-    .c-wrap {
-      display: inline-block;
-      overflow: hidden;
-      vertical-align: top;
-      line-height: 1.08;
-    }
-
+    .c-wrap { display: inline-block; overflow: hidden; vertical-align: top; line-height: 1.08; }
     .c {
       display: inline-block;
       transform: translateY(110%);
-      filter: blur(10px);
-      animation: charReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: charReveal 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
     }
+    @keyframes charReveal { to { transform: translateY(0); } }
 
-    @keyframes charReveal {
-      to { transform: translateY(0); filter: blur(0); }
-    }
+    .paren { color: rgba(255,255,255,0.38); }
+    .dis   { color: rgba(255,255,255,0.62); }
 
-    .paren { color: rgba(255,255,255,0.5); }
-    .dis   { color: rgba(255,255,255,0.7); }
-
-    /* Subtitle */
     .reconnect {
       display: block;
       font-family: 'Noto Serif JP', serif;
-      font-size: clamp(22px, 5.5vw, 66px);
+      font-size: clamp(18px, 4.5vw, 54px);
       font-weight: 200;
-      letter-spacing: 0.05em;
-      color: rgba(255,255,255,0.88);
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.78);
       font-style: italic;
-      margin-bottom: 44px;
+      margin-bottom: 32px;
       position: relative;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeUp 1s 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0; transform: translateY(16px);
+      animation: fadeUp 0.9s 1.3s cubic-bezier(0.16,1,0.3,1) forwards;
     }
     .reconnect::after {
       content: '';
-      position: absolute;
-      bottom: -6px; left: 0;
+      position: absolute; bottom: -5px; left: 0;
       height: 1px; width: 0;
-      background: linear-gradient(to right, rgba(255,255,255,0.55), transparent);
-      animation: brushLine 1.1s 2.5s cubic-bezier(0.16,1,0.3,1) forwards;
+      background: linear-gradient(to right, rgba(255,255,255,0.45), transparent);
+      animation: brushLine 1s 2.3s cubic-bezier(0.16,1,0.3,1) forwards;
     }
     @keyframes brushLine { to { width: 100%; } }
 
-    /* Waseda tagline */
     .waseda-line {
       font-family: 'Noto Serif JP', serif;
-      font-size: clamp(13px, 2.2vw, 17px);
+      font-size: clamp(12px, 2vw, 15px);
       font-weight: 300;
-      letter-spacing: 0.1em;
-      color: rgba(255,255,255,0.65);
-      line-height: 1.8;
-      opacity: 0;
-      transform: translateY(12px);
-      animation: fadeUp 0.9s 2.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.4);
+      line-height: 1.9;
+      opacity: 0; transform: translateY(10px);
+      animation: fadeUp 0.8s 1.8s cubic-bezier(0.16,1,0.3,1) forwards;
     }
 
-    @keyframes fadeUp {
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
-    /* Scroll cue */
     .scroll-cue {
-      position: absolute; bottom: 40px; left: 50%;
+      position: absolute; bottom: 36px; left: 50%;
       transform: translateX(-50%);
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      opacity: 0;
-      animation: appear 0.6s 2.8s forwards;
+      opacity: 0; animation: appear 0.5s 2.6s forwards;
     }
     @keyframes appear { to { opacity: 1; } }
-
     .scroll-cue-line {
-      width: 1px; height: 56px;
-      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.35));
-      animation: linePulse 2.8s 2.8s ease-in-out infinite;
+      width: 1px; height: 48px;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.28));
+      animation: linePulse 2.4s 2.6s ease-in-out infinite;
     }
     @keyframes linePulse {
       0%, 100% { opacity: 0.3; transform: scaleY(0.8); }
       50%       { opacity: 1;  transform: scaleY(1); }
     }
 
-    /* ── KINTSUGI DIVIDER ── */
-    .kintsugi-wrap {
-      width: 100%; height: 28px; overflow: visible;
-      opacity: 0; transition: opacity 2s cubic-bezier(0.16,1,0.3,1);
-    }
-    .kintsugi-wrap.vis { opacity: 1; }
-    .kintsugi-svg { width: 100%; height: 100%; display: block; }
-
-    /* ── 波紋 RIPPLE ── */
-    .hamonRing {
-      position: fixed; border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.5);
-      width: 44px; height: 44px;
-      transform: translate(-50%,-50%) scale(0);
-      animation: hamonOut 1.9s cubic-bezier(0.15,0.8,0.35,1) forwards;
-      pointer-events: none; z-index: 9000;
-    }
-    @keyframes hamonOut {
-      0%   { transform: translate(-50%,-50%) scale(0);  opacity: 0.7; }
-      100% { transform: translate(-50%,-50%) scale(14); opacity: 0; }
-    }
-
-    /* ── MARQUEE ── */
-    .marquee-wrap {
-      padding: 40px 0;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      overflow: hidden;
-      mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
-      -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
-      opacity: 0;
-      transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .marquee-wrap.vis { opacity: 1; }
-
-    .marquee-track {
-      display: flex;
-      white-space: nowrap;
-      animation: marqueeRoll 38s linear infinite;
-    }
-    @keyframes marqueeRoll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-
-    .m-item {
-      display: inline-flex; align-items: center; gap: 24px;
-      padding: 0 24px;
-      font-size: clamp(13px, 2.2vw, 18px);
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      color: rgba(255,255,255,0.15);
-      flex-shrink: 0;
-    }
-    .m-dot {
-      width: 3px; height: 3px;
-      border-radius: 50%; background: rgba(255,255,255,0.1); flex-shrink: 0;
-    }
-
-    /* ── FORM SECTION ── */
+    /* ── FORM ── */
     .form-section {
       max-width: 420px;
       margin: 0 auto;
-      padding: 60px 20px 200px;
+      padding: 24px 20px 180px;
+      position: relative; z-index: 1;
     }
 
-    /* ── GLASS CARD ── */
     .glass-card {
-      background: rgba(255,255,255,0.045);
+      background: rgba(255,255,255,0.04);
       backdrop-filter: blur(32px);
       -webkit-backdrop-filter: blur(32px);
-      border-radius: 28px;
-      padding: 40px 30px 36px;
-      position: relative;
-      overflow: hidden;
+      border-radius: 24px;
+      padding: 40px 28px 36px;
+      position: relative; overflow: hidden;
       opacity: 0;
-      transform: translateY(40px) scale(0.97);
-      transition: opacity 0.95s cubic-bezier(0.16,1,0.3,1),
-                  transform 0.95s cubic-bezier(0.16,1,0.3,1);
+      transform: translateY(36px) scale(0.97);
+      transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.9s cubic-bezier(0.16,1,0.3,1);
     }
     .glass-card.vis { opacity: 1; transform: translateY(0) scale(1); }
     .glass-card::before {
       content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 55%);
+      background: linear-gradient(135deg, rgba(255,255,255,0.055) 0%, transparent 55%);
       border-radius: inherit; pointer-events: none;
     }
     .glass-card::after {
       content: ''; position: absolute; inset: 0;
       border-radius: inherit; padding: 1px;
       background: linear-gradient(135deg,
-        rgba(255,255,255,0.24) 0%,
-        rgba(255,255,255,0.06) 50%,
-        rgba(255,255,255,0.16) 100%);
+        rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.12) 100%);
       -webkit-mask: linear-gradient(#fff,#fff) content-box, linear-gradient(#fff,#fff);
       -webkit-mask-composite: xor; mask-composite: exclude;
       pointer-events: none;
@@ -299,55 +152,56 @@
       font-family: 'Noto Serif JP', serif;
       font-size: 11px; font-weight: 500;
       letter-spacing: 0.28em;
-      color: rgba(255,255,255,0.62);
-      margin-bottom: 32px;
-      opacity: 0; transform: translateY(12px);
-      transition: opacity 0.7s 0.2s cubic-bezier(0.16,1,0.3,1),
-                  transform 0.7s 0.2s cubic-bezier(0.16,1,0.3,1);
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 30px;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.6s 0.15s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.6s 0.15s cubic-bezier(0.16,1,0.3,1);
     }
     .eyebrow.vis { opacity: 1; transform: translateY(0); }
     .eyebrow::after {
       content: ''; display: block;
       width: 0; height: 1px;
-      background: linear-gradient(to right, rgba(255,255,255,0.35), transparent);
-      margin-top: 14px;
-      transition: width 1.4s 0.4s cubic-bezier(0.16,1,0.3,1);
+      background: linear-gradient(to right, rgba(255,255,255,0.28), transparent);
+      margin-top: 12px;
+      transition: width 1.2s 0.3s cubic-bezier(0.16,1,0.3,1);
     }
     .eyebrow.vis::after { width: 100%; }
 
-    /* Floating label fields */
-    .fields { display: flex; flex-direction: column; gap: 0;
-      opacity: 0; transform: translateY(16px);
-      transition: opacity 0.7s 0.35s cubic-bezier(0.16,1,0.3,1),
-                  transform 0.7s 0.35s cubic-bezier(0.16,1,0.3,1);
+    .fields {
+      display: flex; flex-direction: column; gap: 0;
+      opacity: 0; transform: translateY(14px);
+      transition: opacity 0.6s 0.28s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.6s 0.28s cubic-bezier(0.16,1,0.3,1);
     }
     .fields.vis { opacity: 1; transform: translateY(0); }
+
     .field-wrap { position: relative; margin-bottom: 6px; }
     .field-label {
       position: absolute; top: 14px; left: 2px;
       font-size: 14px; font-family: 'Sora', sans-serif;
-      color: rgba(255,255,255,0.3);
-      transition: top .26s cubic-bezier(0.16,1,0.3,1),
-                  font-size .26s, color .26s, letter-spacing .26s;
+      color: rgba(255,255,255,0.28);
+      transition: top .25s cubic-bezier(0.16,1,0.3,1),
+                  font-size .25s, color .25s, letter-spacing .25s;
       pointer-events: none;
     }
     .field:focus ~ .field-label,
     .field:not(:placeholder-shown) ~ .field-label {
       top: -11px; font-size: 10px;
-      letter-spacing: 0.14em; color: rgba(255,255,255,0.55);
+      letter-spacing: 0.14em; color: rgba(255,255,255,0.5);
     }
 
     .field {
       background: transparent; border: none;
-      border-bottom: 1px solid rgba(255,255,255,0.16);
+      border-bottom: 1px solid rgba(255,255,255,0.14);
       border-radius: 0; color: #fff;
       font-family: 'Sora', sans-serif;
       font-size: 16px; padding: 14px 2px 12px;
       width: 100%; outline: none; -webkit-appearance: none;
-      transition: border-color 0.4s cubic-bezier(0.16,1,0.3,1);
+      transition: border-color 0.35s;
     }
-    .field:focus { border-bottom-color: rgba(255,255,255,0.7); }
-    .field.err { border-bottom-color: rgba(239,68,68,0.7); }
+    .field:focus { border-bottom-color: rgba(255,255,255,0.65); }
+    .field.err   { border-bottom-color: rgba(239,68,68,0.7); }
     .field::placeholder { color: transparent; }
 
     .btn-join {
@@ -358,13 +212,12 @@
       border: none; border-radius: 14px;
       padding: 18px; cursor: pointer; width: 100%;
       margin-top: 28px; position: relative; overflow: hidden;
-      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1),
-                  box-shadow 0.3s cubic-bezier(0.16,1,0.3,1);
+      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s;
     }
     .btn-join::before {
       content: ''; position: absolute; top: 0; left: -100%;
       width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.07), transparent);
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
       transition: left 0.55s cubic-bezier(0.16,1,0.3,1);
     }
     .btn-join:hover::before { left: 100%; }
@@ -375,230 +228,96 @@
     .btn-join:active { transform: scale(0.97); box-shadow: 0 0 0 2px rgba(255,255,255,0.06); }
     .btn-join:disabled { opacity: 0.18; cursor: not-allowed; transform: none; box-shadow: none; }
 
-    /* Loading dots */
-    .dots::after {
-      content: '';
-      animation: dots 1.2s steps(4, end) infinite;
-    }
+    .dots::after { content: ''; animation: dots 1.2s steps(4,end) infinite; }
     @keyframes dots {
-      0%   { content: ''; }
-      25%  { content: '.'; }
-      50%  { content: '..'; }
-      75%  { content: '...'; }
+      0% { content: ''; } 25% { content: '.'; }
+      50% { content: '..'; } 75% { content: '...'; }
     }
 
     .hint {
-      font-size: 11px; color: rgba(255,255,255,0.42);
-      text-align: center; margin-top: 16px;
-      letter-spacing: 0.05em;
-      opacity: 0; transform: translateY(8px);
-      transition: opacity 1s 0.22s, transform 1s 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      font-size: 11px; color: rgba(255,255,255,0.32);
+      text-align: center; margin-top: 16px; letter-spacing: 0.05em;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.6s 0.42s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.6s 0.42s;
     }
     .hint.vis { opacity: 1; transform: translateY(0); }
 
-    /* Counter */
     .counter {
-      font-size: 11px; color: rgba(255,255,255,0.48);
-      text-align: center; letter-spacing: 0.12em;
-      margin-top: 36px;
-      opacity: 0; transition: opacity 0.8s 0.4s;
+      font-size: 11px; color: rgba(255,255,255,0.35);
+      text-align: center; letter-spacing: 0.12em; margin-top: 26px;
+      opacity: 0; transition: opacity 0.8s;
     }
     .counter.vis { opacity: 1; }
 
-    /* ── SUCCESS ── */
-    .success { display: none; text-align: center; padding: 20px 0; }
-    .success.show {
-      display: block;
-      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    /* SUCCESS */
+    .success { display: none; text-align: center; padding: 16px 0; }
+    .success.show { display: block; animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; }
     .success-mark {
-      display: block; font-size: 44px;
-      margin-bottom: 20px;
-      animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      display: block; font-size: 40px; margin-bottom: 16px;
+      animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
     }
     @keyframes popIn {
       from { transform: scale(0) rotate(-20deg); opacity: 0; }
-      to   { transform: scale(1) rotate(0deg); opacity: 1; }
+      to   { transform: scale(1) rotate(0deg);   opacity: 1; }
     }
-    .success-title {
-      font-size: 24px; font-weight: 900;
-      letter-spacing: -0.025em; margin-bottom: 10px;
-    }
-    .success-body { font-size: 14px; color: rgba(255,255,255,0.55); line-height: 1.8; }
+    .success-title { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 10px; }
+    .success-body  { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.8; }
 
-    /* ── FOOTER ── */
+    /* FOOTER */
     .footer {
       text-align: center;
       padding-bottom: calc(80px + env(safe-area-inset-bottom));
-      opacity: 0; transition: opacity 1.4s;
+      position: relative; z-index: 1;
+      opacity: 0; transition: opacity 1.2s;
     }
     .footer.vis { opacity: 1; }
-    .footer p { font-size: 10px; color: rgba(255,255,255,0.28); letter-spacing: 0.2em; text-transform: uppercase; }
+    .footer p { font-size: 10px; color: rgba(255,255,255,0.18); letter-spacing: 0.2em; text-transform: uppercase; }
 
-    /* ── CANVAS (rain) ── */
-    #bgCanvas {
-      position: fixed; inset: 0;
-      width: 100%; height: 100%;
-      pointer-events: none; z-index: 1;
-    }
-
-    /* ── SAKURA PETALS ── */
-    #petals { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
-    .petal {
-      position: absolute; top: -30px;
-      border-radius: 150% 0% 150% 0% / 150% 0% 150% 0%;
-      background: linear-gradient(135deg,
-        rgba(255,192,203,0.7) 0%,
-        rgba(255,218,225,0.5) 50%,
-        rgba(255,240,245,0.25) 100%
-      );
-      box-shadow: 0 0 10px rgba(255,182,193,0.4), 0 2px 6px rgba(255,182,193,0.2);
-      animation: petalFall linear infinite;
-      pointer-events: none;
-    }
-    @keyframes petalFall {
-      0%   { transform: translateY(0)    translateX(0)    rotate(0deg)   scale(1);    opacity: 0; }
-      6%   { opacity: 1; }
-      22%  { transform: translateY(22vh) translateX(35px) rotate(80deg)  scale(0.96); }
-      45%  { transform: translateY(45vh) translateX(-18px)rotate(165deg) scale(1.02); }
-      68%  { transform: translateY(68vh) translateX(28px) rotate(250deg) scale(0.94); }
-      90%  { opacity: 0.85; }
-      100% { transform: translateY(112vh)translateX(-10px)rotate(340deg) scale(0.8);  opacity: 0; }
-    }
-
-    /* ── KANJI LAYER ── */
-    #kanji { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
-    .kanji-char {
-      position: absolute;
-      font-family: 'Hiragino Sans', 'Yu Gothic', 'Sora', sans-serif;
-      font-weight: 900;
-      color: rgba(255,255,255,0.1);
-      pointer-events: none;
-      user-select: none;
-      text-shadow: 0 0 40px rgba(200,220,255,0.25), 0 0 80px rgba(200,220,255,0.1);
-      animation: kanjiFly linear infinite;
-    }
-    @keyframes kanjiFly {
-      0%   { transform: translateY(0)     scale(1);    opacity: 0; }
-      10%  { opacity: 1; }
-      85%  { opacity: 1; }
-      100% { transform: translateY(-40vh) scale(1.15); opacity: 0; }
-    }
-
-    /* ── SAKURA TREE SECTION ── */
-    .sakura-section {
-      height: 220vh;
-      position: relative;
-    }
-    .sakura-sticky {
-      position: sticky;
-      top: 0;
-      height: 100svh;
-      overflow: hidden;
-    }
-    #treeCanvas {
-      position: absolute;
-      inset: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-    }
-    .tree-hint {
-      position: absolute;
-      bottom: 52px; left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Noto Serif JP', serif;
-      font-size: 10px; font-weight: 400;
-      letter-spacing: 0.32em;
-      color: rgba(255,255,255,0.22);
-      white-space: nowrap;
-      opacity: 0;
-      transition: opacity 0.8s;
-    }
-    .tree-hint.vis { opacity: 1; }
-
-    /* ── LANG BAR ── */
+    /* LANG BAR */
     .lang-bar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
-      border-top: 1px solid #0d0d0d;
-      display: flex;
-      padding: 10px 16px;
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; padding: 10px 16px;
       padding-bottom: calc(10px + env(safe-area-inset-bottom));
       gap: 8px;
     }
     .lang-btn {
       flex: 1; background: transparent;
       border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-      color: rgba(255,255,255,0.35); font-size: 12px; font-weight: 700;
+      color: rgba(255,255,255,0.35); font-size: 12px; font-weight: 600;
       letter-spacing: 0.04em; padding: 11px 8px;
       cursor: pointer; font-family: 'Sora', sans-serif;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
     }
     .lang-btn.active { background: #fff; color: #000; border-color: #fff; }
   </style>
 </head>
 <body>
 
-<canvas id="bgCanvas"></canvas>
-<div id="petals"></div>
-<div id="kanji"></div>
-<div class="orb orb-1" id="orb1"></div>
-<div class="orb orb-2" id="orb2"></div>
-<div class="orb orb-3"></div>
-<div class="orb orb-4"></div>
+<div class="bg-glow"></div>
 
-<!-- Lang bar -->
 <div class="lang-bar">
   <button class="lang-btn active" id="lang-ja-btn" onclick="setLang('ja')">🇯🇵 日本語</button>
   <button class="lang-btn"        id="lang-en-btn" onclick="setLang('en')">🇺🇸 English</button>
 </div>
 
-<!-- ── HERO ── -->
+<!-- HERO -->
 <section class="hero">
-  <div class="enso"></div>
   <div class="hero-inner" id="heroInner">
     <div class="wordmark" id="wordmark" aria-label="(DIS)CONNECT"></div>
     <span class="reconnect">to Reconnect.</span>
     <p class="waseda-line" id="wasedaLine"></p>
   </div>
-  <div class="scroll-cue">
-    <div class="scroll-cue-line"></div>
-  </div>
+  <div class="scroll-cue"><div class="scroll-cue-line"></div></div>
 </section>
 
-<!-- ── KINTSUGI DIVIDER ── -->
-<div class="kintsugi-wrap" id="kintsugiWrap" data-rev>
-  <svg class="kintsugi-svg" viewBox="0 0 1200 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M0,14 L138,13 L182,6 L226,20 L302,9 L372,18 L435,5 L509,14 L576,8 L646,20 L716,11 L796,6 L866,18 L938,9 L1018,16 L1096,7 L1200,13"
-          stroke="rgba(212,175,55,0.32)" stroke-width="0.8" fill="none" stroke-linecap="round" stroke-linejoin="round"
-          stroke-dasharray="2000"/>
-    <path d="M302,9 L316,2 L333,0"   stroke="rgba(212,175,55,0.17)" stroke-width="0.5" fill="none" stroke-dasharray="2000"/>
-    <path d="M646,20 L657,25 L676,27" stroke="rgba(212,175,55,0.17)" stroke-width="0.5" fill="none" stroke-dasharray="2000"/>
-    <path d="M866,18 L878,23 L902,25 L920,22" stroke="rgba(212,175,55,0.13)" stroke-width="0.4" fill="none" stroke-dasharray="2000"/>
-    <path d="M435,5 L445,0 L458,-1"  stroke="rgba(212,175,55,0.12)" stroke-width="0.4" fill="none" stroke-dasharray="2000"/>
-  </svg>
-</div>
-
-<!-- ── MARQUEE ── -->
-<div class="marquee-wrap" id="marqueeWrap">
-  <div class="marquee-track" id="marqueeTrack"></div>
-</div>
-
-<!-- ── SAKURA TREE ── -->
-<div class="sakura-section" id="sakuraSection">
-  <div class="sakura-sticky">
-    <canvas id="treeCanvas"></canvas>
-    <div class="tree-kanji" id="treeKanji">繋</div>
-    <p class="tree-hint" id="treeHint">満開へ — スクロール</p>
-  </div>
-</div>
-
-<!-- ── FORM ── -->
+<!-- FORM -->
 <section class="form-section">
   <div class="glass-card" id="glassCard">
     <p class="eyebrow" id="eyebrow"></p>
-
     <div id="formState">
       <div class="fields" id="fields">
         <div class="field-wrap">
@@ -613,24 +332,21 @@
       </div>
       <p class="hint" id="hint"></p>
     </div>
-
     <div class="success" id="successMsg">
       <span class="success-mark">✦</span>
       <p class="success-title" id="successTitle"></p>
       <p class="success-body"  id="successBody"></p>
     </div>
-
     <p class="counter" id="counter"></p>
   </div>
 </section>
 
-<!-- ── FOOTER ── -->
-<footer class="footer" id="footer" data-rev>
+<!-- FOOTER -->
+<footer class="footer" id="footer">
   <p>© 2026 (DIS)CONNECT</p>
 </footer>
 
 <script>
-// ── COPY ──────────────────────────────────────────────
 const COPY = {
   ja: {
     waseda:       '早稲田生が本気で取り組む、社会課題を解決するアプリ。',
@@ -653,8 +369,8 @@ const COPY = {
     btn:          'Join',
     btnLoading:   'Joining',
     hint:         'No spam, ever.',
-    successTitle: 'You\'re on the list.',
-    successBody:  'We\'ll reach out when we launch.',
+    successTitle: "You're on the list.",
+    successBody:  "We'll reach out when we launch.",
     counter:      n => `${n} people signed up`,
     err:          'Something went wrong. Try again.',
   }
@@ -678,109 +394,67 @@ function render() {
   document.getElementById('label-email').textContent = c.emailPh;
   const btn = document.getElementById('wl-btn');
   if (!btn.disabled) btn.textContent = c.btn;
-  document.getElementById('hint').textContent       = c.hint;
+  document.getElementById('hint').textContent        = c.hint;
   document.getElementById('successTitle').textContent = c.successTitle;
   document.getElementById('successBody').textContent  = c.successBody;
   if (countCache > 0) {
     document.getElementById('counter').textContent = c.counter(countCache);
     document.getElementById('counter').classList.add('vis');
   }
-  buildMarquee();
 }
 
-// ── HERO TITLE ────────────────────────────────────────
 function buildTitle() {
   const wm = document.getElementById('wordmark');
   const chars = [
-    { ch: '(',  cls: 'paren' },
-    { ch: 'D',  cls: 'dis' },
-    { ch: 'I',  cls: 'dis' },
-    { ch: 'S',  cls: 'dis' },
-    { ch: ')',  cls: 'paren' },
-    { ch: 'C',  cls: '' },
-    { ch: 'O',  cls: '' },
-    { ch: 'N',  cls: '' },
-    { ch: 'N',  cls: '' },
-    { ch: 'E',  cls: '' },
-    { ch: 'C',  cls: '' },
-    { ch: 'T',  cls: '' },
+    { ch: '(', cls: 'paren' }, { ch: 'D', cls: 'dis' }, { ch: 'I', cls: 'dis' },
+    { ch: 'S', cls: 'dis' },   { ch: ')', cls: 'paren' },
+    { ch: 'C', cls: '' }, { ch: 'O', cls: '' }, { ch: 'N', cls: '' },
+    { ch: 'N', cls: '' }, { ch: 'E', cls: '' }, { ch: 'C', cls: '' }, { ch: 'T', cls: '' },
   ];
   wm.innerHTML = '';
   chars.forEach(({ ch, cls }, i) => {
-    const wrap = document.createElement('span');
-    wrap.className = 'c-wrap';
+    const wrap = document.createElement('span'); wrap.className = 'c-wrap';
     const inner = document.createElement('span');
     inner.className = 'c' + (cls ? ' ' + cls : '');
     inner.textContent = ch;
-    inner.style.animationDelay = `${0.06 + i * 0.052}s`;
-    wrap.appendChild(inner);
-    wm.appendChild(wrap);
+    inner.style.animationDelay = `${0.05 + i * 0.048}s`;
+    wrap.appendChild(inner); wm.appendChild(wrap);
   });
 }
 
-// ── MARQUEE ───────────────────────────────────────────
-function buildMarquee() {
-  const track = document.getElementById('marqueeTrack');
-  const chunk = Array(10).fill(null).map(() =>
-    `<span class="m-item">(DIS)CONNECT to Reconnect<span class="m-dot"></span></span>`
-  ).join('');
-  track.innerHTML = chunk + chunk;
-}
+// Scroll reveal
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); }
+  });
+}, { threshold: 0.08 });
+obs.observe(document.getElementById('glassCard'));
+obs.observe(document.getElementById('footer'));
 
-// ── PARALLAX ──────────────────────────────────────────
+// Stagger form elements
+new IntersectionObserver(([e]) => {
+  if (!e.isIntersecting) return;
+  setTimeout(() => document.getElementById('eyebrow').classList.add('vis'), 80);
+  setTimeout(() => document.getElementById('fields').classList.add('vis'), 220);
+  setTimeout(() => document.getElementById('hint').classList.add('vis'), 360);
+}, { threshold: 0.08 }).observe(document.getElementById('glassCard'));
+
+// Hero parallax
 const heroInner = document.getElementById('heroInner');
-const orb1 = document.getElementById('orb1');
-const orb2 = document.getElementById('orb2');
 let raf = false;
-
 window.addEventListener('scroll', () => {
   if (!raf) {
     requestAnimationFrame(() => {
-      const y = window.scrollY;
-      const vh = window.innerHeight;
-      heroInner.style.transform = `translateY(${y * 0.32}px)`;
-      heroInner.style.opacity   = Math.max(0, 1 - (y / (vh * 0.6)));
+      const y = window.scrollY, vh = window.innerHeight;
+      heroInner.style.transform = `translateY(${y * 0.28}px)`;
+      heroInner.style.opacity   = Math.max(0, 1 - y / (vh * 0.65));
       raf = false;
     });
     raf = true;
   }
 }, { passive: true });
 
-// Mouse parallax on orbs
-window.addEventListener('mousemove', (e) => {
-  const mx = (e.clientX / window.innerWidth  - 0.5) * 50;
-  const my = (e.clientY / window.innerHeight - 0.5) * 34;
-  orb1.style.transform = `translateX(calc(-52% + ${mx * 0.6}px)) translateY(${my * 0.5}px)`;
-  orb2.style.transform = `translateX(${-mx * 0.3}px) translateY(${-my * 0.3}px)`;
-}, { passive: true });
-
-// ── SCROLL REVEAL ─────────────────────────────────────
-const revObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('vis');
-      revObs.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.06 });
-
-document.querySelectorAll('[data-rev]').forEach(el => revObs.observe(el));
-revObs.observe(document.getElementById('marqueeWrap'));
-revObs.observe(document.getElementById('footer'));
-revObs.observe(document.getElementById('kintsugiWrap'));
-revObs.observe(document.getElementById('glassCard'));
-// stagger inner form elements after card appears
-const glassCard = document.getElementById('glassCard');
-new IntersectionObserver(([e]) => {
-  if (e.isIntersecting) {
-    setTimeout(() => document.getElementById('eyebrow').classList.add('vis'), 80);
-    setTimeout(() => document.getElementById('fields').classList.add('vis'), 200);
-    setTimeout(() => document.getElementById('hint').classList.add('vis'), 340);
-    e.target._ob && e.target._ob.disconnect();
-  }
-}, { threshold: 0.08 }).observe(glassCard);
-
-// ── FIREBASE ──────────────────────────────────────────
+// Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyBhhdcJ7Yigw5VGxuJxXSicqqHPe2xNcCY",
   authDomain: "tuneout-a7c7b.firebaseapp.com",
@@ -794,9 +468,8 @@ const db = firebase.firestore();
 db.collection('waitlist').get().then(snap => {
   countCache = snap.size;
   if (countCache > 0) {
-    const el = document.getElementById('counter');
-    el.textContent = COPY[lang].counter(countCache);
-    el.classList.add('vis');
+    document.getElementById('counter').textContent = COPY[lang].counter(countCache);
+    document.getElementById('counter').classList.add('vis');
   }
 }).catch(() => {});
 
@@ -807,16 +480,13 @@ document.getElementById('wl-btn').addEventListener('click', async () => {
   const c       = COPY[lang];
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    emailEl.classList.add('err');
-    emailEl.focus();
+    emailEl.classList.add('err'); emailEl.focus();
     setTimeout(() => emailEl.classList.remove('err'), 2400);
     return;
   }
 
   const btn = document.getElementById('wl-btn');
-  btn.disabled = true;
-  btn.classList.add('dots');
-  btn.textContent = c.btnLoading;
+  btn.disabled = true; btn.classList.add('dots'); btn.textContent = c.btnLoading;
 
   try {
     const dup = await db.collection('waitlist').where('email', '==', email).get();
@@ -827,9 +497,7 @@ document.getElementById('wl-btn').addEventListener('click', async () => {
     });
     showSuccess();
   } catch {
-    btn.disabled = false;
-    btn.classList.remove('dots');
-    btn.textContent = c.btn;
+    btn.disabled = false; btn.classList.remove('dots'); btn.textContent = c.btn;
     alert(c.err);
   }
 });
@@ -839,320 +507,6 @@ function showSuccess() {
   document.getElementById('successMsg').classList.add('show');
 }
 
-// ── INK BRUSH RAIN + BOKEH ────────────────────────────
-(function initRain() {
-  const canvas = document.getElementById('bgCanvas');
-  const ctx    = canvas.getContext('2d');
-  const isMob  = window.innerWidth < 768;
-  const DROP_N  = isMob ? 38 : 130;
-  const BOKEH_N = isMob ? 10 : 38;
-
-  let W, H, drops, bokeh;
-
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-    drops = Array.from({ length: DROP_N  }, mkDrop);
-    bokeh = Array.from({ length: BOKEH_N }, mkBokeh);
-  }
-
-  function mkDrop() {
-    return {
-      x:     Math.random() * (W + 200) - 100,
-      y:     Math.random() * H,
-      speed: 3 + Math.random() * 5,
-      len:   14 + Math.random() * 32,
-      wind:  0.22 + Math.random() * 0.38,
-      lw:    0.3 + Math.random() * 1.6,
-      alpha: 0.02 + Math.random() * 0.065,
-      curve: (Math.random() - 0.5) * 9,
-      bright: Math.random() < 0.06,
-    };
-  }
-
-  const BH = [200,218,255,48,275,168];
-  function mkBokeh() {
-    return {
-      x: Math.random()*W, y: Math.random()*H,
-      r: 2+Math.random()*5,
-      speed: 0.05+Math.random()*0.16,
-      drift: (Math.random()-0.5)*0.11,
-      hue:   BH[Math.floor(Math.random()*BH.length)],
-      alpha: 0.07+Math.random()*0.17,
-      pulse: Math.random()*Math.PI*2,
-    };
-  }
-
-  function frame() {
-    ctx.clearRect(0, 0, W, H);
-
-    // Bokeh
-    bokeh.forEach(b => {
-      b.pulse += 0.007;
-      const a = b.alpha*(0.7+0.3*Math.sin(b.pulse));
-      const g = ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*7);
-      g.addColorStop(0,   `hsla(${b.hue},88%,80%,${a})`);
-      g.addColorStop(0.4, `hsla(${b.hue},88%,75%,${a*0.3})`);
-      g.addColorStop(1,   `hsla(${b.hue},88%,70%,0)`);
-      ctx.beginPath(); ctx.fillStyle=g;
-      ctx.arc(b.x,b.y,b.r*7,0,Math.PI*2); ctx.fill();
-      b.y-=b.speed; b.x+=b.drift;
-      if(b.y<-50){b.y=H+50; b.x=Math.random()*W;}
-    });
-
-    // Ink brush strokes
-    ctx.lineCap = 'round';
-    drops.forEach(d => {
-      ctx.lineWidth = d.bright ? d.lw*2.2 : d.lw;
-      if(d.bright){
-        ctx.shadowBlur = isMob ? 0 : 12;
-        ctx.shadowColor='rgba(210,235,255,0.85)';
-        ctx.strokeStyle=`rgba(235,248,255,${d.alpha*3})`;
-      } else {
-        ctx.shadowBlur = isMob ? 0 : 3;
-        ctx.shadowColor='rgba(175,210,255,0.4)';
-        ctx.strokeStyle=`rgba(185,215,255,${d.alpha})`;
-      }
-      const x2=d.x-d.len*d.wind, y2=d.y-d.len;
-      ctx.beginPath(); ctx.moveTo(d.x,d.y);
-      if(Math.abs(d.curve)>2){
-        ctx.quadraticCurveTo(d.x-d.len*d.wind*0.5+d.curve, d.y-d.len*0.5, x2, y2);
-      } else { ctx.lineTo(x2,y2); }
-      ctx.stroke();
-      d.y+=d.speed; d.x+=d.wind;
-      if(d.y>H+20){d.y=-20; d.x=Math.random()*(W+200)-100;}
-    });
-    ctx.shadowBlur=0;
-    requestAnimationFrame(frame);
-  }
-
-  window.addEventListener('resize', resize, { passive: true });
-  resize(); frame();
-})();
-
-// ── 波紋 RIPPLE ───────────────────────────────────────
-(function initHamon() {
-  function spawn(x, y) {
-    [0, 0.25, 0.5].forEach((delay, i) => {
-      const el = document.createElement('div');
-      el.className = 'hamonRing';
-      el.style.cssText = `left:${x}px;top:${y}px;animation-delay:${delay}s;`
-        + `border-color:rgba(255,255,255,${0.5-i*0.14});`;
-      document.body.appendChild(el);
-      el.addEventListener('animationend', () => el.remove());
-    });
-  }
-  document.addEventListener('click', e => spawn(e.clientX, e.clientY));
-  document.addEventListener('touchstart', e => {
-    [...e.changedTouches].forEach(t => spawn(t.clientX, t.clientY));
-  }, { passive: true });
-})();
-
-// ── SAKURA PETALS ─────────────────────────────────────
-(function initPetals() {
-  const container = document.getElementById('petals');
-  const COUNT = window.innerWidth < 768 ? 6 : 20;
-  for (let i = 0; i < COUNT; i++) {
-    const el   = document.createElement('div');
-    el.className = 'petal';
-    const size = 8 + Math.random() * 11;
-    const dur  = 10 + Math.random() * 16;
-    const delay = -(Math.random() * dur);
-    el.style.cssText = [
-      `width:${size}px`,
-      `height:${size * 1.5}px`,
-      `left:${Math.random() * 100}%`,
-      `animation-duration:${dur}s`,
-      `animation-delay:${delay}s`,
-      `opacity:${0.55 + Math.random() * 0.35}`,
-    ].join(';');
-    container.appendChild(el);
-  }
-})();
-
-// ── KANJI FLOATERS ────────────────────────────────────
-(function initKanji() {
-  const container = document.getElementById('kanji');
-  const allChars = ['繋','断','絆','会','孤','変','希','望','社','都','雨','夜'];
-  const chars = window.innerWidth < 768 ? allChars.slice(0, 6) : allChars;
-  chars.forEach((ch, i) => {
-    const el  = document.createElement('div');
-    el.className = 'kanji-char';
-    el.textContent = ch;
-    const size = 36 + Math.random() * 64;
-    const dur  = 20 + Math.random() * 24;
-    el.style.cssText = [
-      `font-size:${size}px`,
-      `left:${4 + Math.random() * 88}%`,
-      `bottom:${Math.random() * 25}%`,
-      `animation-duration:${dur}s`,
-      `animation-delay:${-(i * 3.2 + Math.random() * 4)}s`,
-    ].join(';');
-    container.appendChild(el);
-  });
-})();
-
-// ── SAKURA TREE ───────────────────────────────────────
-(function initSakuraTree() {
-  const section = document.getElementById('sakuraSection');
-  const canvas  = document.getElementById('treeCanvas');
-  const ctx     = canvas.getContext('2d');
-  const hint    = document.getElementById('treeHint');
-  const MAX_D   = 9;
-
-  let W, H, branches, blossoms, petals;
-
-  // Xorshift seeded RNG for deterministic tree shape
-  function mkRng(seed) {
-    let s = seed >>> 0;
-    return () => {
-      s ^= s << 13; s ^= s >> 17; s ^= s << 5;
-      return (s >>> 0) / 0xffffffff;
-    };
-  }
-
-  function buildTree() {
-    const rng = mkRng(31337);
-    branches = []; blossoms = [];
-    const sx = W * 0.5;
-    const sy = H * 0.94;
-    const trunk = Math.min(H * 0.24, 180);
-
-    function gen(x1, y1, angle, len, d) {
-      if (d > MAX_D || len < 3) return;
-      const x2 = x1 + Math.cos(angle) * len;
-      const y2 = y1 + Math.sin(angle) * len;
-      const growAt = (d - 1) / MAX_D + rng() * (0.4 / MAX_D);
-      branches.push({ x1, y1, x2, y2, d, growAt,
-        lw: Math.max(0.4, (MAX_D - d + 2) * 0.72) });
-      if (d >= MAX_D) {
-        blossoms.push({ x: x2, y: y2, r: 2 + rng() * 3.5, growAt: growAt + 0.04 });
-        return;
-      }
-      const sp  = 0.30 + rng() * 0.20;
-      const nl  = len * (0.62 + rng() * 0.08);
-      gen(x2, y2, angle - sp, nl, d + 1);
-      gen(x2, y2, angle + sp, nl, d + 1);
-      if (d < MAX_D - 2 && rng() > 0.42)
-        gen(x2, y2, angle + (rng() - 0.5) * 0.22, nl * 0.88, d + 1);
-    }
-    gen(sx, sy, -Math.PI / 2, trunk, 1);
-  }
-
-  function initPetals() {
-    petals = Array.from({ length: 30 }, () => mkPetal(true));
-  }
-
-  function mkPetal(scatter) {
-    const src = blossoms.length
-      ? blossoms[Math.floor(Math.random() * blossoms.length)]
-      : { x: W / 2, y: H * 0.3 };
-    return {
-      x:  src.x + (Math.random() - 0.5) * 90,
-      y:  scatter ? Math.random() * H : src.y + (Math.random() - 0.5) * 30,
-      vx: (Math.random() - 0.5) * 0.7,
-      vy: 0.25 + Math.random() * 0.5,
-      r:  1.5 + Math.random() * 2.5,
-      rot: Math.random() * Math.PI * 2,
-      rs:  (Math.random() - 0.5) * 0.04,
-      a:   0.35 + Math.random() * 0.55,
-    };
-  }
-
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-    buildTree();
-    initPetals();
-  }
-
-  function getProgress() {
-    const top    = section.getBoundingClientRect().top;
-    const travel = section.offsetHeight - window.innerHeight;
-    return Math.max(0, Math.min(1, -top / travel));
-  }
-
-  const treeKanji = document.getElementById('treeKanji');
-
-  function draw(p) {
-    ctx.clearRect(0, 0, W, H);
-
-    // Full-bloom radial glow
-    if (p > 0.78) {
-      const gp = Math.min(1, (p - 0.78) / 0.22);
-      const cx = W * 0.5, cy = H * 0.44;
-      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.44);
-      gr.addColorStop(0,   `rgba(255,255,255,${0.045 * gp})`);
-      gr.addColorStop(0.5, `rgba(200,220,255,${0.022 * gp})`);
-      gr.addColorStop(1,   'rgba(0,0,0,0)');
-      ctx.beginPath();
-      ctx.arc(cx, cy, Math.min(W, H) * 0.44, 0, Math.PI * 2);
-      ctx.fillStyle = gr; ctx.fill();
-    }
-
-    // Branches
-    branches.forEach(b => {
-      if (p <= b.growAt) return;
-      const sp = Math.min(1, (p - b.growAt) / (0.65 / MAX_D));
-      const ex = b.x1 + (b.x2 - b.x1) * sp;
-      const ey = b.y1 + (b.y2 - b.y1) * sp;
-      const dr = b.d / MAX_D;
-      ctx.lineWidth   = b.lw;
-      ctx.lineCap     = 'round';
-      ctx.strokeStyle = `rgba(255,255,255,${0.5 + (1 - dr) * 0.45})`;
-      ctx.beginPath(); ctx.moveTo(b.x1, b.y1); ctx.lineTo(ex, ey); ctx.stroke();
-    });
-
-    // Blossoms
-    if (p > 0.70) {
-      const bp = Math.min(1, (p - 0.70) / 0.30);
-      blossoms.forEach(bl => {
-        if (p < bl.growAt) return;
-        const lp = Math.min(1, (p - bl.growAt) / 0.09);
-        const a  = bp * lp * 0.9;
-        ctx.beginPath();
-        ctx.arc(bl.x, bl.y, bl.r * lp, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fill();
-        const g = ctx.createRadialGradient(bl.x, bl.y, 0, bl.x, bl.y, bl.r * 5);
-        g.addColorStop(0, `rgba(255,255,255,${a * 0.38})`);
-        g.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.beginPath(); ctx.arc(bl.x, bl.y, bl.r * 5, 0, Math.PI * 2);
-        ctx.fillStyle = g; ctx.fill();
-      });
-    }
-
-    // Falling petals
-    if (p > 0.86) {
-      const fp = Math.min(1, (p - 0.86) / 0.14);
-      petals.forEach(pt => {
-        pt.x += pt.vx; pt.y += pt.vy; pt.rot += pt.rs;
-        if (pt.y > H + 10) Object.assign(pt, mkPetal(false));
-        ctx.save();
-        ctx.translate(pt.x, pt.y); ctx.rotate(pt.rot);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, pt.r, pt.r * 0.55, 0, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${pt.a * fp})`; ctx.fill();
-        ctx.restore();
-      });
-    }
-  }
-
-  let hintShown = false;
-  function loop() {
-    const p = getProgress();
-    draw(p);
-    treeKanji.classList.toggle('show', p > 0.28 && p < 0.88);
-    if (!hintShown && p > 0.005) { hint.classList.add('vis'); hintShown = true; }
-    if (p > 0.07) hint.classList.remove('vis');
-    requestAnimationFrame(loop);
-  }
-
-  window.addEventListener('resize', resize, { passive: true });
-  resize();
-  loop();
-})();
-
-// ── INIT ──────────────────────────────────────────────
 buildTitle();
 render();
 </script>
