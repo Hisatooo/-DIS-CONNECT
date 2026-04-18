@@ -1460,7 +1460,7 @@ function renderHome() {
   const u = getUser();
   document.getElementById('page-home').innerHTML = `
     <div class="flex-shrink-0 flex items-center justify-between px-4 pt-6 pb-3">
-      <h1 class="text-2xl font-black text-white">(DIS)CONNECT</h1>
+      <h1 class="text-3xl font-black text-white">(DIS)CONNECT</h1>
       <button id="notif-icon-btn" class="relative w-10 h-10 flex items-center justify-center rounded-full bg-[#1C1C1E]">
         <div class="notif-dot ${S.unreadNotif ? '' : 'hidden'}" id="notif-dot-btn"></div>
         <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1468,9 +1468,9 @@ function renderHome() {
         </svg>
       </button>
     </div>
-    <div class="flex-shrink-0 flex space-x-6 px-4 border-b border-gray-900 pb-3">
-      <button class="feed-tab ${S.feedTab==='friends'?'active-tab':''}" data-tab="friends">${t('フレンド','Friends')}</button>
-      <button class="feed-tab ${S.feedTab==='world'?'active-tab':''}" data-tab="world">World</button>
+    <div class="flex-shrink-0 px-4 pb-3 flex gap-2">
+      <button class="feed-tab flex-1 py-2 rounded-full text-sm font-bold transition ${S.feedTab==='friends'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}" data-tab="friends">${t('フレンド','Friends')}</button>
+      <button class="feed-tab flex-1 py-2 rounded-full text-sm font-bold transition ${S.feedTab==='world'?'bg-white text-black':'bg-[#2C2C2E] text-gray-400'}" data-tab="world">World</button>
     </div>
     <div id="feed-list" class="flex-grow overflow-y-auto no-scrollbar px-4 pb-28 pt-1"></div>
   `;
