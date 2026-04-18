@@ -508,11 +508,12 @@
 <div class="kintsugi-wrap" id="kintsugiWrap" data-rev>
   <svg class="kintsugi-svg" viewBox="0 0 1200 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M0,14 L138,13 L182,6 L226,20 L302,9 L372,18 L435,5 L509,14 L576,8 L646,20 L716,11 L796,6 L866,18 L938,9 L1018,16 L1096,7 L1200,13"
-          stroke="rgba(212,175,55,0.32)" stroke-width="0.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M302,9 L316,2 L333,0"   stroke="rgba(212,175,55,0.17)" stroke-width="0.5" fill="none"/>
-    <path d="M646,20 L657,25 L676,27" stroke="rgba(212,175,55,0.17)" stroke-width="0.5" fill="none"/>
-    <path d="M866,18 L878,23 L902,25 L920,22" stroke="rgba(212,175,55,0.13)" stroke-width="0.4" fill="none"/>
-    <path d="M435,5 L445,0 L458,-1"  stroke="rgba(212,175,55,0.12)" stroke-width="0.4" fill="none"/>
+          stroke="rgba(212,175,55,0.32)" stroke-width="0.8" fill="none" stroke-linecap="round" stroke-linejoin="round"
+          stroke-dasharray="2000"/>
+    <path d="M302,9 L316,2 L333,0"   stroke="rgba(212,175,55,0.17)" stroke-width="0.5" fill="none" stroke-dasharray="2000"/>
+    <path d="M646,20 L657,25 L676,27" stroke="rgba(212,175,55,0.17)" stroke-width="0.5" fill="none" stroke-dasharray="2000"/>
+    <path d="M866,18 L878,23 L902,25 L920,22" stroke="rgba(212,175,55,0.13)" stroke-width="0.4" fill="none" stroke-dasharray="2000"/>
+    <path d="M435,5 L445,0 L458,-1"  stroke="rgba(212,175,55,0.12)" stroke-width="0.4" fill="none" stroke-dasharray="2000"/>
   </svg>
 </div>
 
@@ -525,6 +526,7 @@
 <div class="sakura-section" id="sakuraSection">
   <div class="sakura-sticky">
     <canvas id="treeCanvas"></canvas>
+    <div class="tree-kanji" id="treeKanji">繋</div>
     <p class="tree-hint" id="treeHint">満開へ — スクロール</p>
   </div>
 </div>
@@ -985,8 +987,23 @@ function showSuccess() {
     return Math.max(0, Math.min(1, -top / travel));
   }
 
+  const treeKanji = document.getElementById('treeKanji');
+
   function draw(p) {
     ctx.clearRect(0, 0, W, H);
+
+    // Full-bloom radial glow
+    if (p > 0.78) {
+      const gp = Math.min(1, (p - 0.78) / 0.22);
+      const cx = W * 0.5, cy = H * 0.44;
+      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.44);
+      gr.addColorStop(0,   `rgba(255,255,255,${0.045 * gp})`);
+      gr.addColorStop(0.5, `rgba(200,220,255,${0.022 * gp})`);
+      gr.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.min(W, H) * 0.44, 0, Math.PI * 2);
+      ctx.fillStyle = gr; ctx.fill();
+    }
 
     // Branches
     branches.forEach(b => {
@@ -1010,13 +1027,11 @@ function showSuccess() {
         const a  = bp * lp * 0.9;
         ctx.beginPath();
         ctx.arc(bl.x, bl.y, bl.r * lp, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${a})`;
-        ctx.fill();
+        ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fill();
         const g = ctx.createRadialGradient(bl.x, bl.y, 0, bl.x, bl.y, bl.r * 5);
         g.addColorStop(0, `rgba(255,255,255,${a * 0.38})`);
         g.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.beginPath();
-        ctx.arc(bl.x, bl.y, bl.r * 5, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(bl.x, bl.y, bl.r * 5, 0, Math.PI * 2);
         ctx.fillStyle = g; ctx.fill();
       });
     }
@@ -1031,8 +1046,7 @@ function showSuccess() {
         ctx.translate(pt.x, pt.y); ctx.rotate(pt.rot);
         ctx.beginPath();
         ctx.ellipse(0, 0, pt.r, pt.r * 0.55, 0, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${pt.a * fp})`;
-        ctx.fill();
+        ctx.fillStyle = `rgba(255,255,255,${pt.a * fp})`; ctx.fill();
         ctx.restore();
       });
     }
@@ -1042,6 +1056,7 @@ function showSuccess() {
   function loop() {
     const p = getProgress();
     draw(p);
+    treeKanji.classList.toggle('show', p > 0.28 && p < 0.88);
     if (!hintShown && p > 0.005) { hint.classList.add('vis'); hintShown = true; }
     if (p > 0.07) hint.classList.remove('vis');
     requestAnimationFrame(loop);
