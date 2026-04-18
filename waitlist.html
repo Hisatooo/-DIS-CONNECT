@@ -6,7 +6,7 @@
   <title>(DIS)CONNECT</title>
   <link rel="icon" type="image/png" href="/icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;700;800;900&family=Noto+Serif+JP:wght@200;300;400;500;700&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
@@ -81,7 +81,28 @@
       text-align: center;
     }
 
-    .hero-inner { will-change: transform, opacity; }
+    /* Ensō — thin white circle behind title */
+    .enso {
+      position: absolute;
+      width: min(74vw, 540px); height: min(74vw, 540px);
+      border-radius: 50%;
+      border: 0.5px solid rgba(255,255,255,0.045);
+      pointer-events: none; z-index: 1;
+      opacity: 0;
+      animation: ensoIn 3.5s 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .enso::after {
+      content: '';
+      position: absolute; inset: 18px;
+      border-radius: 50%;
+      border: 0.5px solid rgba(255,255,255,0.022);
+    }
+    @keyframes ensoIn {
+      from { opacity: 0; transform: scale(0.88) rotate(-8deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .hero-inner { will-change: transform, opacity; position: relative; z-index: 2; }
 
     /* Title */
     .wordmark {
@@ -117,9 +138,10 @@
     /* Subtitle */
     .reconnect {
       display: block;
-      font-size: clamp(28px, 6.5vw, 76px);
-      font-weight: 300;
-      letter-spacing: -0.02em;
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(22px, 5.5vw, 66px);
+      font-weight: 200;
+      letter-spacing: 0.05em;
       color: rgba(255,255,255,0.88);
       font-style: italic;
       margin-bottom: 44px;
@@ -130,9 +152,10 @@
 
     /* Waseda tagline */
     .waseda-line {
-      font-size: clamp(14px, 2.4vw, 18px);
-      font-weight: 500;
-      letter-spacing: 0.06em;
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(13px, 2.2vw, 17px);
+      font-weight: 300;
+      letter-spacing: 0.1em;
       color: rgba(255,255,255,0.65);
       line-height: 1.8;
       opacity: 0;
@@ -162,6 +185,28 @@
     @keyframes linePulse {
       0%, 100% { opacity: 0.3; transform: scaleY(0.8); }
       50%       { opacity: 1;  transform: scaleY(1); }
+    }
+
+    /* ── KINTSUGI DIVIDER ── */
+    .kintsugi-wrap {
+      width: 100%; height: 28px; overflow: visible;
+      opacity: 0; transition: opacity 2s cubic-bezier(0.16,1,0.3,1);
+    }
+    .kintsugi-wrap.vis { opacity: 1; }
+    .kintsugi-svg { width: 100%; height: 100%; display: block; }
+
+    /* ── 波紋 RIPPLE ── */
+    .hamonRing {
+      position: fixed; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.5);
+      width: 44px; height: 44px;
+      transform: translate(-50%,-50%) scale(0);
+      animation: hamonOut 1.9s cubic-bezier(0.15,0.8,0.35,1) forwards;
+      pointer-events: none; z-index: 9000;
+    }
+    @keyframes hamonOut {
+      0%   { transform: translate(-50%,-50%) scale(0);  opacity: 0.7; }
+      100% { transform: translate(-50%,-50%) scale(14); opacity: 0; }
     }
 
     /* ── MARQUEE ── */
@@ -398,8 +443,9 @@
       position: absolute;
       bottom: 52px; left: 50%;
       transform: translateX(-50%);
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.26em; text-transform: uppercase;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 10px; font-weight: 400;
+      letter-spacing: 0.32em;
       color: rgba(255,255,255,0.22);
       white-space: nowrap;
       opacity: 0;
@@ -447,6 +493,7 @@
 
 <!-- ── HERO ── -->
 <section class="hero">
+  <div class="enso"></div>
   <div class="hero-inner" id="heroInner">
     <div class="wordmark" id="wordmark" aria-label="(DIS)CONNECT"></div>
     <span class="reconnect">to Reconnect.</span>
@@ -456,6 +503,18 @@
     <div class="scroll-cue-line"></div>
   </div>
 </section>
+
+<!-- ── KINTSUGI DIVIDER ── -->
+<div class="kintsugi-wrap" id="kintsugiWrap" data-rev>
+  <svg class="kintsugi-svg" viewBox="0 0 1200 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,14 L138,13 L182,6 L226,20 L302,9 L372,18 L435,5 L509,14 L576,8 L646,20 L716,11 L796,6 L866,18 L938,9 L1018,16 L1096,7 L1200,13"
+          stroke="rgba(212,175,55,0.32)" stroke-width="0.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M302,9 L316,2 L333,0"   stroke="rgba(212,175,55,0.17)" stroke-width="0.5" fill="none"/>
+    <path d="M646,20 L657,25 L676,27" stroke="rgba(212,175,55,0.17)" stroke-width="0.5" fill="none"/>
+    <path d="M866,18 L878,23 L902,25 L920,22" stroke="rgba(212,175,55,0.13)" stroke-width="0.4" fill="none"/>
+    <path d="M435,5 L445,0 L458,-1"  stroke="rgba(212,175,55,0.12)" stroke-width="0.4" fill="none"/>
+  </svg>
+</div>
 
 <!-- ── MARQUEE ── -->
 <div class="marquee-wrap" id="marqueeWrap">
@@ -635,6 +694,7 @@ const revObs = new IntersectionObserver((entries) => {
 document.querySelectorAll('[data-rev]').forEach(el => revObs.observe(el));
 revObs.observe(document.getElementById('marqueeWrap'));
 revObs.observe(document.getElementById('footer'));
+revObs.observe(document.getElementById('kintsugiWrap'));
 
 // ── FIREBASE ──────────────────────────────────────────
 firebase.initializeApp({
@@ -695,97 +755,111 @@ function showSuccess() {
   document.getElementById('successMsg').classList.add('show');
 }
 
-// ── RAIN CANVAS + BOKEH ───────────────────────────────
+// ── INK BRUSH RAIN + BOKEH ────────────────────────────
 (function initRain() {
   const canvas = document.getElementById('bgCanvas');
   const ctx    = canvas.getContext('2d');
-  const isMobile = window.innerWidth < 768;
-  const DROP_COUNT  = isMobile ? 70 : 150;
-  const BOKEH_COUNT = isMobile ? 22 : 45;
+  const isMob  = window.innerWidth < 768;
+  const DROP_N  = isMob ? 65 : 140;
+  const BOKEH_N = isMob ? 20 : 42;
 
   let W, H, drops, bokeh;
 
   function resize() {
     W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
-    drops = Array.from({ length: DROP_COUNT }, () => mkDrop());
-    bokeh = Array.from({ length: BOKEH_COUNT }, () => mkBokeh());
+    drops = Array.from({ length: DROP_N  }, mkDrop);
+    bokeh = Array.from({ length: BOKEH_N }, mkBokeh);
   }
 
   function mkDrop() {
     return {
       x:     Math.random() * (W + 200) - 100,
       y:     Math.random() * H,
-      speed: 2.5 + Math.random() * 5,
-      len:   12 + Math.random() * 26,
-      wind:  0.25 + Math.random() * 0.4,
-      alpha: 0.03 + Math.random() * 0.08,
-      bright: Math.random() < 0.07,
+      speed: 3 + Math.random() * 5,
+      len:   14 + Math.random() * 32,
+      wind:  0.22 + Math.random() * 0.38,
+      lw:    0.3 + Math.random() * 1.6,
+      alpha: 0.02 + Math.random() * 0.065,
+      curve: (Math.random() - 0.5) * 9,
+      bright: Math.random() < 0.06,
     };
   }
 
-  const BOKEH_HUES = [200, 215, 255, 45, 280, 170];
+  const BH = [200,218,255,48,275,168];
   function mkBokeh() {
     return {
-      x:     Math.random() * W,
-      y:     Math.random() * H,
-      r:     2 + Math.random() * 5,
-      speed: 0.06 + Math.random() * 0.18,
-      drift: (Math.random() - 0.5) * 0.12,
-      hue:   BOKEH_HUES[Math.floor(Math.random() * BOKEH_HUES.length)],
-      alpha: 0.07 + Math.random() * 0.18,
-      pulse: Math.random() * Math.PI * 2,
+      x: Math.random()*W, y: Math.random()*H,
+      r: 2+Math.random()*5,
+      speed: 0.05+Math.random()*0.16,
+      drift: (Math.random()-0.5)*0.11,
+      hue:   BH[Math.floor(Math.random()*BH.length)],
+      alpha: 0.07+Math.random()*0.17,
+      pulse: Math.random()*Math.PI*2,
     };
   }
 
   function frame() {
     ctx.clearRect(0, 0, W, H);
 
-    // Bokeh city lights
+    // Bokeh
     bokeh.forEach(b => {
       b.pulse += 0.007;
-      const a = b.alpha * (0.7 + 0.3 * Math.sin(b.pulse));
-      const grad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * 7);
-      grad.addColorStop(0,   `hsla(${b.hue},90%,80%,${a})`);
-      grad.addColorStop(0.35,`hsla(${b.hue},90%,75%,${a * 0.35})`);
-      grad.addColorStop(1,   `hsla(${b.hue},90%,70%,0)`);
-      ctx.beginPath();
-      ctx.fillStyle = grad;
-      ctx.arc(b.x, b.y, b.r * 7, 0, Math.PI * 2);
-      ctx.fill();
-      b.y -= b.speed;
-      b.x += b.drift;
-      if (b.y < -50) { b.y = H + 50; b.x = Math.random() * W; }
+      const a = b.alpha*(0.7+0.3*Math.sin(b.pulse));
+      const g = ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*7);
+      g.addColorStop(0,   `hsla(${b.hue},88%,80%,${a})`);
+      g.addColorStop(0.4, `hsla(${b.hue},88%,75%,${a*0.3})`);
+      g.addColorStop(1,   `hsla(${b.hue},88%,70%,0)`);
+      ctx.beginPath(); ctx.fillStyle=g;
+      ctx.arc(b.x,b.y,b.r*7,0,Math.PI*2); ctx.fill();
+      b.y-=b.speed; b.x+=b.drift;
+      if(b.y<-50){b.y=H+50; b.x=Math.random()*W;}
     });
 
-    // Rain drops with glow
-    ctx.lineWidth = 0.7;
+    // Ink brush strokes
+    ctx.lineCap = 'round';
     drops.forEach(d => {
-      if (d.bright) {
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = `rgba(210,235,255,0.9)`;
-        ctx.strokeStyle = `rgba(230,245,255,${d.alpha * 2.8})`;
+      ctx.lineWidth = d.bright ? d.lw*2.2 : d.lw;
+      if(d.bright){
+        ctx.shadowBlur=12; ctx.shadowColor='rgba(210,235,255,0.85)';
+        ctx.strokeStyle=`rgba(235,248,255,${d.alpha*3})`;
       } else {
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = `rgba(180,215,255,0.5)`;
-        ctx.strokeStyle = `rgba(180,215,255,${d.alpha})`;
+        ctx.shadowBlur=3; ctx.shadowColor='rgba(175,210,255,0.4)';
+        ctx.strokeStyle=`rgba(185,215,255,${d.alpha})`;
       }
-      ctx.beginPath();
-      ctx.moveTo(d.x, d.y);
-      ctx.lineTo(d.x - d.len * d.wind, d.y - d.len);
+      const x2=d.x-d.len*d.wind, y2=d.y-d.len;
+      ctx.beginPath(); ctx.moveTo(d.x,d.y);
+      if(Math.abs(d.curve)>2){
+        ctx.quadraticCurveTo(d.x-d.len*d.wind*0.5+d.curve, d.y-d.len*0.5, x2, y2);
+      } else { ctx.lineTo(x2,y2); }
       ctx.stroke();
-      d.y += d.speed;
-      d.x += d.wind;
-      if (d.y > H + 20) { d.y = -20; d.x = Math.random() * (W + 200) - 100; }
+      d.y+=d.speed; d.x+=d.wind;
+      if(d.y>H+20){d.y=-20; d.x=Math.random()*(W+200)-100;}
     });
-    ctx.shadowBlur = 0;
-
+    ctx.shadowBlur=0;
     requestAnimationFrame(frame);
   }
 
   window.addEventListener('resize', resize, { passive: true });
-  resize();
-  frame();
+  resize(); frame();
+})();
+
+// ── 波紋 RIPPLE ───────────────────────────────────────
+(function initHamon() {
+  function spawn(x, y) {
+    [0, 0.25, 0.5].forEach((delay, i) => {
+      const el = document.createElement('div');
+      el.className = 'hamonRing';
+      el.style.cssText = `left:${x}px;top:${y}px;animation-delay:${delay}s;`
+        + `border-color:rgba(255,255,255,${0.5-i*0.14});`;
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    });
+  }
+  document.addEventListener('click', e => spawn(e.clientX, e.clientY));
+  document.addEventListener('touchstart', e => {
+    [...e.changedTouches].forEach(t => spawn(t.clientX, t.clientY));
+  }, { passive: true });
 })();
 
 // ── SAKURA PETALS ─────────────────────────────────────
