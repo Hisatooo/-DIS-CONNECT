@@ -258,70 +258,121 @@
 
     /* ── FORM SECTION ── */
     .form-section {
-      max-width: 440px;
+      max-width: 420px;
       margin: 0 auto;
-      padding: 96px 24px 220px;
+      padding: 60px 20px 200px;
+    }
+
+    /* ── GLASS CARD ── */
+    .glass-card {
+      background: rgba(255,255,255,0.045);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border-radius: 28px;
+      padding: 40px 30px 36px;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(40px) scale(0.97);
+      transition: opacity 0.95s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.95s cubic-bezier(0.16,1,0.3,1);
+    }
+    .glass-card.vis { opacity: 1; transform: translateY(0) scale(1); }
+    .glass-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 55%);
+      border-radius: inherit; pointer-events: none;
+    }
+    .glass-card::after {
+      content: ''; position: absolute; inset: 0;
+      border-radius: inherit; padding: 1px;
+      background: linear-gradient(135deg,
+        rgba(255,255,255,0.24) 0%,
+        rgba(255,255,255,0.06) 50%,
+        rgba(255,255,255,0.16) 100%);
+      -webkit-mask: linear-gradient(#fff,#fff) content-box, linear-gradient(#fff,#fff);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none;
     }
 
     .eyebrow {
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.24em; text-transform: uppercase;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.28em;
       color: rgba(255,255,255,0.62);
-      margin-bottom: 40px;
-      opacity: 0; transform: translateY(16px);
-      transition: opacity 1s, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+      margin-bottom: 32px;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.7s 0.2s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.7s 0.2s cubic-bezier(0.16,1,0.3,1);
     }
     .eyebrow.vis { opacity: 1; transform: translateY(0); }
+    .eyebrow::after {
+      content: ''; display: block;
+      width: 0; height: 1px;
+      background: linear-gradient(to right, rgba(255,255,255,0.35), transparent);
+      margin-top: 14px;
+      transition: width 1.4s 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    .eyebrow.vis::after { width: 100%; }
 
-    .fields {
-      display: flex; flex-direction: column; gap: 0;
-      opacity: 0; transform: translateY(24px);
-      transition: opacity 1s 0.1s, transform 1s 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Floating label fields */
+    .fields { display: flex; flex-direction: column; gap: 0;
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.7s 0.35s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.7s 0.35s cubic-bezier(0.16,1,0.3,1);
     }
     .fields.vis { opacity: 1; transform: translateY(0); }
+    .field-wrap { position: relative; margin-bottom: 6px; }
+    .field-label {
+      position: absolute; top: 14px; left: 2px;
+      font-size: 14px; font-family: 'Sora', sans-serif;
+      color: rgba(255,255,255,0.3);
+      transition: top .26s cubic-bezier(0.16,1,0.3,1),
+                  font-size .26s, color .26s, letter-spacing .26s;
+      pointer-events: none;
+    }
+    .field:focus ~ .field-label,
+    .field:not(:placeholder-shown) ~ .field-label {
+      top: -11px; font-size: 10px;
+      letter-spacing: 0.14em; color: rgba(255,255,255,0.55);
+    }
 
     .field {
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid rgba(255,255,255,0.18);
-      border-radius: 0;
-      color: #fff;
+      background: transparent; border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.16);
+      border-radius: 0; color: #fff;
       font-family: 'Sora', sans-serif;
-      font-size: 16px;
-      padding: 14px 2px;
-      width: 100%;
-      outline: none;
-      -webkit-appearance: none;
+      font-size: 16px; padding: 14px 2px 12px;
+      width: 100%; outline: none; -webkit-appearance: none;
       transition: border-color 0.4s cubic-bezier(0.16,1,0.3,1);
     }
-    .field:focus {
-      border-bottom-color: rgba(255,255,255,0.75);
-    }
-    .field.err { border-bottom-color: rgba(239,68,68,0.65); }
-    .field::placeholder { color: rgba(255,255,255,0.22); }
+    .field:focus { border-bottom-color: rgba(255,255,255,0.7); }
+    .field.err { border-bottom-color: rgba(239,68,68,0.7); }
+    .field::placeholder { color: transparent; }
 
     .btn-join {
-      background: #fff;
-      color: #000;
+      background: #fff; color: #000;
       font-family: 'Noto Serif JP', serif;
       font-size: 13px; font-weight: 500;
       letter-spacing: 0.22em;
-      border: none; border-radius: 0;
-      padding: 20px; cursor: pointer; width: 100%;
-      margin-top: 32px;
-      position: relative; overflow: hidden;
-      transition: opacity 0.25s, transform 0.2s, box-shadow 0.3s;
+      border: none; border-radius: 14px;
+      padding: 18px; cursor: pointer; width: 100%;
+      margin-top: 28px; position: relative; overflow: hidden;
+      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1),
+                  box-shadow 0.3s cubic-bezier(0.16,1,0.3,1);
     }
     .btn-join::before {
-      content: '';
-      position: absolute; top: 0; left: -100%;
+      content: ''; position: absolute; top: 0; left: -100%;
       width: 100%; height: 100%;
       background: linear-gradient(90deg, transparent, rgba(0,0,0,0.07), transparent);
-      transition: left 0.6s cubic-bezier(0.16,1,0.3,1);
+      transition: left 0.55s cubic-bezier(0.16,1,0.3,1);
     }
     .btn-join:hover::before { left: 100%; }
-    .btn-join:hover { box-shadow: 0 12px 40px rgba(255,255,255,0.1); transform: translateY(-1px); }
-    .btn-join:active { transform: scale(0.98); box-shadow: none; }
+    .btn-join:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.14), 0 12px 36px rgba(255,255,255,0.1);
+    }
+    .btn-join:active { transform: scale(0.97); box-shadow: 0 0 0 2px rgba(255,255,255,0.06); }
     .btn-join:disabled { opacity: 0.18; cursor: not-allowed; transform: none; box-shadow: none; }
 
     /* Loading dots */
@@ -545,24 +596,32 @@
 
 <!-- ── FORM ── -->
 <section class="form-section">
-  <p class="eyebrow" id="eyebrow" data-rev></p>
+  <div class="glass-card" id="glassCard">
+    <p class="eyebrow" id="eyebrow"></p>
 
-  <div id="formState">
-    <div class="fields" id="fields" data-rev>
-      <input id="wl-name"  class="field" type="text"  autocomplete="name">
-      <input id="wl-email" class="field" type="email" inputmode="email" autocomplete="email">
-      <button id="wl-btn" class="btn-join"></button>
+    <div id="formState">
+      <div class="fields" id="fields">
+        <div class="field-wrap">
+          <input id="wl-name" class="field" type="text" placeholder=" " autocomplete="name">
+          <label class="field-label" id="label-name" for="wl-name"></label>
+        </div>
+        <div class="field-wrap">
+          <input id="wl-email" class="field" type="email" inputmode="email" placeholder=" " autocomplete="email">
+          <label class="field-label" id="label-email" for="wl-email"></label>
+        </div>
+        <button id="wl-btn" class="btn-join"></button>
+      </div>
+      <p class="hint" id="hint"></p>
     </div>
-    <p class="hint" id="hint" data-rev></p>
-  </div>
 
-  <div class="success" id="successMsg">
-    <span class="success-mark">✦</span>
-    <p class="success-title" id="successTitle"></p>
-    <p class="success-body"  id="successBody"></p>
-  </div>
+    <div class="success" id="successMsg">
+      <span class="success-mark">✦</span>
+      <p class="success-title" id="successTitle"></p>
+      <p class="success-body"  id="successBody"></p>
+    </div>
 
-  <p class="counter" id="counter"></p>
+    <p class="counter" id="counter"></p>
+  </div>
 </section>
 
 <!-- ── FOOTER ── -->
@@ -613,10 +672,10 @@ function setLang(l) {
 
 function render() {
   const c = COPY[lang];
-  document.getElementById('wasedaLine').textContent = c.waseda;
-  document.getElementById('eyebrow').textContent    = c.eyebrow;
-  document.getElementById('wl-name').placeholder    = c.namePh;
-  document.getElementById('wl-email').placeholder   = c.emailPh;
+  document.getElementById('wasedaLine').textContent  = c.waseda;
+  document.getElementById('eyebrow').textContent     = c.eyebrow;
+  document.getElementById('label-name').textContent  = c.namePh;
+  document.getElementById('label-email').textContent = c.emailPh;
   const btn = document.getElementById('wl-btn');
   if (!btn.disabled) btn.textContent = c.btn;
   document.getElementById('hint').textContent       = c.hint;
@@ -709,6 +768,17 @@ document.querySelectorAll('[data-rev]').forEach(el => revObs.observe(el));
 revObs.observe(document.getElementById('marqueeWrap'));
 revObs.observe(document.getElementById('footer'));
 revObs.observe(document.getElementById('kintsugiWrap'));
+revObs.observe(document.getElementById('glassCard'));
+// stagger inner form elements after card appears
+const glassCard = document.getElementById('glassCard');
+new IntersectionObserver(([e]) => {
+  if (e.isIntersecting) {
+    setTimeout(() => document.getElementById('eyebrow').classList.add('vis'), 80);
+    setTimeout(() => document.getElementById('fields').classList.add('vis'), 200);
+    setTimeout(() => document.getElementById('hint').classList.add('vis'), 340);
+    e.target._ob && e.target._ob.disconnect();
+  }
+}, { threshold: 0.08 }).observe(glassCard);
 
 // ── FIREBASE ──────────────────────────────────────────
 firebase.initializeApp({
