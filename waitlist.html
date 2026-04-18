@@ -321,6 +321,54 @@
     .footer.vis { opacity: 1; }
     .footer p { font-size: 10px; color: rgba(255,255,255,0.16); letter-spacing: 0.2em; text-transform: uppercase; }
 
+    /* ── CANVAS (rain) ── */
+    #bgCanvas {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 1;
+    }
+
+    /* ── SAKURA PETALS ── */
+    #petals { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+    .petal {
+      position: absolute; top: -30px;
+      border-radius: 150% 0% 150% 0% / 150% 0% 150% 0%;
+      background: linear-gradient(135deg,
+        rgba(255,192,203,0.55) 0%,
+        rgba(255,218,225,0.35) 50%,
+        rgba(255,240,245,0.15) 100%
+      );
+      animation: petalFall linear infinite;
+      pointer-events: none;
+    }
+    @keyframes petalFall {
+      0%   { transform: translateY(0)    translateX(0)    rotate(0deg)   scale(1);    opacity: 0; }
+      6%   { opacity: 1; }
+      22%  { transform: translateY(22vh) translateX(35px) rotate(80deg)  scale(0.96); }
+      45%  { transform: translateY(45vh) translateX(-18px)rotate(165deg) scale(1.02); }
+      68%  { transform: translateY(68vh) translateX(28px) rotate(250deg) scale(0.94); }
+      90%  { opacity: 0.85; }
+      100% { transform: translateY(112vh)translateX(-10px)rotate(340deg) scale(0.8);  opacity: 0; }
+    }
+
+    /* ── KANJI LAYER ── */
+    #kanji { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+    .kanji-char {
+      position: absolute;
+      font-family: 'Sora', 'Hiragino Sans', sans-serif;
+      font-weight: 900;
+      color: rgba(255,255,255,0.055);
+      pointer-events: none;
+      user-select: none;
+      animation: kanjiFly linear infinite;
+    }
+    @keyframes kanjiFly {
+      0%   { transform: translateY(0)     scale(1);    opacity: 0; }
+      12%  { opacity: 1; }
+      88%  { opacity: 1; }
+      100% { transform: translateY(-35vh) scale(1.12); opacity: 0; }
+    }
+
     /* ── LANG BAR ── */
     .lang-bar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
@@ -345,6 +393,9 @@
 </head>
 <body>
 
+<canvas id="bgCanvas"></canvas>
+<div id="petals"></div>
+<div id="kanji"></div>
 <div class="orb orb-1" id="orb1"></div>
 <div class="orb orb-2" id="orb2"></div>
 <div class="orb orb-3"></div>
@@ -596,6 +647,96 @@ function showSuccess() {
   document.getElementById('formState').style.display = 'none';
   document.getElementById('successMsg').classList.add('show');
 }
+
+// ── RAIN CANVAS ───────────────────────────────────────
+(function initRain() {
+  const canvas = document.getElementById('bgCanvas');
+  const ctx    = canvas.getContext('2d');
+  const isMobile = window.innerWidth < 768;
+  const COUNT  = isMobile ? 60 : 130;
+
+  let W, H, drops;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    drops = Array.from({ length: COUNT }, () => mkDrop());
+  }
+
+  function mkDrop() {
+    return {
+      x:     Math.random() * (W + 200) - 100,
+      y:     Math.random() * H,
+      speed: 2.5 + Math.random() * 4.5,
+      len:   10 + Math.random() * 22,
+      wind:  0.25 + Math.random() * 0.35,
+      alpha: 0.025 + Math.random() * 0.055,
+    };
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineWidth = 0.6;
+    drops.forEach(d => {
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(180,215,255,${d.alpha})`;
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x - d.len * d.wind, d.y - d.len);
+      ctx.stroke();
+      d.y += d.speed;
+      d.x += d.wind;
+      if (d.y > H + 20) { d.y = -20; d.x = Math.random() * (W + 200) - 100; }
+    });
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize, { passive: true });
+  resize();
+  frame();
+})();
+
+// ── SAKURA PETALS ─────────────────────────────────────
+(function initPetals() {
+  const container = document.getElementById('petals');
+  const COUNT = window.innerWidth < 768 ? 10 : 18;
+  for (let i = 0; i < COUNT; i++) {
+    const el   = document.createElement('div');
+    el.className = 'petal';
+    const size = 7 + Math.random() * 9;
+    const dur  = 10 + Math.random() * 14;
+    const delay = -(Math.random() * dur);
+    el.style.cssText = [
+      `width:${size}px`,
+      `height:${size * 1.5}px`,
+      `left:${Math.random() * 100}%`,
+      `animation-duration:${dur}s`,
+      `animation-delay:${delay}s`,
+      `opacity:${0.55 + Math.random() * 0.35}`,
+    ].join(';');
+    container.appendChild(el);
+  }
+})();
+
+// ── KANJI FLOATERS ────────────────────────────────────
+(function initKanji() {
+  const container = document.getElementById('kanji');
+  const chars = ['繋','断','絆','会','孤','変','希','望','社','都','雨','夜'];
+  chars.forEach((ch, i) => {
+    const el  = document.createElement('div');
+    el.className = 'kanji-char';
+    el.textContent = ch;
+    const size = 28 + Math.random() * 52;
+    const dur  = 18 + Math.random() * 22;
+    el.style.cssText = [
+      `font-size:${size}px`,
+      `left:${4 + Math.random() * 88}%`,
+      `bottom:${Math.random() * 25}%`,
+      `animation-duration:${dur}s`,
+      `animation-delay:${-(i * 3.2 + Math.random() * 4)}s`,
+    ].join(';');
+    container.appendChild(el);
+  });
+})();
 
 // ── INIT ──────────────────────────────────────────────
 buildTitle();
