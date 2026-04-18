@@ -145,10 +145,20 @@
       color: rgba(255,255,255,0.88);
       font-style: italic;
       margin-bottom: 44px;
+      position: relative;
       opacity: 0;
       transform: translateY(20px);
       animation: fadeUp 1s 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    .reconnect::after {
+      content: '';
+      position: absolute;
+      bottom: -6px; left: 0;
+      height: 1px; width: 0;
+      background: linear-gradient(to right, rgba(255,255,255,0.55), transparent);
+      animation: brushLine 1.1s 2.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes brushLine { to { width: 100%; } }
 
     /* Waseda tagline */
     .waseda-line {
@@ -264,52 +274,54 @@
     .eyebrow.vis { opacity: 1; transform: translateY(0); }
 
     .fields {
-      display: flex; flex-direction: column; gap: 10px;
+      display: flex; flex-direction: column; gap: 0;
       opacity: 0; transform: translateY(24px);
       transition: opacity 1s 0.1s, transform 1s 0.1s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .fields.vis { opacity: 1; transform: translateY(0); }
 
     .field {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.18);
+      border-radius: 0;
       color: #fff;
       font-family: 'Sora', sans-serif;
-      font-size: 15px;
-      padding: 16px 20px;
+      font-size: 16px;
+      padding: 14px 2px;
       width: 100%;
       outline: none;
       -webkit-appearance: none;
-      transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+      transition: border-color 0.4s cubic-bezier(0.16,1,0.3,1);
     }
     .field:focus {
-      border-color: rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.07);
-      box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+      border-bottom-color: rgba(255,255,255,0.75);
     }
-    .field.err { border-color: rgba(239,68,68,0.5); box-shadow: 0 0 0 3px rgba(239,68,68,0.08); }
-    .field::placeholder { color: rgba(255,255,255,0.2); }
+    .field.err { border-bottom-color: rgba(239,68,68,0.65); }
+    .field::placeholder { color: rgba(255,255,255,0.22); }
 
     .btn-join {
       background: #fff;
       color: #000;
-      font-family: 'Sora', sans-serif;
-      font-size: 13px; font-weight: 800;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      border: none; border-radius: 14px;
-      padding: 19px; cursor: pointer; width: 100%;
-      margin-top: 6px;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 13px; font-weight: 500;
+      letter-spacing: 0.22em;
+      border: none; border-radius: 0;
+      padding: 20px; cursor: pointer; width: 100%;
+      margin-top: 32px;
       position: relative; overflow: hidden;
       transition: opacity 0.25s, transform 0.2s, box-shadow 0.3s;
-      box-shadow: 0 0 0 0 rgba(255,255,255,0);
     }
-    .btn-join:hover {
-      opacity: 0.9;
-      box-shadow: 0 8px 32px rgba(255,255,255,0.08);
-      transform: translateY(-1px);
+    .btn-join::before {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.07), transparent);
+      transition: left 0.6s cubic-bezier(0.16,1,0.3,1);
     }
-    .btn-join:active { transform: scale(0.98) translateY(0); box-shadow: none; }
+    .btn-join:hover::before { left: 100%; }
+    .btn-join:hover { box-shadow: 0 12px 40px rgba(255,255,255,0.1); transform: translateY(-1px); }
+    .btn-join:active { transform: scale(0.98); box-shadow: none; }
     .btn-join:disabled { opacity: 0.18; cursor: not-allowed; transform: none; box-shadow: none; }
 
     /* Loading dots */
@@ -762,8 +774,8 @@ function showSuccess() {
   const canvas = document.getElementById('bgCanvas');
   const ctx    = canvas.getContext('2d');
   const isMob  = window.innerWidth < 768;
-  const DROP_N  = isMob ? 65 : 140;
-  const BOKEH_N = isMob ? 20 : 42;
+  const DROP_N  = isMob ? 38 : 130;
+  const BOKEH_N = isMob ? 10 : 38;
 
   let W, H, drops, bokeh;
 
@@ -823,10 +835,12 @@ function showSuccess() {
     drops.forEach(d => {
       ctx.lineWidth = d.bright ? d.lw*2.2 : d.lw;
       if(d.bright){
-        ctx.shadowBlur=12; ctx.shadowColor='rgba(210,235,255,0.85)';
+        ctx.shadowBlur = isMob ? 0 : 12;
+        ctx.shadowColor='rgba(210,235,255,0.85)';
         ctx.strokeStyle=`rgba(235,248,255,${d.alpha*3})`;
       } else {
-        ctx.shadowBlur=3; ctx.shadowColor='rgba(175,210,255,0.4)';
+        ctx.shadowBlur = isMob ? 0 : 3;
+        ctx.shadowColor='rgba(175,210,255,0.4)';
         ctx.strokeStyle=`rgba(185,215,255,${d.alpha})`;
       }
       const x2=d.x-d.len*d.wind, y2=d.y-d.len;
@@ -867,7 +881,7 @@ function showSuccess() {
 // ── SAKURA PETALS ─────────────────────────────────────
 (function initPetals() {
   const container = document.getElementById('petals');
-  const COUNT = window.innerWidth < 768 ? 12 : 22;
+  const COUNT = window.innerWidth < 768 ? 6 : 20;
   for (let i = 0; i < COUNT; i++) {
     const el   = document.createElement('div');
     el.className = 'petal';
@@ -889,7 +903,8 @@ function showSuccess() {
 // ── KANJI FLOATERS ────────────────────────────────────
 (function initKanji() {
   const container = document.getElementById('kanji');
-  const chars = ['繋','断','絆','会','孤','変','希','望','社','都','雨','夜'];
+  const allChars = ['繋','断','絆','会','孤','変','希','望','社','都','雨','夜'];
+  const chars = window.innerWidth < 768 ? allChars.slice(0, 6) : allChars;
   chars.forEach((ch, i) => {
     const el  = document.createElement('div');
     el.className = 'kanji-char';
