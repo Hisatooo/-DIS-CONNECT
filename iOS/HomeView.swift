@@ -22,23 +22,20 @@ struct HomeView: View {
                     Spacer()
                     NavigationLink(destination: ActivityView(notificationVM: notificationViewModel)) {
                         let hasUnread = notificationViewModel.notifications.contains { !$0.isRead }
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: "bell")
+                        ZStack {
+                            Circle()
+                                .fill(Color.cardBackground)
+                                .frame(width: 44, height: 44)
+                                .overlay(Circle().stroke(Color.cardBorder, lineWidth: 1))
+                            Image(systemName: hasUnread ? "bell.badge.fill" : "bell.fill")
                                 .font(.system(size: 20))
                                 .foregroundColor(.white)
-                            if hasUnread {
-                                Circle()
-                                    .fill(Color.blue)
-                                    .frame(width: 8, height: 8)
-                                    .offset(x: 2, y: -2)
-                            }
                         }
-                        .padding(4)
                     }
                 }
                 .padding(.horizontal)
                 .padding(.top, 24)
-                .padding(.bottom, 14)
+                .padding(.bottom, 24)
 
                 TopTabBarView(selectedTabIndex: $selectedTabIndex) {
                     Task { await viewModel.fetchAllData() }
@@ -399,33 +396,25 @@ struct TopTabBarView: View {
     let tabs: [LocalizedStringKey] = ["tab_all", "tab_following"]
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
             ForEach(tabs.indices, id: \.self) { index in
                 Button(action: {
                     withAnimation(.easeInOut(duration: 0.2)) { selectedTabIndex = index }
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     onTabTapped()
                 }) {
-                    VStack(spacing: 6) {
-                        Text(tabs[index])
-                            .font(.system(size: 15, weight: selectedTabIndex == index ? .semibold : .regular))
-                            .foregroundColor(selectedTabIndex == index ? .white : Color(hex: "6B7280"))
-                        Rectangle()
-                            .frame(height: 2)
-                            .foregroundColor(selectedTabIndex == index ? .white : .clear)
-                            .cornerRadius(1)
-                    }
-                    .padding(.vertical, 10)
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
+                    Text(tabs[index])
+                        .font(.subheadline).fontWeight(.bold)
+                        .foregroundColor(selectedTabIndex == index ? .black : .white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(selectedTabIndex == index ? Color.white : Color.white.opacity(0.08))
+                        .cornerRadius(20)
                 }
             }
         }
-        .background(Color.black)
-        .overlay(
-            Rectangle().fill(Color.white.opacity(0.08)).frame(height: 0.5),
-            alignment: .bottom
-        )
+        .padding(.horizontal)
+        .padding(.bottom, 12)
     }
 }
 
